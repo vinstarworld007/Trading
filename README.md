@@ -17,6 +17,17 @@ scripts/fetch-itch-sample.sh    # one sample trading day (4.8 GB) into ~/data/it
 Then on Windows, copy `scripts/wslconfig.example` to `%UserProfile%\.wslconfig`,
 adjust `memory=` and `processors=`, and run `wsl --shutdown` in PowerShell.
 
+Rebuild every book from a day and check its data quality:
+
+```bash
+./build/release/tools/itch-dump/itch-dump ~/data/itch/01302019.NASDAQ_ITCH50.gz \
+    --symbol AAPL --depth 10 --top 20 --csv ~/data/itch/01302019-stats.csv
+```
+
+`itch-dump` exits 0 when every integrity check is zero and 1 otherwise, so it
+can gate scripts. No download yet? `itch-gen /tmp/synth.gz --messages 5000000`
+writes a synthetic day to try it on.
+
 Build by hand:
 
 ```bash
@@ -31,15 +42,20 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | Path | What it is |
 | --- | --- |
 | `libs/core` | Lock-free SPSC ring, shared-memory regions, TSC clock, thread pinning, latency histogram, async logger, big-endian helpers |
+| `libs/itch` | ITCH 5.0 codec for all 23 message types, gzip BinaryFILE reader/writer, synthetic day generator |
+| `libs/book` | Order store, price-level books, and `BookBuilder`, which rebuilds every book from ITCH and runs data quality checks |
+| `tools/itch-dump` | Replays a day file, rebuilds all books, prints integrity checks, top symbols, a symbol's book, per-symbol CSV |
+| `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
 | `tools/lab-check` | Checks the machine (CPUs, TSC, huge pages, loopback multicast, disk) and measures a core-to-core round trip |
 | `scripts/` | WSL setup, sample data download, `.wslconfig` template |
 | `docs/core-plan.md` | Which thread runs on which core |
+| `docs/specs/itch50-layout.md` | ITCH 5.0 field tables the codec implements, with the source |
 | `bench/` | Microbenchmarks for the core library |
 
 ## Build phases
 
-1. **Foundations** (this): build system, core library, WSL setup, CI.
-2. **ITCH codec and offline book**: `itch-dump` rebuilds every order book from a sample day.
+1. **Foundations**: build system, core library, WSL setup, CI.
+2. **ITCH codec and offline book** (this): `itch-dump` rebuilds every order book from a sample day.
 3. **Live feed**: `itch-replay` (MoldUDP64, fault injection, retransmission) and `itch-fh`.
 4. **Exchange**: `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
 5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.

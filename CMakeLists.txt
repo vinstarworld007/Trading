@@ -17,7 +17,11 @@ include(cmake/CompilerOptions.cmake)
 find_package(Threads REQUIRED)
 
 add_subdirectory(libs/core)
+add_subdirectory(libs/itch)
+add_subdirectory(libs/book)
 add_subdirectory(tools/lab-check)
+add_subdirectory(tools/itch-dump)
+add_subdirectory(tools/itch-gen)
 
 if(LAB_BUILD_TESTS)
   enable_testing()

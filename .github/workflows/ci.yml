@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq ninja-build clang-18 libclang-rt-18-dev libgtest-dev libbenchmark-dev
+          sudo apt-get install -y -qq ninja-build clang-18 libclang-rt-18-dev libgtest-dev libbenchmark-dev zlib1g-dev
 
       - name: Select compiler
         run: |
@@ -41,6 +41,13 @@ jobs:
       - name: Machine check
         if: matrix.preset == 'release'
         run: ./build/release/tools/lab-check/lab-check --no-pingpong
+
+      - name: End-to-end synthetic day
+        if: matrix.preset != 'tsan'
+        run: |
+          dir=build/${{ matrix.preset }}/tools
+          $dir/itch-gen/itch-gen /tmp/synth.itch50.gz --symbols 100 --messages 1000000
+          $dir/itch-dump/itch-dump /tmp/synth.itch50.gz --symbol SYM0001 --quiet
 
   format:
     runs-on: ubuntu-24.04
