@@ -46,8 +46,8 @@ jobs:
         if: matrix.preset != 'tsan'
         run: |
           dir=build/${{ matrix.preset }}/tools
-          $dir/itch-gen /tmp/synth.itch50.gz --symbols 100 --messages 1000000
-          $dir/itch-dump /tmp/synth.itch50.gz --symbol SYM0001 --quiet
+          $dir/itch-gen/itch-gen /tmp/synth.itch50.gz --symbols 100 --messages 1000000
+          $dir/itch-dump/itch-dump /tmp/synth.itch50.gz --symbol SYM0001 --quiet
 
   format:
     runs-on: ubuntu-24.04
