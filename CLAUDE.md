@@ -10,13 +10,17 @@ the project playbook. Build phases are listed in README.md.
 - `cmake --preset release && cmake --build --preset release && ctest --preset release`
 - Also run `asan` and `tsan` presets before any change to concurrent code.
 - `./build/release/tools/lab-check/lab-check` checks the machine.
+- `itch-dump FILE` rebuilds all books from a day and must report zero integrity
+  errors; run it on a synthetic day (`itch-gen`) after any codec or book change.
 - Benchmarks: `./build/release/bench/core_bench`. Any hot-path change comes with
   before/after numbers from the same machine.
 
 ## Layout
 
 - `libs/core`  rings, shared memory, clocks, pinning, histograms, async logger
-- `libs/itch`, `libs/ouch`, `libs/book`  protocol codecs and order book (phases 2-4)
+- `libs/itch`  ITCH 5.0 codec (one field list per message drives encode and decode), file reader, synthetic day
+- `libs/book`  order store, price-level books, `BookBuilder` with integrity checks
+- `libs/ouch`  OUCH/SoupBinTCP codec (phase 4)
 - `exchange/`, `firm/`, `tools/`, `research/`  as in the design doc
 - One library or executable per directory, each with its own CMakeLists.txt and
   tests under `tests/<lib>/`.
