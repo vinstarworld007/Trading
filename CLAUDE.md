@@ -12,6 +12,9 @@ the project playbook. Build phases are listed in README.md.
 - `./build/release/tools/lab-check/lab-check` checks the machine.
 - `itch-dump FILE` rebuilds all books from a day and must report zero integrity
   errors; run it on a synthetic day (`itch-gen`) after any codec or book change.
+- `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
+  `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
+  feed, sequencing or book change.
 - Benchmarks: `./build/release/bench/core_bench`. Any hot-path change comes with
   before/after numbers from the same machine.
 
@@ -20,6 +23,8 @@ the project playbook. Build phases are listed in README.md.
 - `libs/core`  rings, shared memory, clocks, pinning, histograms, async logger
 - `libs/itch`  ITCH 5.0 codec (one field list per message drives encode and decode), file reader, synthetic day
 - `libs/book`  order store, price-level books, `BookBuilder` with integrity checks
+- `libs/mold`  MoldUDP64 codec, receiver sequencing (gaps, retransmission), retransmit store, fault injector
+- `libs/net`  UDP unicast/multicast sockets, batched receive
 - `libs/ouch`  OUCH/SoupBinTCP codec (phase 4)
 - `exchange/`, `firm/`, `tools/`, `research/`  as in the design doc
 - One library or executable per directory, each with its own CMakeLists.txt and

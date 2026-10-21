@@ -23,3 +23,17 @@ add_executable(book_tests
   book/test_order_map.cpp)
 target_link_libraries(book_tests PRIVATE lab::book GTest::gtest_main)
 gtest_discover_tests(book_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(mold_tests
+  mold/test_fault_injector.cpp
+  mold/test_mold.cpp
+  mold/test_pipeline.cpp
+  mold/test_retransmit_store.cpp
+  mold/test_sequencer.cpp)
+target_link_libraries(mold_tests PRIVATE lab::mold lab::book GTest::gtest_main)
+gtest_discover_tests(mold_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(net_tests
+  net/test_udp.cpp)
+target_link_libraries(net_tests PRIVATE lab::net GTest::gtest_main)
+gtest_discover_tests(net_tests DISCOVERY_TIMEOUT 30)

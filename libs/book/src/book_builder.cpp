@@ -29,6 +29,34 @@ std::vector<std::uint16_t> BookBuilder::listed_locates() const {
   return out;
 }
 
+std::uint64_t BookBuilder::digest() const noexcept {
+  std::uint64_t h = 0xCBF29CE484222325ULL;
+  auto mix = [&h](std::uint64_t v) {
+    for (int i = 0; i < 8; ++i) {
+      h ^= (v >> (i * 8)) & 0xFF;
+      h *= 0x100000001B3ULL;
+    }
+  };
+  for (std::size_t l = 1; l < instruments_.size(); ++l) {
+    const Instrument& inst = instruments_[l];
+    if (!inst.listed) continue;
+    mix(l);
+    mix(static_cast<unsigned char>(inst.trading_state));
+    mix(inst.stats.matched_volume());
+    for (const BookSide* side : {&inst.book.bids(), &inst.book.asks()}) {
+      mix(side->depth());
+      for (std::size_t d = 0; d < side->depth(); ++d) {
+        const Level* lv = side->level(d);
+        mix(lv->price);
+        mix(lv->shares);
+        mix(lv->orders);
+      }
+    }
+  }
+  mix(orders_.size());
+  return h;
+}
+
 Instrument* BookBuilder::listed(std::uint16_t locate) noexcept {
   Instrument& inst = instruments_[locate];
   if (LAB_UNLIKELY(!inst.listed)) {

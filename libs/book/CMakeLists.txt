@@ -1,4 +1,4 @@
-add_library(lab_book src/book_builder.cpp)
+add_library(lab_book src/book_builder.cpp src/report.cpp)
 add_library(lab::book ALIAS lab_book)
 
 target_include_directories(lab_book PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

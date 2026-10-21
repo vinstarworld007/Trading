@@ -42,7 +42,17 @@ class SpscRing {
   LAB_ALWAYS_INLINE bool try_push(const T& value) noexcept {
     T* slot = try_claim();
     if (LAB_UNLIKELY(slot == nullptr)) return false;
+#if defined(__GNUC__) && !defined(__clang__)
+// GCC 13 sometimes attributes the slot store to the head_ atomic next to the
+// slots when the ring is a member of a larger object, and reports a bogus
+// overflow. The slot index is always masked into slots_.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
     *slot = value;
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
     commit();
     return true;
   }

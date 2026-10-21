@@ -142,6 +142,12 @@ class BookBuilder : public itch::HandlerBase {
   // Locates with a stock directory message, in locate order.
   std::vector<std::uint16_t> listed_locates() const;
 
+  // FNV-1a hash of every listed instrument's levels, trading state and traded
+  // volume, plus the live order count. Two builders that applied the same
+  // messages have the same digest, so it proves a live feed rebuilt exactly
+  // the books a file replay did. Walks every book: not for hot paths.
+  std::uint64_t digest() const noexcept;
+
  private:
   void see(const itch::Header& h) noexcept {
     if (h.timestamp < last_timestamp_)
