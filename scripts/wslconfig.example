@@ -1,0 +1,15 @@
+# Copy to %UserProfile%\.wslconfig on Windows, adjust, then run `wsl --shutdown`
+# in PowerShell so the new settings apply.
+
+[wsl2]
+# About 75% of physical RAM. A full ITCH day's books plus the lab's rings fit
+# comfortably in 24 GB; more helps when replaying several days.
+memory=24GB
+
+# All physical cores. The default core plan (docs/core-plan.md) uses 8.
+processors=8
+
+swap=8GB
+
+# Lets Windows tools reach services in WSL on localhost (Grafana, control API).
+networkingMode=mirrored

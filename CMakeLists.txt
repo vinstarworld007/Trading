@@ -1,0 +1,35 @@
+cmake_minimum_required(VERSION 3.25)
+project(trading_lab VERSION 0.1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(LAB_BUILD_TESTS "Build unit tests" ON)
+option(LAB_BUILD_BENCH "Build microbenchmarks (needs google benchmark)" ON)
+option(LAB_NATIVE "Tune for the build machine (-march=native)" ON)
+option(LAB_WERROR "Treat warnings as errors" OFF)
+set(LAB_SANITIZE "" CACHE STRING "Sanitizers to enable, e.g. address,undefined or thread")
+
+include(cmake/CompilerOptions.cmake)
+
+find_package(Threads REQUIRED)
+
+add_subdirectory(libs/core)
+add_subdirectory(tools/lab-check)
+
+if(LAB_BUILD_TESTS)
+  enable_testing()
+  find_package(GTest REQUIRED)
+  add_subdirectory(tests)
+endif()
+
+if(LAB_BUILD_BENCH)
+  find_package(benchmark QUIET)
+  if(benchmark_FOUND)
+    add_subdirectory(bench)
+  else()
+    message(STATUS "google benchmark not found, skipping bench/ (apt install libbenchmark-dev)")
+  endif()
+endif()

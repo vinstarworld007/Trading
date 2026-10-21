@@ -1,0 +1,50 @@
+# Trading lab
+
+A systematic trading firm in miniature, running in WSL2: Nasdaq ITCH 5.0 replay,
+a low-latency feed handler, a simulated exchange (`simex`), and a firm side
+(strategy, risk, OMS, order gateways). Design: the "Trading Lab Design" tab of
+the project playbook. Build phases are listed in README.md.
+
+## Build and test
+
+- `cmake --preset release && cmake --build --preset release && ctest --preset release`
+- Also run `asan` and `tsan` presets before any change to concurrent code.
+- `./build/release/tools/lab-check/lab-check` checks the machine.
+- Benchmarks: `./build/release/bench/core_bench`. Any hot-path change comes with
+  before/after numbers from the same machine.
+
+## Layout
+
+- `libs/core`  rings, shared memory, clocks, pinning, histograms, async logger
+- `libs/itch`, `libs/ouch`, `libs/book`  protocol codecs and order book (phases 2-4)
+- `exchange/`, `firm/`, `tools/`, `research/`  as in the design doc
+- One library or executable per directory, each with its own CMakeLists.txt and
+  tests under `tests/<lib>/`.
+
+## Hot-path rules
+
+- No allocation, locks, exceptions, syscalls or logging I/O on hot threads.
+  Allocate and fault pages in at startup. Log through `lab::LogChannel` only.
+- Messages between threads/processes are trivially copyable, fixed-size structs
+  with `static_assert`s on size; no pointers in anything placed in shared memory.
+- Timestamps on hot threads are raw `lab::rdtsc()` ticks; convert with
+  `lab::TscClock` off the hot path.
+- Measure with `lab::LatencyHistogram` (p50/p99/p99.9), never with averages.
+
+## Protocols
+
+- ITCH 5.0, MoldUDP64, OUCH and SoupBinTCP field layouts come from the official
+  spec PDFs in `docs/specs/`. Never guess a field offset; if the spec is missing,
+  stop and ask.
+- All wire integers are big-endian: use `lab/core/endian.hpp`.
+- Prices are integers (ITCH Price(4) = 1/10000 dollars). No floating point for prices.
+
+## Data
+
+- Sample days live in `~/data/itch/` (WSL disk, never `/mnt/c`), fetched with
+  `scripts/fetch-itch-sample.sh`. Read `.gz` directly; never commit data.
+
+## Style
+
+- C++20, `.clang-format` (Google, 100 columns), warnings are errors in CI.
+- Tests with GoogleTest, benchmarks with Google Benchmark.
