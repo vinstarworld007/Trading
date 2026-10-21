@@ -266,3 +266,22 @@ TEST(BookBuilder, RebuildsSyntheticDayExactly) {
 }
 
 }  // namespace
+
+TEST(BookBuilder, DigestMatchesOnlyForTheSameBooks) {
+  Feed a;
+  Feed b;
+  for (Feed* f : {&a, &b}) {
+    f->list(1, "TEST");
+    f->add(1, 'B', 100, 1'000'000);
+    f->add(2, 'S', 200, 1'010'000);
+  }
+  EXPECT_EQ(a.b().digest(), b.b().digest());
+
+  b.add(3, 'B', 100, 1'000'000);  // one more order at an existing level
+  EXPECT_NE(a.b().digest(), b.b().digest());
+  a.add(3, 'B', 100, 1'000'000);
+  EXPECT_EQ(a.b().digest(), b.b().digest());
+
+  Feed empty;
+  EXPECT_NE(empty.b().digest(), a.b().digest());
+}

@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "lab/book/book_builder.hpp"
+#include "lab/book/report.hpp"
 #include "lab/core/clock.hpp"
 #include "lab/core/histogram.hpp"
 #include "lab/itch/file_reader.hpp"
@@ -25,6 +26,8 @@
 namespace {
 
 using lab::book::BookBuilder;
+using lab::book::format_feed_time;
+using lab::book::format_price;
 using lab::book::Instrument;
 
 struct Options {
@@ -71,95 +74,6 @@ bool parse(int argc, char** argv, Options& o) {
   return true;
 }
 
-std::string price(std::uint32_t p) {
-  if (p == 0) return "-";
-  char buf[32];
-  std::snprintf(buf, sizeof buf, "%u.%04u", p / 10000, p % 10000);
-  return buf;
-}
-
-std::string clock_time(std::uint64_t ns_since_midnight) {
-  const std::uint64_t s = ns_since_midnight / 1'000'000'000ULL;
-  char buf[32];
-  std::snprintf(
-      buf, sizeof buf, "%02llu:%02llu:%02llu.%09llu", static_cast<unsigned long long>(s / 3600),
-      static_cast<unsigned long long>(s / 60 % 60), static_cast<unsigned long long>(s % 60),
-      static_cast<unsigned long long>(ns_since_midnight % 1'000'000'000ULL));
-  return buf;
-}
-
-const char* type_name(char t) {
-  switch (t) {
-    case 'S':
-      return "system event";
-    case 'R':
-      return "stock directory";
-    case 'H':
-      return "trading action";
-    case 'Y':
-      return "reg SHO";
-    case 'L':
-      return "participant position";
-    case 'V':
-      return "MWCB decline level";
-    case 'W':
-      return "MWCB status";
-    case 'K':
-      return "IPO quoting period";
-    case 'J':
-      return "LULD auction collar";
-    case 'h':
-      return "operational halt";
-    case 'A':
-      return "add order";
-    case 'F':
-      return "add order (MPID)";
-    case 'E':
-      return "order executed";
-    case 'C':
-      return "executed with price";
-    case 'X':
-      return "order cancel";
-    case 'D':
-      return "order delete";
-    case 'U':
-      return "order replace";
-    case 'P':
-      return "trade (hidden)";
-    case 'Q':
-      return "cross trade";
-    case 'B':
-      return "broken trade";
-    case 'I':
-      return "NOII";
-    case 'N':
-      return "RPII";
-    case 'O':
-      return "direct listing";
-    default:
-      return "unknown";
-  }
-}
-
-void print_book(const BookBuilder& b, std::uint16_t locate, std::size_t depth) {
-  const Instrument& inst = b.instrument(locate);
-  std::printf("\nBook for %.*s (locate %u), trading state %c:\n",
-              static_cast<int>(lab::itch::trimmed(inst.symbol).size()),
-              lab::itch::trimmed(inst.symbol).data(), locate, inst.trading_state);
-  std::printf("  %10s %8s %12s | %-12s %-8s %-10s\n", "bid shares", "orders", "bid", "ask",
-              "orders", "ask shares");
-  for (std::size_t d = 0; d < depth; ++d) {
-    const auto* bid = inst.book.bids().level(d);
-    const auto* ask = inst.book.asks().level(d);
-    if (bid == nullptr && ask == nullptr) break;
-    std::printf(
-        "  %10s %8s %12s | %-12s %-8s %-10s\n", bid ? std::to_string(bid->shares).c_str() : "",
-        bid ? std::to_string(bid->orders).c_str() : "", bid ? price(bid->price).c_str() : "",
-        ask ? price(ask->price).c_str() : "", ask ? std::to_string(ask->orders).c_str() : "",
-        ask ? std::to_string(ask->shares).c_str() : "");
-  }
-}
-
 bool write_csv(const BookBuilder& b, const std::string& path) {
   std::FILE* f = std::fopen(path.c_str(), "w");
   if (f == nullptr) return false;
@@ -186,10 +100,11 @@ bool write_csv(const BookBuilder& b, const std::string& path) {
         static_cast<unsigned long long>(s.hidden_trade_shares),
         static_cast<unsigned long long>(s.cross_shares),
         static_cast<unsigned long long>(s.matched_volume()),
-        static_cast<unsigned long long>(s.broken_trades), price(s.opening_cross_price).c_str(),
-        price(s.closing_cross_price).c_str(), price(s.last_trade_price).c_str(),
-        bid ? price(bid->price).c_str() : "-", ask ? price(ask->price).c_str() : "-",
-        inst.book.bids().depth(), inst.book.asks().depth(), inst.trading_state);
+        static_cast<unsigned long long>(s.broken_trades),
+        format_price(s.opening_cross_price).c_str(), format_price(s.closing_cross_price).c_str(),
+        format_price(s.last_trade_price).c_str(), bid ? format_price(bid->price).c_str() : "-",
+        ask ? format_price(ask->price).c_str() : "-", inst.book.bids().depth(),
+        inst.book.asks().depth(), inst.trading_state);
   }
   return std::fclose(f) == 0;
 }
@@ -227,7 +142,7 @@ int main(int argc, char** argv) {
     if (opt.progress && (n % 50'000'000) == 0) {
       std::fprintf(stderr, "  %llu M messages, feed time %s\n",
                    static_cast<unsigned long long>(n / 1'000'000),
-                   clock_time(builder->last_timestamp()).c_str());
+                   format_feed_time(builder->last_timestamp()).c_str());
     }
     if (opt.limit != 0 && n >= opt.limit) break;
   }
@@ -242,67 +157,26 @@ int main(int argc, char** argv) {
   std::printf("File        %s\n", opt.path.c_str());
   std::printf("Messages    %llu (%.1f MB decompressed), last feed time %s\n",
               static_cast<unsigned long long>(n), static_cast<double>(reader.bytes_read()) / 1e6,
-              clock_time(b.last_timestamp()).c_str());
+              format_feed_time(b.last_timestamp()).c_str());
   std::printf("Elapsed     %.2f s, %.2f M msgs/s including decompression\n", secs,
               secs > 0 ? static_cast<double>(n) / secs / 1e6 : 0.0);
   apply_ticks.print(stdout, "Apply cost (1 in 64)", 1.0 / clock.ticks_per_ns());
   std::printf("Live orders %zu at end of input\n", b.orders().size());
+  std::printf("Book digest %016llx\n", static_cast<unsigned long long>(b.digest()));
 
-  std::printf("\nMessage types:\n");
-  for (char t : std::string{"SRHYLVWKJhAFECXDUPQBINO"}) {
-    if (const auto c = b.type_count(t)) {
-      std::printf("  %c  %-22s %12llu\n", t, type_name(t), static_cast<unsigned long long>(c));
-    }
-  }
-  std::printf("System events seen: %s\n",
-              b.system_events().empty() ? "none" : b.system_events().c_str());
+  lab::book::print_message_types(stdout, b);
 
   const auto& c = b.checks();
-  std::printf("\nIntegrity checks:\n");
-  auto line = [](const char* name, std::uint64_t v, bool is_error) {
-    std::printf("  %-6s %-32s %llu\n", v == 0 ? "OK" : (is_error ? "ERROR" : "INFO"), name,
-                static_cast<unsigned long long>(v));
-  };
-  line("unknown message type", c.unknown_message_type, true);
-  line("truncated message", c.truncated_message, true);
-  line("unknown order reference", c.unknown_order_reference, true);
-  line("duplicate order reference", c.duplicate_order_reference, true);
-  line("over-execution", c.over_execution, true);
-  line("locate without directory", c.locate_without_directory, true);
-  line("locate/symbol mismatch", c.locate_symbol_mismatch, true);
-  line("book inconsistency", c.book_inconsistency, true);
-  line("timestamp regressions", c.timestamp_regressions, true);
-  line("system events out of order", c.system_event_out_of_order, true);
-  line("books became crossed", c.crossed_book_events, false);
-  line("books became locked", c.locked_book_events, false);
+  lab::book::print_integrity(stdout, c);
   if (opt.limit != 0) {
     std::printf("  (stopped early at --limit: end-of-day checks are incomplete)\n");
   }
 
-  std::vector<std::uint16_t> locates = b.listed_locates();
-  std::sort(locates.begin(), locates.end(), [&](std::uint16_t x, std::uint16_t y) {
-    return b.instrument(x).stats.matched_volume() > b.instrument(y).stats.matched_volume();
-  });
-  std::printf("\nTop %zu by matched volume:\n", std::min(opt.top, locates.size()));
-  std::printf("  %-8s %12s %10s %10s %10s %10s %10s %10s\n", "symbol", "volume", "adds", "execs",
-              "open", "close", "best bid", "best ask");
-  for (std::size_t i = 0; i < opt.top && i < locates.size(); ++i) {
-    const Instrument& inst = b.instrument(locates[i]);
-    const auto sym = lab::itch::trimmed(inst.symbol);
-    const auto* bid = inst.book.bids().best();
-    const auto* ask = inst.book.asks().best();
-    std::printf("  %-8.*s %12llu %10llu %10llu %10s %10s %10s %10s\n", static_cast<int>(sym.size()),
-                sym.data(), static_cast<unsigned long long>(inst.stats.matched_volume()),
-                static_cast<unsigned long long>(inst.stats.adds),
-                static_cast<unsigned long long>(inst.stats.executions),
-                price(inst.stats.opening_cross_price).c_str(),
-                price(inst.stats.closing_cross_price).c_str(),
-                bid ? price(bid->price).c_str() : "-", ask ? price(ask->price).c_str() : "-");
-  }
+  lab::book::print_top(stdout, b, opt.top);
 
   if (!opt.symbol.empty()) {
     if (const auto l = b.find_locate(opt.symbol))
-      print_book(b, l, opt.depth);
+      lab::book::print_book(stdout, b, l, opt.depth);
     else
       std::printf("\nSymbol %s not found in the stock directory\n", opt.symbol.c_str());
   }

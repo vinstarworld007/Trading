@@ -6,12 +6,17 @@ default layout is:
 | CPU | Runs | Phase |
 | --- | --- | --- |
 | 0-1 | Linux, tools, logger, slow-path services | 1 |
-| 2 | Feed handler (`itch-fh`) | 3 |
-| 3 | Strategy engine | 5 |
-| 4 | Pre-trade risk + order entry gateway | 5 |
-| 5 | Exchange matching engine (`simex`) | 4 |
-| 6 | Exchange market data publisher | 4 |
-| 7 | ITCH replayer (`itch-replay`) | 3 |
+| 2 | Feed handler rx thread (`itch-fh --rx-cpu 2`): recvmmsg, retransmission requests | 3 |
+| 3 | Feed handler book thread (`itch-fh --book-cpu 3`): sequencing, decode, books | 3 |
+| 4 | Strategy engine | 5 |
+| 5 | Pre-trade risk + order entry gateway | 5 |
+| 6 | Exchange matching engine (`simex`) | 4 |
+| 7 | Exchange market data publisher, or `itch-replay --cpu 7` | 3, 4 |
+
+The feed handler keeps every syscall on its rx thread. The book thread only
+reads packets from a lock-free ring, so a slow `recvmmsg` or a retransmission
+request never stalls book updates, and a book thread that falls behind shows
+up as "packet ring full" in the report (recovered like any other lost packet).
 
 With fewer cores, put the exchange side (5, 6, 7) on shared cores first: its
 latency matters less than the firm's.

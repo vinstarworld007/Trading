@@ -49,6 +49,11 @@ jobs:
           $dir/itch-gen/itch-gen /tmp/synth.itch50.gz --symbols 100 --messages 1000000
           $dir/itch-dump/itch-dump /tmp/synth.itch50.gz --symbol SYM0001 --quiet
 
+      - name: End-to-end live feed with packet loss
+        env:
+          RATE: 200000  # sanitizer builds apply books several times slower
+        run: timeout 300 scripts/e2e-live-feed.sh build/${{ matrix.preset }}
+
   format:
     runs-on: ubuntu-24.04
     steps:
