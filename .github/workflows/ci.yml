@@ -61,6 +61,14 @@ jobs:
           ORDER_RATE: 5000
         run: timeout 300 scripts/e2e-simex.sh build/${{ matrix.preset }}
 
+      - name: End-to-end firm (trader making markets on simex)
+        env:
+          RATE: 50000
+          ORDER_RATE: 1000
+          ORDERS: 5000
+          DURATION: 10
+        run: timeout 300 scripts/e2e-firm.sh build/${{ matrix.preset }}
+
   format:
     runs-on: ubuntu-24.04
     steps:

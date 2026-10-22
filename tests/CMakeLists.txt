@@ -53,3 +53,10 @@ add_executable(ouch_tests
   ouch/test_codec.cpp)
 target_link_libraries(ouch_tests PRIVATE lab::ouch GTest::gtest_main)
 gtest_discover_tests(ouch_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(firm_tests
+  firm/test_market_maker.cpp
+  firm/test_oms.cpp
+  firm/test_risk.cpp)
+target_link_libraries(firm_tests PRIVATE lab::strategy lab::risk lab::oms GTest::gtest_main)
+gtest_discover_tests(firm_tests DISCOVERY_TIMEOUT 30)

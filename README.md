@@ -61,6 +61,20 @@ response (sequence numbers, fills inside limits, every request answered, a
 re-login replaying byte for byte) and reports order round trips.
 `scripts/e2e-simex.sh` runs all three, and CI runs it under every sanitizer.
 
+Trade on it: `trader` is the firm. It rebuilds books from simex's feed, makes
+markets in the symbols you give it, checks every order against pre-trade risk
+limits and tracks orders and positions in its OMS. Start it before simex so it
+sees the stock directory:
+
+```bash
+./build/release/firm/trader/trader --symbols AAPL,MSFT --account FIRM01:lab --duration 60 \
+    --rx-cpu 2 --md-cpu 3 --trader-cpu 4 --oe-cpu 5
+```
+
+At the end it cancels its orders and reports positions, PnL, risk blocks, and
+latency from a market data packet to the order it caused leaving the socket.
+`scripts/e2e-firm.sh` runs it against simex with noise flow from `ouch-client`.
+
 Build by hand:
 
 ```bash
@@ -88,6 +102,10 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `libs/ouch` | OUCH 5.0 codec, one field list per message as in `libs/itch` |
 | `libs/match` | Price-time matching engine: preallocated order pool, open-addressing key index, IOC and day orders, replace, cancel-on-disconnect |
 | `exchange/simex` | The exchange: gateway thread (OUCH sessions), matching thread (sequencer and engine), market data thread (ITCH over MoldUDP64), journal, historical liquidity |
+| `firm/oms` | Order management: order states through enter/replace/cancel, positions, cash and worst-case exposure |
+| `firm/risk` | Inline pre-trade risk: kill switch, order size and notional, price collar, worst-case position, open orders, order rate |
+| `firm/strategy` | A one-level market maker that leans against its position |
+| `firm/trader` | The firm's trading engine: market data, trading and order entry threads joined by rings |
 | `tools/ouch-client` | Trades random orders into simex on several accounts and checks every response |
 | `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
 | `tools/lab-check` | Checks the machine (CPUs, TSC, huge pages, loopback multicast, disk) and measures a core-to-core round trip |
@@ -98,6 +116,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `docs/specs/soupbintcp-layout.md`, `docs/specs/ouch50-layout.md` | SoupBinTCP and OUCH 5.0 layouts, and how simex reads the spec where it leaves room |
 | `scripts/e2e-live-feed.sh` | Replays a day with packet loss into `itch-fh` and checks the books match `itch-dump` |
 | `scripts/e2e-simex.sh` | simex with historical liquidity, `ouch-client` trading into it and `itch-fh` on its feed; checks responses and that all books agree |
+| `scripts/e2e-firm.sh` | `trader` making markets on simex against noise flow; checks risk limits, OMS consistency, no self-trades, clean shutdown |
 | `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine |
 
 ## Build phases
@@ -105,8 +124,8 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 1. **Foundations**: build system, core library, WSL setup, CI.
 2. **ITCH codec and offline book**: `itch-dump` rebuilds every order book from a sample day.
 3. **Live feed**: `itch-replay` (MoldUDP64, fault injection, retransmission) and `itch-fh`.
-4. **Exchange** (this): `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
-5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.
+4. **Exchange**: `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
+5. **Firm hot path** (this): order gateway, inline risk, OMS, a market-making strategy.
 6. **Post-trade and research**: drop copy, PnL, TCA, Python backtests.
 7. **Hardening**: profiling, tail latency, agent-based liquidity, a FIX venue.
 
