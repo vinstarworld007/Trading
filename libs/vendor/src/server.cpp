@@ -88,6 +88,7 @@ Server::Server(const ServerConfig& cfg, Factory factory)
       rx_{cfg.feed},
       by_locate_(65536) {
   subs_.reserve(1u << 16);
+  data_.set_luld_band_pct(cfg.luld_band_pct);
 }
 
 Server::~Server() = default;

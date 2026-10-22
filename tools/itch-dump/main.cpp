@@ -44,6 +44,7 @@ struct Options {
   std::uint64_t limit = 0;
   std::size_t depth = 10;
   std::size_t top = 10;
+  std::vector<lab::book::StripDef> strips;
   bool progress = true;
 };
 
@@ -52,6 +53,7 @@ void usage() {
       stderr,
       "usage: itch-dump FILE [--symbol SYM] [--depth N] [--top N] [--csv OUT] "
       "[--limit N] [--quiet]\n"
+      "                 [--strip NAME=A+B]...  a strip's implied-out and implied-in prices\n"
       "                 [--tob-csv OUT]   with --symbol: its top of book after each change\n");
 }
 
@@ -79,7 +81,11 @@ bool parse(int argc, char** argv, Options& o) {
       o.depth = std::strtoul(v, nullptr, 10);
     else if (a == "--top")
       o.top = std::strtoul(v, nullptr, 10);
-    else
+    else if (a == "--strip") {
+      const auto d = lab::book::parse_strip(v);
+      if (!d) return false;
+      o.strips.push_back(*d);
+    } else
       return false;
   }
   return o.tob_csv.empty() || !o.symbol.empty();
@@ -282,6 +288,9 @@ int main(int argc, char** argv) {
   }
 
   lab::book::print_top(stdout, b, opt.top);
+
+  lab::book::print_scenarios(stdout, b);
+  lab::book::print_implied(stdout, b, opt.strips, 5);
   if (tob) {
     std::printf("\nWrote %llu top-of-book changes for %s to %s\n",
                 static_cast<unsigned long long>(tob->rows()), opt.symbol.c_str(),

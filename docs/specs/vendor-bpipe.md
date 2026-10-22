@@ -70,7 +70,8 @@ With no `fields` every field is sent; `interval` (seconds) conflates.
 ## MarketDataEvents
 
 `MKTDATA_EVENT_TYPE` / `MKTDATA_EVENT_SUBTYPE`: `SUMMARY`/`INITPAINT`,
-`TRADE`/`NEW`, `QUOTE`/`BID` or `ASK`, `SUMMARY`/`TRADING_STATUS`. Then
+`TRADE`/`NEW`, `QUOTE`/`BID` or `ASK`, `SUMMARY`/`TRADING_STATUS`,
+`SUMMARY`/`AUCTION` (imbalance) or `SUMMARY`/`PRICE_LIMITS` (LULD band). Then
 `EVENT_TIME` (the ITCH time of the change), then the wanted fields that
 changed (all of them in the initial paint):
 
@@ -79,3 +80,12 @@ changed (all of them in the initial paint):
 | BID, ASK, LAST_PRICE, OPEN, HIGH, LOW | D (0 means no value) |
 | BID_SIZE, ASK_SIZE, SIZE_LAST_TRADE, VOLUME, NUM_TRADES | I |
 | TRADING_STATUS | E: `TRADING`, `HALTED`, `PAUSED`, `QUOTATION_ONLY` |
+| HALT_REASON | S: the ITCH reason (`T1`, `LUDP`, `MWC1`, ...), empty when trading |
+| REG_SHO_RESTRICTION | E: `NONE`, `IN_EFFECT`, `CONTINUED` |
+| AUCTION_TYPE | E: `OPENING`, `CLOSING`, `HALT`, `NONE` |
+| INDICATIVE_PRICE | D |
+| PAIRED_SHARES, IMBALANCE_SHARES | I |
+| IMBALANCE_SIDE | E: `BUY`, `SELL`, `NONE`, `INSUFFICIENT_ORDERS`, `PAUSED`, `NOT_SET` |
+| LULD_LOWER_LIMIT, LULD_UPPER_LIMIT | D (0 means no band yet) |
+
+The fields from HALT_REASON on are lab names, not Bloomberg mnemonics.

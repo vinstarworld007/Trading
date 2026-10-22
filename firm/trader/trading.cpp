@@ -151,6 +151,9 @@ void Trading::reconcile(std::uint16_t i) {
   const std::uint32_t ask_reach = aopen != 0 ? reach(in.ask_ref, 'S', apx) : 0;
   if (m.mid() != 0) in.last_mid = m.mid();
   auto q = maker_.quote(m, oms_.position(i).shares);
+  // Halted, paused or quoting only: the exchange refuses orders, so pull both
+  // sides (cancels are still accepted) and wait for trading to resume.
+  if (in.top.trading_state != 'T') q.bid_qty = q.ask_qty = 0;
   // Self-match prevention: never bid at or above our own working ask, or offer
   // at or below our own bid, while the other side is still being moved.
   const std::uint32_t tick = cfg_.maker.tick;
@@ -182,6 +185,7 @@ void Trading::run(const std::atomic<bool>& stop) {
     while (tops_.try_pop(t)) {
       ++stats_.tops;
       Instrument& in = instruments_[t.instrument];
+      if (t.trading_state != 'T' && in.top.trading_state == 'T') ++stats_.halts;
       in.top = t;
       in.have_top = true;
       tick_tsc_ = t.rx_tsc;
@@ -219,12 +223,13 @@ bool Trading::report(std::FILE* out) const {
   std::fprintf(
       out,
       "Orders       %llu entered, %llu replaces, %llu cancels | exchange: %llu accepted, "
-      "%llu rejected, %llu executions | %llu tops in, %llu requests out\n",
+      "%llu rejected, %llu executions | %llu tops in, %llu requests out, %llu halts sat out\n",
       static_cast<unsigned long long>(s.entered), static_cast<unsigned long long>(s.replaced),
       static_cast<unsigned long long>(s.canceled), static_cast<unsigned long long>(s.accepted),
       static_cast<unsigned long long>(s.rejected), static_cast<unsigned long long>(s.executions),
       static_cast<unsigned long long>(stats_.tops),
-      static_cast<unsigned long long>(stats_.requests));
+      static_cast<unsigned long long>(stats_.requests),
+      static_cast<unsigned long long>(stats_.halts));
   std::fprintf(out, "Risk blocks ");
   bool any = false;
   for (int v = 1; v < static_cast<int>(Verdict::kCount); ++v) {

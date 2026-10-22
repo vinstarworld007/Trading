@@ -47,8 +47,17 @@ inline constexpr Field kFields[] = {
     {"BIDSIZE", 30, Kind::kInteger, field::kBidSize},
     {"ASKSIZE", 31, Kind::kInteger, field::kAskSize},
     {"ACVOL_1", 32, Kind::kInteger, field::kVolume},
+    {"UPLIMIT", 75, Kind::kPrice, field::kBand},
+    {"LOLIMIT", 76, Kind::kPrice, field::kBand},
     {"NUM_MOVES", 77, Kind::kInteger, field::kTrades},
     {"TRDVOL_1", 178, Kind::kInteger, field::kLastSize},
+    {"IMB_ACT_TP", 4333, Kind::kEnum, field::kAuction},
+    {"IMB_PR_NR", 4335, Kind::kPrice, field::kAuction},
+    {"IMB_PR_SH", 4337, Kind::kInteger, field::kAuction},
+    {"IMB_SH", 4338, Kind::kInteger, field::kAuction},
+    {"IMB_SIDE", 4340, Kind::kEnum, field::kAuction},
+    {"HALT_REASN", 6517, Kind::kAscii, field::kStatus},
+    {"SH_SAL_RES", 6577, Kind::kEnum, field::kStatus},
     {"TRD_STATUS", 6614, Kind::kEnum, field::kStatus},
     {"QUOTIM_NS", 14265, Kind::kTime, field::kQuote},
     {"SALTIM_NS", 14266, Kind::kTime, field::kLastSize},
@@ -68,6 +77,51 @@ inline std::string ric(std::string_view symbol) { return std::string{symbol} + "
 inline std::string_view symbol_of(std::string_view ric) {
   const auto dot = ric.rfind('.');
   return dot == std::string_view::npos ? ric : ric.substr(0, dot);
+}
+
+// IMB_ACT_TP (FID 4333) from the ITCH NOII cross type: 1 Open, 3 Halt,
+// 4 Close; 0 Not set when no auction is running.
+inline int imb_act_tp_of(char cross_type) noexcept {
+  switch (cross_type) {
+    case 'O':
+      return 1;
+    case 'H':
+      return 3;
+    case 'C':
+    case 'A':  // extended trading close
+      return 4;
+  }
+  return 0;
+}
+
+// IMB_SIDE (FID 4340) from the ITCH NOII imbalance direction: 1 N, 2 B,
+// 3 S, 4 O insufficient orders, 5 P paused; 0 Not Set.
+inline int imb_side_of(char direction) noexcept {
+  switch (direction) {
+    case 'N':
+      return 1;
+    case 'B':
+      return 2;
+    case 'S':
+      return 3;
+    case 'O':
+      return 4;
+    case 'P':
+      return 5;
+  }
+  return 0;
+}
+
+// SH_SAL_RES (FID 6577) from the ITCH Reg SHO action: 0 -> 1 not
+// restricted, 1 -> 4 restricted, 2 -> 3 restriction continued.
+inline int sh_sal_res_of(char action) noexcept {
+  switch (action) {
+    case '1':
+      return 4;
+    case '2':
+      return 3;
+  }
+  return 1;
 }
 
 inline int trd_status_of(char s) noexcept {
@@ -142,6 +196,38 @@ inline void fields(std::string& out, const Record& r, std::uint32_t mask, std::u
         } else {
           out += std::to_string(r.last_size);
         }
+        break;
+      case 75:
+        price(r.band_upper);
+        break;
+      case 76:
+        price(r.band_lower);
+        break;
+      case 4333:
+        out += std::to_string(imb_act_tp_of(r.auction_type));
+        break;
+      case 4335:
+        price(r.indicative_price);
+        break;
+      case 4337:
+      case 4338:
+        if (r.auction_type == ' ') {
+          out += "null";
+        } else {
+          out += std::to_string(f.fid == 4337 ? r.paired_shares : r.imbalance_shares);
+        }
+        break;
+      case 4340:
+        out += std::to_string(imb_side_of(r.imbalance_side));
+        break;
+      case 6517: {
+        std::string_view reason{r.halt_reason.data(), r.halt_reason.size()};
+        while (!reason.empty() && reason.back() == ' ') reason.remove_suffix(1);
+        json::quote(out, reason);
+        break;
+      }
+      case 6577:
+        out += std::to_string(sh_sal_res_of(r.reg_sho));
         break;
       case 6614:
         out += std::to_string(trd_status_of(r.status));

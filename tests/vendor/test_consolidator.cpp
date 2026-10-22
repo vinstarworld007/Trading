@@ -113,4 +113,69 @@ TEST(Consolidator, ReportsQuoteTradeAndStatusChanges) {
   EXPECT_EQ(f.c.books().checks().error_count(), 0u);
 }
 
+TEST(Consolidator, ReportsHaltsAuctionsAndBands) {
+  Feed f;
+  f.c.set_luld_band_pct(2);
+  StockDirectory d;
+  d.stock = make_symbol("ACME");
+  f.send(d);
+
+  StockTradingAction h;
+  h.stock = d.stock;
+  h.trading_state = 'H';
+  h.reason = {'T', '1', ' ', ' '};
+  auto ch = f.send(h);
+  ASSERT_EQ(ch.size(), 1u);
+  EXPECT_EQ(ch[0].mask, field::kStatus);
+  EXPECT_EQ(ch[0].r.status, 'H');
+  EXPECT_EQ(ch[0].r.halt_reason[1], '1');
+
+  Noii n;
+  n.stock = d.stock;
+  n.paired_shares = 500;
+  n.imbalance_shares = 200;
+  n.imbalance_direction = 'B';
+  n.near_price = 1'000'000;
+  n.cross_type = 'H';
+  ch = f.send(n);
+  ASSERT_EQ(ch.size(), 1u);
+  EXPECT_EQ(ch[0].mask, field::kAuction);
+  EXPECT_EQ(lab::vendor::kind_of(ch[0].mask), lab::vendor::Kind::kStatus);
+  EXPECT_EQ(ch[0].r.auction_type, 'H');
+  EXPECT_EQ(ch[0].r.imbalance_side, 'B');
+  EXPECT_EQ(ch[0].r.indicative_price, 1'000'000u);
+  EXPECT_EQ(ch[0].r.paired_shares, 500u);
+  EXPECT_EQ(ch[0].r.imbalance_shares, 200u);
+
+  // The halt cross prints, ends the auction and sets the LULD reference.
+  CrossTrade q;
+  q.stock = d.stock;
+  q.shares = 500;
+  q.cross_price = 1'000'000;
+  q.match_number = 1;
+  q.cross_type = 'H';
+  ch = f.send(q);
+  ASSERT_EQ(ch.size(), 1u);
+  EXPECT_TRUE(ch[0].mask & field::kAuction);
+  EXPECT_TRUE(ch[0].mask & field::kBand);
+  EXPECT_TRUE(ch[0].mask & field::kVolume);
+  EXPECT_EQ(ch[0].r.auction_type, ' ');
+  EXPECT_EQ(ch[0].r.band_lower, 980'000u);  // 2% of $100.00
+  EXPECT_EQ(ch[0].r.band_upper, 1'020'000u);
+
+  h.trading_state = 'T';
+  h.reason = {' ', ' ', ' ', ' '};
+  ch = f.send(h);
+  ASSERT_EQ(ch.size(), 1u);
+  EXPECT_EQ(ch[0].mask, field::kStatus);
+  EXPECT_EQ(ch[0].r.halt_reason[0], ' ');
+
+  RegShoRestriction y;
+  y.stock = d.stock;
+  y.reg_sho_action = '1';
+  ch = f.send(y);
+  ASSERT_EQ(ch.size(), 1u);
+  EXPECT_EQ(ch[0].r.reg_sho, '1');
+}
+
 }  // namespace

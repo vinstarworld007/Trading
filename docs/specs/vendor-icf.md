@@ -73,7 +73,7 @@ retry once the venue lists it.
 | 16 | 8 | exchange time: ITCH timestamp of the change, ns since midnight |
 | 24 | 8 | vendor time: when the server sent it, ns since midnight |
 | 32 | 4 | record sequence: changes to this record so far |
-| 36 | 1 | token count n (at most 16) |
+| 36 | 1 | token count n (at most 24) |
 | 37 | 11 × n | tokens |
 
 Token, 11 bytes:
@@ -81,7 +81,7 @@ Token, 11 bytes:
 | Offset | Length | Field |
 | --- | --- | --- |
 | 0 | 2 | token id |
-| 2 | 1 | type: `P` price (Price(4), signed), `I` integer, `T` time (ns since midnight), `C` character (low byte) |
+| 2 | 1 | type: `P` price (Price(4), signed), `I` integer, `T` time (ns since midnight), `C` character (low byte), `A` up to 8 ASCII bytes (first byte most significant, space padded) |
 | 3 | 8 | value, signed |
 
 An Image carries every token; an update carries those whose field changed.
@@ -102,5 +102,20 @@ An Image carries every token; an update carries those whose field changed.
 | 23 | DAY.LOW | P |
 | 24 | DAY.TRADES | I |
 | 30 | STATUS.TRADING | C: `T` trading, `H` halted, `P` paused, `Q` quotation only |
+| 31 | STATUS.HALT_REASON | A: the ITCH reason (`T1`, `LUDP`, `MWC1`, `IPOQ`, ...), spaces when trading |
+| 32 | STATUS.SHORT_SALE_RESTRICTION | C: ITCH Reg SHO action `0` none, `1` in effect, `2` continued |
+| 40 | AUCTION.TYPE | C: `O` opening, `C` closing, `H` halt, IPO or reopening; space when no auction runs |
+| 41 | AUCTION.INDICATIVE.PRICE | P: the imbalance message's near price |
+| 42 | AUCTION.PAIRED.SIZE | I |
+| 43 | AUCTION.IMBALANCE.SIZE | I |
+| 44 | AUCTION.IMBALANCE.SIDE | C: `B`, `S`, `N` none, `O` insufficient orders, `P` paused |
+| 50 | LULD.LOWER.PRICE | P |
+| 51 | LULD.UPPER.PRICE | P |
+
+Status tokens (30-32) travel together, as do the auction tokens (40-44, sent
+on each imbalance message and cleared by the cross) and the band tokens
+(50-51). The LULD band comes from the reference price rule in
+`lab/book/luld.hpp`; start the server with the venue's `--luld-band-pct` so
+the bands match the ones it enforces.
 
 A price of 0 means no value (an empty side, no trade yet).

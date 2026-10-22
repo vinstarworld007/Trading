@@ -28,6 +28,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "lab/book/book_builder.hpp"
 #include "lab/book/report.hpp"
@@ -45,6 +46,7 @@ struct Options {
   std::string symbol;
   std::size_t depth = 10;
   std::size_t top = 10;
+  std::vector<lab::book::StripDef> strips;
 };
 
 void usage() {
@@ -52,7 +54,7 @@ void usage() {
                "usage: itch-fh [--group IP:PORT] [--iface IP] [--retrans IP:PORT]\n"
                "               [--rx-cpu N] [--book-cpu N] [--gap-delay-us N] [--timeout-ms N]\n"
                "               [--retries N] [--idle-seconds S] [--symbol SYM] [--depth N]\n"
-               "               [--top N]\n");
+               "               [--top N] [--strip NAME=A+B]...\n");
 }
 
 bool parse(int argc, char** argv, Options& o) {
@@ -84,7 +86,11 @@ bool parse(int argc, char** argv, Options& o) {
       o.depth = std::strtoul(v, nullptr, 10);
     else if (a == "--top")
       o.top = std::strtoul(v, nullptr, 10);
-    else
+    else if (a == "--strip") {
+      const auto d = lab::book::parse_strip(v);
+      if (!d) return false;
+      o.strips.push_back(*d);
+    } else
       return false;
   }
   return true;
@@ -183,6 +189,8 @@ int main(int argc, char** argv) {
   lab::book::print_message_types(stdout, b);
   lab::book::print_integrity(stdout, b.checks());
   lab::book::print_top(stdout, b, opt.top);
+  lab::book::print_scenarios(stdout, b);
+  lab::book::print_implied(stdout, b, opt.strips, 5);
   if (!opt.symbol.empty()) {
     if (const auto l = b.find_locate(opt.symbol))
       lab::book::print_book(stdout, b, l, opt.depth);

@@ -10,7 +10,9 @@
 // Populations (docs/core-plan.md, phase 7):
 //   makers     account 1: quote a bid and an ask around a noisy estimate of
 //              value, wider for some than others, skewed by inventory.
-//   noise      account 2: marketable IOC orders on random sides at random times.
+//   noise      account 2: marketable IOC orders on random sides at random times;
+//              with --day-orders F, a fraction F are day orders canceled after
+//              half a second instead, so auctions see crossing interest.
 //   value      account 2: know the value; buy when trades print below it by
 //              more than a threshold, sell when above. They pick off makers
 //              whose estimate is stale.
@@ -18,6 +20,10 @@
 //              chase the move.
 // Trade prices come from the agents' own executions (they are on one side of
 // almost every trade), so agents need no market data feed.
+//
+// --shock SYM@T:PCT moves a symbol's value by PCT percent T seconds in, like
+// news: makers requote at once and value traders chase it, which is how a
+// simulated day reaches simex's LULD bands.
 //
 // Checks, any failure exits 1: every OUCH answer names an order the agents
 // sent; the market traded; at the end every agent order is gone. Prints per
@@ -76,6 +82,17 @@ struct Options {
   double momentum_threshold = 2;  // ticks between fast and slow averages
   double agent_rate = 20;         // max orders per second per symbol for value and momentum agents
   std::int64_t maker_limit = 3'000;  // shares of inventory per maker before it quotes one side
+  double day_orders = 0;             // fraction of noise orders sent as short-lived day orders
+  struct Shock {
+    std::string symbol;
+    double at_s;
+    double pct;
+  };
+  std::vector<Shock> shocks;
+  struct StripLegs {
+    std::string name, a, b;
+  };
+  std::vector<StripLegs> strips;  // traded like symbols; value = sum of the legs
 };
 
 [[noreturn]] void usage() {
@@ -83,6 +100,8 @@ struct Options {
                "usage: agents [--connect IP:PORT] [--symbols A,B] [--makers N] [--value DOLLARS]\n"
                "              [--maker-account USER:PASS] [--taker-account USER:PASS]\n"
                "              [--value-rate N] [--noise-rate N] [--agent-rate N]\n"
+               "              [--day-orders FRACTION] [--shock SYM@T:PCT]...\n"
+               "              [--strip NAME=A+B]...\n"
                "              [--duration S] [--seed S]\n");
   std::exit(2);
 }
@@ -276,6 +295,8 @@ struct SymbolState {
   Clock::time_point next_value_agent{}, next_momentum_agent{};
   std::uint64_t trades = 0;
   std::vector<std::int64_t> returns;  // value steps, in ticks, for volatility
+  int leg_a = -1, leg_b = -1;         // a strip: its legs' indexes
+  std::int64_t start = 0;             // value at the start
 };
 
 class Agents {
@@ -288,8 +309,23 @@ class Agents {
     for (const auto& s : opt.symbols) {
       SymbolState st;
       st.symbol = ouch::make_alpha<8>(s);
-      st.value = st.last_px = opt.start_value;
+      st.value = st.last_px = st.start = opt.start_value;
       st.fast = st.slow = static_cast<double>(opt.start_value);
+      symbols_.push_back(st);
+    }
+    auto index_of = [&](const std::string& name) {
+      for (std::size_t i = 0; i < opt.symbols.size(); ++i) {
+        if (opt.symbols[i] == name) return static_cast<int>(i);
+      }
+      throw std::invalid_argument("strip leg " + name + " is not in --symbols");
+    };
+    for (const auto& sd : opt.strips) {
+      SymbolState st;
+      st.symbol = ouch::make_alpha<8>(sd.name);
+      st.leg_a = index_of(sd.a);
+      st.leg_b = index_of(sd.b);
+      st.value = st.last_px = st.start = 2 * opt.start_value;
+      st.fast = st.slow = static_cast<double>(st.value);
       symbols_.push_back(st);
     }
     std::uniform_int_distribution<int> spread{1, 4}, lots{1, 5};
@@ -323,6 +359,8 @@ class Agents {
       if (dt < 0.001) continue;
       last = now;
       step(now, dt);
+      shocks(std::chrono::duration<double>(now - start).count());
+      expire(now);
       if (now >= next_sample) {
         sample();
         next_sample = now + std::chrono::milliseconds{10};
@@ -377,10 +415,17 @@ class Agents {
   void step(Clock::time_point now, double dt) {
     std::uniform_real_distribution<double> u{0, 1};
     for (auto& s : symbols_) {
+      if (s.leg_a >= 0) continue;  // strips follow their legs
       if (u(rng_) < opt_.value_rate * dt) {
         const std::int64_t move = u(rng_) < 0.5 ? -kTick : kTick;
         s.value = std::max<std::int64_t>(s.value + move, 100 * kTick);
         s.returns.push_back(move / kTick);
+      }
+    }
+    for (auto& s : symbols_) {
+      if (s.leg_a >= 0) {
+        s.value = symbols_[static_cast<std::size_t>(s.leg_a)].value +
+                  symbols_[static_cast<std::size_t>(s.leg_b)].value;
       }
     }
     for (std::size_t i = 0; i < makers_.size(); ++i) quote(static_cast<int>(i));
@@ -389,7 +434,11 @@ class Agents {
       if (u(rng_) < opt_.noise_rate * dt) {
         const char side = u(rng_) < 0.5 ? 'B' : 'S';
         const std::int64_t px = s.last_px + (side == 'B' ? 3 : -3) * kTick;
-        take(kNoise, i, side, px, 1 + static_cast<std::uint32_t>(u(rng_) * 3));
+        const bool day = u(rng_) < opt_.day_orders;
+        const std::uint32_t ref =
+            take(kNoise, i, side, px, 1 + static_cast<std::uint32_t>(u(rng_) * 3),
+                 day ? ouch::tif::kDay : ouch::tif::kIoc);
+        if (day && ref != 0) expiring_.push_back({ref, now + std::chrono::milliseconds{500}});
       }
       const double gap = static_cast<double>(s.value - s.last_px) / kTick;
       if (now >= s.next_value_agent && std::abs(gap) >= opt_.value_threshold) {
@@ -408,17 +457,50 @@ class Agents {
     }
   }
 
-  // An IOC limit order from a taking population.
-  void take(Population pop, std::size_t sym, char side, std::int64_t px, std::uint32_t lots) {
-    if (px <= 0) return;
+  // News: the value jumps.
+  void shocks(double elapsed) {
+    for (; next_shock_ < opt_.shocks.size() && opt_.shocks[next_shock_].at_s <= elapsed;
+         ++next_shock_) {
+      const auto& sh = opt_.shocks[next_shock_];
+      for (auto& s : symbols_) {
+        if (std::string_view{s.symbol.data(), 8}.substr(0, sh.symbol.size()) != sh.symbol) continue;
+        const auto jump = static_cast<std::int64_t>(static_cast<double>(s.value) * sh.pct / 100.0);
+        s.value = std::max<std::int64_t>((s.value + jump) / kTick * kTick, 100 * kTick);
+      }
+    }
+  }
+
+  // Cancels the noise traders' day orders that have lived long enough.
+  void expire(Clock::time_point now) {
+    std::size_t keep = 0;
+    for (const auto& [ref, at] : expiring_) {
+      if (now < at) {
+        expiring_[keep++] = {ref, at};
+        continue;
+      }
+      const Order* o = takers_acc_.find(ref);
+      if (o == nullptr) continue;
+      if (o->pending) {
+        expiring_[keep++] = {ref, at};  // not answered yet: try again later
+        continue;
+      }
+      takers_acc_.cancel(ref);
+    }
+    expiring_.resize(keep);
+  }
+
+  // A limit order from a taking population, IOC unless told otherwise.
+  std::uint32_t take(Population pop, std::size_t sym, char side, std::int64_t px,
+                     std::uint32_t lots, char tif = ouch::tif::kIoc) {
+    if (px <= 0) return 0;
     Order o;
     o.population = pop;
     o.symbol = sym;
     o.side = side;
     o.price = static_cast<std::uint32_t>(px);
     o.open = lots * 100;
-    takers_acc_.enter(o, symbols_[sym].symbol, ouch::tif::kIoc);
     ++stats_[pop].orders;
+    return takers_acc_.enter(o, symbols_[sym].symbol, tif);
   }
 
   // Moves maker i's two quotes toward its targets: enter, replace or cancel.
@@ -498,6 +580,8 @@ class Agents {
   std::uint64_t samples_ = 0;
   std::uint64_t two_sided_ = 0;
   double elapsed_ = 0;
+  std::vector<std::pair<std::uint32_t, Clock::time_point>> expiring_;
+  std::size_t next_shock_ = 0;
 };
 
 struct Account::Handler : ouch::HandlerBase {
@@ -629,8 +713,8 @@ bool Agents::report(std::FILE* out) const {
     const double vol =
         s.returns.empty() ? 0 : std::sqrt(var / static_cast<double>(s.returns.size()));
     std::fprintf(out, "%-9.8s %10.2f %10.2f %10.2f %8llu %10.2f\n", s.symbol.data(),
-                 static_cast<double>(opt_.start_value) / 10'000.0,
-                 static_cast<double>(s.value) / 10'000.0, static_cast<double>(s.last_px) / 10'000.0,
+                 static_cast<double>(s.start) / 10'000.0, static_cast<double>(s.value) / 10'000.0,
+                 static_cast<double>(s.last_px) / 10'000.0,
                  static_cast<unsigned long long>(s.trades), vol);
     trades += s.trades;
   }
@@ -681,11 +765,26 @@ int main(int argc, char** argv) {
       opt.duration = std::stod(value());
     } else if (a == "--seed") {
       opt.seed = std::stoull(value());
+    } else if (a == "--day-orders") {
+      opt.day_orders = std::stod(value());
+    } else if (a == "--strip") {
+      const std::string v = value();
+      const auto eq = v.find('='), plus = v.find('+');
+      if (eq == std::string::npos || plus == std::string::npos || plus < eq) usage();
+      opt.strips.push_back({v.substr(0, eq), v.substr(eq + 1, plus - eq - 1), v.substr(plus + 1)});
+    } else if (a == "--shock") {
+      const std::string v = value();
+      const auto at = v.find('@'), colon = v.find(':');
+      if (at == std::string::npos || colon == std::string::npos || colon < at) usage();
+      opt.shocks.push_back({v.substr(0, at), std::stod(v.substr(at + 1, colon - at - 1)),
+                            std::stod(v.substr(colon + 1))});
     } else {
       usage();
     }
   }
   if (opt.symbols.empty() || opt.makers < 1 || opt.start_value < 100 * kTick) usage();
+  std::sort(opt.shocks.begin(), opt.shocks.end(),
+            [](const auto& a, const auto& b) { return a.at_s < b.at_s; });
   std::signal(SIGINT, on_signal);
   std::signal(SIGTERM, on_signal);
   try {

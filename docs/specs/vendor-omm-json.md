@@ -66,8 +66,17 @@ status change), `SeqNumber`, `Fields` (only those that changed).
 | BIDSIZE | 30 | Real (integer) | shares at the best bid |
 | ASKSIZE | 31 | Real (integer) | shares at the best offer |
 | ACVOL_1 | 32 | Real (integer) | matched volume |
+| UPLIMIT | 75 | Real | LULD upper band |
+| LOLIMIT | 76 | Real | LULD lower band |
 | NUM_MOVES | 77 | Int | trades |
 | TRDVOL_1 | 178 | Real (integer) | last trade size |
+| IMB_ACT_TP | 4333 | Enum | auction running: 1 Open, 3 Halt, 4 Close; 0 Not set |
+| IMB_PR_NR | 4335 | Real | indicative (near) price |
+| IMB_PR_SH | 4337 | Real (integer) | paired shares |
+| IMB_SH | 4338 | Real (integer) | imbalance shares |
+| IMB_SIDE | 4340 | Enum | 1 No imbalance, 2 Buy, 3 Sell, 4 Insufficient orders, 5 Paused; 0 Not Set |
+| HALT_REASN | 6517 | RMTES string | ITCH halt reason (`T1`, `LUDP`, `MWC1`, ...); empty when trading |
+| SH_SAL_RES | 6577 | Enum | 1 not restricted, 4 restricted, 3 restriction continued |
 | TRD_STATUS | 6614 | Enum | 1 Normal, 2 Halted, 3 Suspended (paused) |
 | QUOTIM_NS | 14265 | Time | ITCH time of the last quote change |
 | SALTIM_NS | 14266 | Time | ITCH time of the last trade |

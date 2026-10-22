@@ -79,4 +79,65 @@ TEST(Icf, ParsesCommandsWithParametersAndRegex) {
   EXPECT_EQ(cs[1].get("CONFLATION_INTERVAL"), "250");
 }
 
+TEST(Icf, ScenarioTokens) {
+  Record r;
+  r.status = 'P';
+  r.halt_reason = {'L', 'U', 'D', 'P'};
+  r.reg_sho = '1';
+  r.auction_type = 'H';
+  r.indicative_price = 1'000'000;
+  r.paired_shares = 500;
+  r.imbalance_shares = 200;
+  r.imbalance_side = 'S';
+  r.band_lower = 950'000;
+  r.band_upper = 1'050'000;
+  icf::MarketData m;
+  icf::fill(m, r, field::kAll);
+  EXPECT_LE(m.count, icf::kMaxTokens);
+  std::array<std::byte, icf::kMaxMessage> b{};
+  const auto d = icf::decode({b.data(), icf::encode(m, b.data())});
+  ASSERT_TRUE(d);
+  int seen = 0;
+  for (std::size_t i = 0; i < d->count; ++i) {
+    const icf::Token& t = d->tokens[i];
+    switch (t.id) {
+      case icf::token::kHaltReason: {
+        const auto a = icf::alpha_chars(t.value);
+        EXPECT_EQ(t.type, icf::kAlpha);
+        EXPECT_EQ(std::string_view(a.data(), 8), "LUDP    ");
+        ++seen;
+        break;
+      }
+      case icf::token::kRegSho:
+        EXPECT_EQ(t.value, '1');
+        ++seen;
+        break;
+      case icf::token::kAuctionType:
+        EXPECT_EQ(t.value, 'H');
+        ++seen;
+        break;
+      case icf::token::kIndicativePrice:
+        EXPECT_EQ(t.value, 1'000'000);
+        ++seen;
+        break;
+      case icf::token::kImbalanceSide:
+        EXPECT_EQ(t.value, 'S');
+        ++seen;
+        break;
+      case icf::token::kLuldLower:
+        EXPECT_EQ(t.value, 950'000);
+        ++seen;
+        break;
+      case icf::token::kLuldUpper:
+        EXPECT_EQ(t.value, 1'050'000);
+        ++seen;
+        break;
+      default:
+        break;
+    }
+  }
+  EXPECT_EQ(seen, 7);
+  EXPECT_STREQ(icf::token_name(icf::token::kImbalanceShares), "AUCTION.IMBALANCE.SIZE");
+}
+
 }  // namespace

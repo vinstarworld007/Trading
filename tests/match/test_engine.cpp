@@ -46,6 +46,10 @@ struct Recorder {
     log.push_back("repl " + k(old.key) + "->" + k(n.key) + " orn " + std::to_string(old.orn) +
                   "->" + std::to_string(n.orn));
   }
+  void on_cross_execution(const OrderView& o, std::uint32_t q, std::uint32_t p, std::uint64_t m) {
+    log.push_back("cross " + k(o.key) + " q=" + std::to_string(q) + " p=" + std::to_string(p) +
+                  " m=" + std::to_string(m) + " left=" + std::to_string(o.remaining));
+  }
   std::vector<std::string> take() { return std::exchange(log, {}); }
 };
 
@@ -296,6 +300,91 @@ TEST(KeyIndex, InsertFindEraseWithCollisions) {
   }
   EXPECT_EQ(idx.size(), 500u);
   EXPECT_FALSE(idx.erase(0));
+}
+
+TEST_F(EngineTest, AuctionRestsCrossingOrdersWithoutTrading) {
+  e->set_phase(kSym, Phase::kAuction);
+  e->add(order(1, 1, Side::kBuy, 300, 1010), r);
+  e->add(order(1, 2, Side::kSell, 200, 1000), r);
+  e->add(order(1, 3, Side::kSell, 100, 1000, Tif::kIoc), r);  // IOC cannot wait for the cross
+  EXPECT_EQ(r.take(), (std::vector<std::string>{"acc 1:1", "rest 1:1 300@1010", "acc 1:2",
+                                                "rest 1:2 200@1000", "acc 1:3",
+                                                "cxl 1:3 q=100 left=0 why=1"}));
+  EXPECT_EQ(e->best(kSym, Side::kBuy)->price, 1010u);
+  EXPECT_EQ(e->best(kSym, Side::kSell)->price, 1000u);  // crossed book
+}
+
+TEST_F(EngineTest, IndicativeMaximizesVolumeThenMinimizesImbalance) {
+  e->set_phase(kSym, Phase::kAuction);
+  Indicative none = e->indicative(kSym, 1000);
+  EXPECT_EQ(none.direction, 'O');  // no orders
+  e->add(order(1, 1, Side::kBuy, 300, 1010), r);
+  e->add(order(1, 2, Side::kBuy, 100, 1005), r);
+  e->add(order(1, 3, Side::kSell, 200, 1000), r);
+  e->add(order(1, 4, Side::kSell, 100, 1008), r);
+  // At 1005: buys 400, sells 200 -> 200. At 1008: buys 300, sells 300 -> 300.
+  // At 1010: buys 300, sells 300 -> 300, same imbalance; 1008 is nearer 1000.
+  const Indicative i = e->indicative(kSym, 1000);
+  EXPECT_EQ(i.price, 1008u);
+  EXPECT_EQ(i.paired, 300u);
+  EXPECT_EQ(i.imbalance, 0u);
+  EXPECT_EQ(i.direction, 'N');
+  e->add(order(1, 5, Side::kBuy, 50, 1020), r);
+  const Indicative j = e->indicative(kSym, 1000);
+  EXPECT_EQ(j.paired, 300u);
+  EXPECT_EQ(j.imbalance, 50u);
+  EXPECT_EQ(j.direction, 'B');
+}
+
+TEST_F(EngineTest, UncrossFillsEveryCrossingOrderAtOnePrice) {
+  e->set_phase(kSym, Phase::kAuction);
+  e->add(order(1, 1, Side::kBuy, 300, 1010), r);
+  e->add(order(1, 2, Side::kSell, 200, 1000), r);
+  e->add(order(2, 3, Side::kSell, 200, 1005), r);
+  e->add(order(2, 4, Side::kBuy, 100, 990), r);
+  r.take();
+  const Indicative i = e->indicative(kSym, 1000);
+  EXPECT_EQ(i.price, 1005u);
+  EXPECT_EQ(i.paired, 300u);
+  EXPECT_EQ(i.direction, 'S');
+  EXPECT_EQ(e->uncross(kSym, i.price, r), 300u);
+  EXPECT_EQ(r.take(),
+            (std::vector<std::string>{
+                "cross 1:1 q=200 p=1005 m=1 left=100", "cross 1:2 q=200 p=1005 m=1 left=0",
+                "cross 1:1 q=100 p=1005 m=2 left=0", "cross 2:3 q=100 p=1005 m=2 left=100"}));
+  e->set_phase(kSym, Phase::kContinuous);
+  EXPECT_EQ(e->best(kSym, Side::kBuy)->price, 990u);
+  EXPECT_EQ(e->best(kSym, Side::kSell)->price, 1005u);
+  EXPECT_EQ(e->best(kSym, Side::kSell)->shares, 100u);
+  EXPECT_EQ(e->live_orders(), 2u);
+  // Continuous again: a crossing order trades at once.
+  e->add(order(1, 5, Side::kBuy, 100, 1005), r);
+  EXPECT_EQ(r.take()[1], "exec r=2:3 a=1:5 q=100 p=1005");
+}
+
+TEST_F(EngineTest, HaltedRejectsNewOrdersButAllowsCancels) {
+  e->add(order(1, 1, Side::kBuy, 100, 1000), r);
+  e->set_phase(kSym, Phase::kHalted);
+  r.take();
+  e->add(order(1, 2, Side::kBuy, 100, 1000), r);
+  EXPECT_EQ(
+      r.take(),
+      (std::vector<std::string>{"rej 1:2 " + std::to_string(static_cast<int>(Reject::kHalted))}));
+  EXPECT_TRUE(e->cancel(make_key(1, 1), 0, r));
+  EXPECT_EQ(e->live_orders(), 0u);
+}
+
+TEST_F(EngineTest, BandRepricesOrdersThatWouldTradeBeyondIt) {
+  e->set_band(kSym, 950, 1050);
+  e->add(order(1, 1, Side::kSell, 100, 1100), r);  // outside the band on the passive side: rests
+  e->add(order(1, 2, Side::kBuy, 100, 1200), r);   // slid down to 1050: cannot reach 1100
+  EXPECT_EQ(r.take(), (std::vector<std::string>{"acc 1:1", "rest 1:1 100@1100", "acc 1:2",
+                                                "rest 1:2 100@1050"}));
+  e->add(order(1, 3, Side::kSell, 50, 900), r);  // slid up to 950, trades with the bid at 1050
+  EXPECT_EQ(r.take()[1], "exec r=1:2 a=1:3 q=50 p=1050");
+  e->set_band(kSym, 0, 0);
+  e->add(order(1, 4, Side::kBuy, 100, 1200), r);
+  EXPECT_EQ(r.take()[1], "exec r=1:1 a=1:4 q=100 p=1100");
 }
 
 }  // namespace

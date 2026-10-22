@@ -6,9 +6,17 @@
 // The day has the real structure (system events, stock directory, trading
 // actions, opening and closing crosses) and a random mix of adds, executions,
 // cancels, deletes, replaces and hidden trades. Bids always sit below each
-// symbol's fixed mid and asks above, so books never cross. The generator keeps
+// symbol's fixed mid and asks above, so books never cross outside auctions. The generator keeps
 // its own model of every live order, so a consumer's rebuilt books can be
 // compared against it exactly.
+//
+// With `scenarios`, the day also has every market scenario ITCH can carry:
+// opening and closing crosses with imbalance messages and non-printable
+// executions of crossing orders, a news halt with a quotation period and
+// halt cross, a LULD pause with its auction collar and reopening cross,
+// market-wide circuit breaker levels and a level 1 halt, an IPO released
+// for quotation and crossed, an operational halt, a Reg SHO restriction and
+// a broken trade. Auction books cross briefly, as real ones do.
 
 #include <cstdint>
 #include <functional>
@@ -22,6 +30,7 @@ struct SyntheticConfig {
   std::uint32_t symbols = 50;
   std::uint64_t book_messages = 1'000'000;  // order and trade messages, excluding setup
   std::uint64_t seed = 42;
+  bool scenarios = false;
 };
 
 class SyntheticDay {

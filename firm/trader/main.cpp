@@ -206,8 +206,11 @@ class MarketData {
         t.ask_qty[d] = static_cast<std::uint32_t>(l->shares);
       }
     }
+    const char state = books_->instrument(locate).trading_state;
+    t.trading_state = state == ' ' ? 'T' : state;
     auto& last = last_[static_cast<std::size_t>(inst)];
-    if (std::memcmp(t.bid_px, last.bid_px, 32) == 0) return;  // top two levels unchanged
+    if (std::memcmp(t.bid_px, last.bid_px, 32) == 0 && t.trading_state == last.trading_state)
+      return;  // top two levels and state unchanged
     t.rx_tsc = rx_tsc;
     t.feed_ns = books_->last_timestamp();
     t.instrument = static_cast<std::uint16_t>(inst);

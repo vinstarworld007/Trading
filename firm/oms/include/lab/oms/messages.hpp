@@ -24,7 +24,8 @@ struct alignas(64) TopOfBook {
   std::uint32_t ask_qty[2];
   std::uint16_t instrument;  // index into the trader's symbol list
   std::uint16_t locate;
-  std::uint8_t reserved[12];
+  char trading_state;  // ITCH H: T trading, H halted, P paused, Q quotation only
+  std::uint8_t reserved[11];
 };
 static_assert(sizeof(TopOfBook) == 64);
 static_assert(std::is_trivially_copyable_v<TopOfBook>);

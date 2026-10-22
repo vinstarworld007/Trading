@@ -157,6 +157,8 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `scripts/e2e-posttrade.sh` | The firm session plus drop copy, then reconciliation, TCA and a backtest |
 | `scripts/e2e-fix.sh` | Two FIX sessions trading through `fixgw`, one dropped and resumed midway; FIX fills checked against the drop copy |
 | `scripts/e2e-agents.sh` | `trader` making markets among the agents, with no replay |
+| `scripts/e2e-scenarios.sh` | simex `--scenario all` with an implied strip, agents, `itch-fh` and two vendors; checks every scenario ran and every book agrees |
+| `docs/scenarios.md` | Auctions, halts, LULD, circuit breakers, IPOs and implied strips: what each part of the lab does |
 | `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine (with p50/p99/p99.9), FIX codec |
 
 ## Build phases
@@ -168,7 +170,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.
 6. **Post-trade and research**: drop copy, PnL, TCA, Python backtests.
 7. **Hardening**: profiling, tail latency, agent-based liquidity, a FIX venue.
-8. **Market data vendors** (this): three vendors that consolidate simex's feed and
+8. **Market data vendors**: three vendors that consolidate simex's feed and
    redistribute it: `icf-server` (an ICE Consolidated Feed look-alike over
    SoupBinTCP), `rt-server` (the public Refinitiv WebSocket API, OMM JSON with
    RDMFieldDictionary field ids) and `bpipe-server` (a Bloomberg B-PIPE
@@ -177,6 +179,12 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
    result against the direct feed. ICE's and Bloomberg's wire formats are
    licensed, so those two protocols are the lab's own, documented in
    `docs/specs/vendor-*.md`.
+9. **Market scenarios** (this): opening and closing auctions with imbalance
+   messages, news halts, LULD bands, limit states, pauses and reopening
+   auctions, market-wide circuit breakers, an IPO, an operational halt, a
+   broken trade, Reg SHO, and implied strip books, in simex, on the feed, in
+   the feed handler, in the synthetic day and through the vendors. See
+   `docs/scenarios.md`.
 
 Latency numbers measured under WSL2 are relative, not production figures: the
 Windows host schedules the VM's CPUs, and there is no kernel-bypass networking.

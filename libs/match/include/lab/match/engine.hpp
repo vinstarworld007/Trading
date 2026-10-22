@@ -21,7 +21,19 @@
 //     void on_rested(const OrderView&);                            // remainder joined the book
 //     void on_canceled(const OrderView&, std::uint32_t qty, CancelReason);
 //     void on_replaced(const OrderView& old, const OrderView& replacement);
+//     // Only when uncross() is used: one call per order filled in an auction.
+//     void on_cross_execution(const OrderView&, std::uint32_t qty, std::uint32_t price,
+//                             std::uint64_t match);
 //   };
+//
+// Each instrument has a trading phase. Continuous trading matches on entry.
+// In an auction (pre-open, closing auction, halt or pause quotation period)
+// orders are accepted and rest without matching, so the book may cross;
+// indicative() computes the clearing price and imbalance, and uncross()
+// executes the cross at one price. A halted instrument rejects new orders and
+// replacements; cancels still work. Optional price bands (LULD) reprice
+// orders that would trade beyond them to the band, the way an exchange
+// "slides" them, so continuous trading never prints outside the band.
 //
 // Views passed to a listener show the order after the event (remaining
 // already reduced), except on_book, which says whether the order was resting
@@ -53,6 +65,7 @@ constexpr std::uint64_t key_ref(OrderKey k) noexcept { return k & 0xFFFF'FFFF'FF
 enum class Side : std::uint8_t { kBuy, kSell };
 enum class Tif : std::uint8_t { kDay, kIoc };
 enum class CancelReason : std::uint8_t { kUser, kIoc, kSystem };
+enum class Phase : std::uint8_t { kContinuous, kAuction, kHalted };
 enum class Reject : std::uint8_t {
   kDuplicateKey,
   kUnknownOrder,
@@ -60,6 +73,15 @@ enum class Reject : std::uint8_t {
   kInvalidQuantity,
   kInvalidPrice,
   kBookFull,
+  kHalted,
+};
+
+// An auction's indicative result (ITCH NOII fields).
+struct Indicative {
+  std::uint32_t price = 0;      // clearing price; 0 if nothing crosses
+  std::uint64_t paired = 0;     // shares that would execute at `price`
+  std::uint64_t imbalance = 0;  // shares left on the heavier side at `price`
+  char direction = 'O';         // B buy, S sell, N none, O insufficient orders
 };
 
 inline constexpr std::uint32_t kMaxQuantity = 999'999;       // OUCH: less than 1,000,000
@@ -111,6 +133,22 @@ class Engine {
     for (std::size_t i = cfg.max_orders; i-- > 0;) free_.push_back(static_cast<std::uint32_t>(i));
   }
 
+  // Trading phase and price band of an instrument.
+  void set_phase(std::uint16_t instrument, Phase p) noexcept { books_[instrument].phase = p; }
+  Phase phase(std::uint16_t instrument) const noexcept { return books_[instrument].phase; }
+  // True if `price` is inside the instrument's band (or it has none).
+  bool in_band(std::uint16_t instrument, std::uint32_t price) const noexcept {
+    const Book& b = books_[instrument];
+    return (b.band_upper == 0 || price <= b.band_upper) &&
+           (b.band_lower == 0 || price >= b.band_lower);
+  }
+  // Orders that would trade beyond [lower, upper] are repriced to the band.
+  // 0 for either removes that side of the band.
+  void set_band(std::uint16_t instrument, std::uint32_t lower, std::uint32_t upper) noexcept {
+    books_[instrument].band_lower = lower;
+    books_[instrument].band_upper = upper;
+  }
+
   // Opens trading in an instrument. Setup only: reserves its price levels.
   void add_instrument(std::uint16_t instrument) {
     if (instrument >= books_.size()) throw std::out_of_range("instrument beyond max_instruments");
@@ -136,7 +174,7 @@ class Engine {
       return;
     }
     Node& x = nodes_[n];
-    init(x, o, 0);
+    init(x, banded(o), 0);
     ++stats_.accepted;
     l.on_accepted(view(x));
     match_and_rest(n, o.tif, l);
@@ -200,7 +238,7 @@ class Engine {
     const std::uint32_t n = allocate(o.key);  // cannot fail: a slot and the key were just freed
     Node& x = nodes_[n];
     o.quantity -= executed;
-    init(x, o, executed);
+    init(x, banded(o), executed);
     ++stats_.replaced;
     l.on_replaced(before, view(x));
     match_and_rest(n, o.tif, l);
@@ -234,6 +272,91 @@ class Engine {
     }
     return out;
   }
+  // Best level of one side, if any.
+  std::optional<LevelView> best(std::uint16_t instrument, Side side) const noexcept {
+    const auto& v = books_[instrument].side[static_cast<int>(side)];
+    if (v.empty()) return std::nullopt;
+    return LevelView{v.back().price, v.back().shares, v.back().orders};
+  }
+
+  // The price that maximizes executable shares if the book uncrossed now;
+  // ties go to the smaller imbalance, then to the price nearest `reference`,
+  // then to the lower price. Walks the crossed levels only.
+  Indicative indicative(std::uint16_t instrument, std::uint32_t reference) const noexcept {
+    Indicative out;
+    const auto& bids = books_[instrument].side[0];
+    const auto& asks = books_[instrument].side[1];
+    if (bids.empty() || asks.empty()) return out;
+    out.direction = 'N';
+    if (bids.back().price < asks.back().price) return out;  // nothing crosses
+    std::uint64_t best_imb = 0;
+    std::uint64_t best_dist = 0;
+    auto consider = [&](std::uint32_t p) {
+      std::uint64_t buy = 0, sell = 0;
+      for (std::size_t i = bids.size(); i-- > 0 && bids[i].price >= p;) buy += bids[i].shares;
+      for (std::size_t i = asks.size(); i-- > 0 && asks[i].price <= p;) sell += asks[i].shares;
+      const std::uint64_t exec = buy < sell ? buy : sell;
+      const std::uint64_t imb = buy > sell ? buy - sell : sell - buy;
+      const std::uint64_t dist = p > reference ? p - reference : reference - p;
+      const bool better_choice =
+          exec > out.paired ||
+          (exec == out.paired &&
+           (imb < best_imb ||
+            (imb == best_imb && (dist < best_dist || (dist == best_dist && p < out.price)))));
+      if (out.price == 0 || better_choice) {
+        out.price = p;
+        out.paired = exec;
+        out.imbalance = imb;
+        out.direction = buy > sell ? 'B' : sell > buy ? 'S' : 'N';
+        best_imb = imb;
+        best_dist = dist;
+      }
+    };
+    // Candidate prices: every crossed level on either side.
+    const std::uint32_t lo = asks.back().price, hi = bids.back().price;
+    for (std::size_t i = bids.size(); i-- > 0 && bids[i].price >= lo;) consider(bids[i].price);
+    for (std::size_t i = asks.size(); i-- > 0 && asks[i].price <= hi;) consider(asks[i].price);
+    return out;
+  }
+
+  // Executes the auction at `price`: crossing buys and sells trade in price
+  // then time priority, every fill at `price`, each pair of fills sharing a
+  // match number. Returns the shares crossed. Leaves the phase unchanged.
+  template <class L>
+  std::uint64_t uncross(std::uint16_t instrument, std::uint32_t price, L& l) {
+    auto& bids = books_[instrument].side[0];
+    auto& asks = books_[instrument].side[1];
+    std::uint64_t crossed = 0;
+    while (!bids.empty() && !asks.empty() && bids.back().price >= price &&
+           asks.back().price <= price) {
+      Level& bl = bids.back();
+      Level& al = asks.back();
+      const std::uint32_t b = bl.head, a = al.head;
+      Node& bo = nodes_[b];
+      Node& ao = nodes_[a];
+      const std::uint32_t q = bo.remaining < ao.remaining ? bo.remaining : ao.remaining;
+      const std::uint64_t m = ++match_;
+      crossed += q;
+      ++stats_.executions;
+      stats_.executed_shares += q;
+      for (const std::uint32_t n : {b, a}) {
+        Node& x = nodes_[n];
+        Level& lv = n == b ? bl : al;
+        x.remaining -= q;
+        x.executed += q;
+        lv.shares -= q;
+        l.on_cross_execution(view(x), q, price, m);
+      }
+      // Remove filled orders (and emptied levels) after both callbacks.
+      for (const std::uint32_t n : {b, a}) {
+        if (nodes_[n].remaining != 0) continue;
+        unlink(n);
+        release(n);
+      }
+    }
+    return crossed;
+  }
+
   const OrderView* find(OrderKey key) noexcept {
     const std::uint32_t n = index_.find(key);
     if (n == KeyIndex::kNone) return nullptr;
@@ -241,6 +364,9 @@ class Engine {
     return &scratch_;
   }
   std::size_t live_orders() const noexcept { return index_.size(); }
+  // A fresh match number from the engine's sequence, for prints the engine
+  // does not make itself (an auction's cross trade message).
+  std::uint64_t next_match() noexcept { return ++match_; }
   const EngineStats& stats() const noexcept { return stats_; }
 
  private:
@@ -271,6 +397,9 @@ class Engine {
   // Each side sorted so the best price is at the back.
   struct Book {
     bool active = false;
+    Phase phase = Phase::kContinuous;
+    std::uint32_t band_lower = 0;
+    std::uint32_t band_upper = 0;
     std::vector<Level> side[2];
   };
 
@@ -289,7 +418,17 @@ class Engine {
     if (!has_instrument(o.instrument)) return Reject::kUnknownInstrument;
     if (o.quantity == 0 || o.quantity > cfg_.max_quantity) return Reject::kInvalidQuantity;
     if (o.price == 0 || o.price > kMaxPrice) return Reject::kInvalidPrice;
+    if (books_[o.instrument].phase == Phase::kHalted) return Reject::kHalted;
     return std::nullopt;
+  }
+
+  // The order repriced into its instrument's band, if it has one.
+  NewOrder banded(NewOrder o) const noexcept {
+    const Book& b = books_[o.instrument];
+    if (o.side == Side::kBuy && b.band_upper != 0 && o.price > b.band_upper) o.price = b.band_upper;
+    if (o.side == Side::kSell && b.band_lower != 0 && o.price < b.band_lower)
+      o.price = b.band_lower;
+    return o;
   }
 
   template <class L>
@@ -329,7 +468,8 @@ class Engine {
   void match_and_rest(std::uint32_t n, Tif tif, L& l) {
     Node& x = nodes_[n];
     auto& opposite = books_[x.instrument].side[x.side == Side::kBuy ? 1 : 0];
-    while (x.remaining > 0 && !opposite.empty() &&
+    const bool continuous = books_[x.instrument].phase == Phase::kContinuous;
+    while (continuous && x.remaining > 0 && !opposite.empty() &&
            crosses(x.side, x.price, opposite.back().price)) {
       Level& lv = opposite.back();
       while (x.remaining > 0 && lv.head != kNil) {

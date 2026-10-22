@@ -350,18 +350,58 @@ inline Topic parse_topic(std::string_view t) {
 }
 
 // The //blp/mktdata fields the vendor publishes, and the record fields each
-// depends on.
+// depends on. The first twelve are Bloomberg mnemonics; the auction, band and
+// halt fields after them are lab names (docs/specs/vendor-bpipe.md).
+enum class Id : std::uint8_t {
+  kBid,
+  kBidSize,
+  kAsk,
+  kAskSize,
+  kLast,
+  kLastSize,
+  kVolume,
+  kOpen,
+  kHigh,
+  kLow,
+  kTrades,
+  kStatus,
+  kHaltReason,
+  kRegSho,
+  kAuctionType,
+  kIndicativePrice,
+  kPairedShares,
+  kImbalanceShares,
+  kImbalanceSide,
+  kLuldLower,
+  kLuldUpper,
+};
 struct Field {
   std::string_view name;
   std::uint32_t mask;
+  Id id;
 };
 inline constexpr Field kFields[] = {
-    {"BID", field::kBid},           {"BID_SIZE", field::kBidSize},
-    {"ASK", field::kAsk},           {"ASK_SIZE", field::kAskSize},
-    {"LAST_PRICE", field::kLast},   {"SIZE_LAST_TRADE", field::kLastSize},
-    {"VOLUME", field::kVolume},     {"OPEN", field::kOpen},
-    {"HIGH", field::kHigh},         {"LOW", field::kLow},
-    {"NUM_TRADES", field::kTrades}, {"TRADING_STATUS", field::kStatus},
+    {"BID", field::kBid, Id::kBid},
+    {"BID_SIZE", field::kBidSize, Id::kBidSize},
+    {"ASK", field::kAsk, Id::kAsk},
+    {"ASK_SIZE", field::kAskSize, Id::kAskSize},
+    {"LAST_PRICE", field::kLast, Id::kLast},
+    {"SIZE_LAST_TRADE", field::kLastSize, Id::kLastSize},
+    {"VOLUME", field::kVolume, Id::kVolume},
+    {"OPEN", field::kOpen, Id::kOpen},
+    {"HIGH", field::kHigh, Id::kHigh},
+    {"LOW", field::kLow, Id::kLow},
+    {"NUM_TRADES", field::kTrades, Id::kTrades},
+    {"TRADING_STATUS", field::kStatus, Id::kStatus},
+    {"HALT_REASON", field::kStatus, Id::kHaltReason},
+    {"REG_SHO_RESTRICTION", field::kStatus, Id::kRegSho},
+    {"AUCTION_TYPE", field::kAuction, Id::kAuctionType},
+    {"INDICATIVE_PRICE", field::kAuction, Id::kIndicativePrice},
+    {"PAIRED_SHARES", field::kAuction, Id::kPairedShares},
+    {"IMBALANCE_SHARES", field::kAuction, Id::kImbalanceShares},
+    {"IMBALANCE_SIDE", field::kAuction, Id::kImbalanceSide},
+    {"LULD_LOWER_LIMIT", field::kBand, Id::kLuldLower},
+    {"LULD_UPPER_LIMIT", field::kBand, Id::kLuldUpper},
 };
 inline constexpr std::size_t kFieldCount = sizeof(kFields) / sizeof(kFields[0]);
 
@@ -386,6 +426,35 @@ inline std::string_view trading_status(char s) noexcept {
   return "UNKNOWN";
 }
 
+inline std::string_view auction_type(char t) noexcept {
+  switch (t) {
+    case 'O':
+      return "OPENING";
+    case 'C':
+    case 'A':
+      return "CLOSING";
+    case 'H':
+      return "HALT";
+  }
+  return "NONE";
+}
+
+inline std::string_view imbalance_side(char d) noexcept {
+  switch (d) {
+    case 'B':
+      return "BUY";
+    case 'S':
+      return "SELL";
+    case 'N':
+      return "NONE";
+    case 'O':
+      return "INSUFFICIENT_ORDERS";
+    case 'P':
+      return "PAUSED";
+  }
+  return "NOT_SET";
+}
+
 // A MarketDataEvents message: event type and subtype, EVENT_TIME, then the
 // fields in `want` (a bit per kFields entry) that `mask` touches (all of them
 // for the initial paint).
@@ -405,48 +474,82 @@ inline void market_data(Writer& w, std::uint64_t cid, const Record& r, std::uint
                   (mask & (field::kBid | field::kBidSize)) ? "BID" : "ASK");
   } else {
     w.enumeration("MKTDATA_EVENT_TYPE", "SUMMARY");
-    w.enumeration("MKTDATA_EVENT_SUBTYPE", "TRADING_STATUS");
+    w.enumeration("MKTDATA_EVENT_SUBTYPE", (mask & field::kAuction) ? "AUCTION"
+                                           : (mask & field::kBand)  ? "PRICE_LIMITS"
+                                                                    : "TRADING_STATUS");
   }
   w.time("EVENT_TIME", r.exch_ns);
   for (std::size_t i = 0; i < kFieldCount; ++i) {
     const Field& f = kFields[i];
     if (!(want & (1u << i)) || (!initial && !(f.mask & mask))) continue;
-    switch (f.mask) {
-      case field::kBid:
+    switch (f.id) {
+      case Id::kBid:
         w.price(f.name, r.bid);  // 0: no value
         break;
-      case field::kBidSize:
+      case Id::kBidSize:
         w.integer(f.name, static_cast<std::int64_t>(r.bid_size));
         break;
-      case field::kAsk:
+      case Id::kAsk:
         w.price(f.name, r.ask);  // 0: no value
         break;
-      case field::kAskSize:
+      case Id::kAskSize:
         w.integer(f.name, static_cast<std::int64_t>(r.ask_size));
         break;
-      case field::kLast:
+      case Id::kLast:
         w.price(f.name, r.last);  // 0: no value
         break;
-      case field::kLastSize:
+      case Id::kLastSize:
         if (r.trades) w.integer(f.name, static_cast<std::int64_t>(r.last_size));
         break;
-      case field::kVolume:
+      case Id::kVolume:
         w.integer(f.name, static_cast<std::int64_t>(r.volume));
         break;
-      case field::kOpen:
+      case Id::kOpen:
         w.price(f.name, r.open);  // 0: no value
         break;
-      case field::kHigh:
+      case Id::kHigh:
         w.price(f.name, r.high);  // 0: no value
         break;
-      case field::kLow:
+      case Id::kLow:
         w.price(f.name, r.low);  // 0: no value
         break;
-      case field::kTrades:
+      case Id::kTrades:
         w.integer(f.name, static_cast<std::int64_t>(r.trades));
         break;
-      case field::kStatus:
+      case Id::kStatus:
         w.enumeration(f.name, trading_status(r.status));
+        break;
+      case Id::kHaltReason: {
+        std::string_view reason{r.halt_reason.data(), r.halt_reason.size()};
+        while (!reason.empty() && reason.back() == ' ') reason.remove_suffix(1);
+        w.string(f.name, reason);
+        break;
+      }
+      case Id::kRegSho:
+        w.enumeration(f.name, r.reg_sho == '1'   ? "IN_EFFECT"
+                              : r.reg_sho == '2' ? "CONTINUED"
+                                                 : "NONE");
+        break;
+      case Id::kAuctionType:
+        w.enumeration(f.name, auction_type(r.auction_type));
+        break;
+      case Id::kIndicativePrice:
+        w.price(f.name, r.indicative_price);  // 0: no value
+        break;
+      case Id::kPairedShares:
+        w.integer(f.name, static_cast<std::int64_t>(r.paired_shares));
+        break;
+      case Id::kImbalanceShares:
+        w.integer(f.name, static_cast<std::int64_t>(r.imbalance_shares));
+        break;
+      case Id::kImbalanceSide:
+        w.enumeration(f.name, imbalance_side(r.imbalance_side));
+        break;
+      case Id::kLuldLower:
+        w.price(f.name, r.band_lower);  // 0: no value
+        break;
+      case Id::kLuldUpper:
+        w.price(f.name, r.band_upper);  // 0: no value
         break;
     }
   }

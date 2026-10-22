@@ -41,16 +41,24 @@ struct IntegrityChecks {
   std::uint64_t book_inconsistency = 0;         // level totals disagree with the orders (a bug)
   std::uint64_t timestamp_regressions = 0;      // timestamp lower than the previous message
   std::uint64_t system_event_out_of_order = 0;  // O S Q M E C sequence broken
+  std::uint64_t trade_while_halted = 0;         // E, printable C or P while halted or paused
 
   // Informational: not errors by themselves.
   std::uint64_t crossed_book_events = 0;  // a book became crossed (bid > ask)
   std::uint64_t locked_book_events = 0;   // a book became locked (bid == ask)
+  std::uint64_t crosses = 0;              // Q messages
+  std::uint64_t halts = 0;                // H messages into H or P
+  std::uint64_t noii = 0;                 // I messages
+  // Non-printable C shares since the previous Q exceed twice its shares.
+  // A lab-built cross never does this; a real day may use non-printable
+  // executions for other bulk prints too, so it is not an error.
+  std::uint64_t cross_overfill = 0;
 
   std::uint64_t error_count() const noexcept {
     return unknown_message_type + truncated_message + unknown_order_reference +
            duplicate_order_reference + over_execution + locate_without_directory +
            locate_symbol_mismatch + book_inconsistency + timestamp_regressions +
-           system_event_out_of_order;
+           system_event_out_of_order + trade_while_halted;
   }
 };
 
@@ -75,12 +83,45 @@ struct InstrumentStats {
   }
 };
 
+// The latest Net Order Imbalance Indicator for an instrument's auction.
+struct Imbalance {
+  char cross_type = ' ';  // O opening, C closing, H halt/IPO/pause; ' ' none yet
+  char direction = ' ';   // B, S, N, O insufficient orders, P paused
+  char variation = ' ';   // price variation indicator
+  std::uint64_t paired = 0;
+  std::uint64_t imbalance = 0;
+  std::uint32_t far_price = 0;
+  std::uint32_t near_price = 0;
+  std::uint32_t reference_price = 0;
+  std::uint64_t timestamp = 0;
+};
+
+// The LULD reopening auction collar from the latest J message.
+struct Collar {
+  std::uint32_t reference = 0;
+  std::uint32_t upper = 0;
+  std::uint32_t lower = 0;
+  std::uint32_t extensions = 0;
+};
+
 struct Instrument {
   bool listed = false;  // saw its stock directory message
   itch::Symbol symbol{};
   std::uint32_t round_lot_size = 0;
-  char trading_state = ' ';  // from H: H, P, Q, T
+  char trading_state = ' ';                             // from H: H, P, Q, T
+  std::array<char, 4> halt_reason{' ', ' ', ' ', ' '};  // from H: T1, LUDP, MWC1, IPOQ, ...
   char reg_sho_action = ' ';
+  char operational_halt = ' ';         // from h: H halted on the market, T resumed
+  char ipo_qualifier = ' ';            // from K: A anticipated, C canceled
+  std::uint32_t ipo_release_time = 0;  // seconds since midnight
+  std::uint32_t ipo_price = 0;
+  Imbalance imbalance;
+  Collar collar;
+  // LULD reference price: the latest cross that printed shares, else the
+  // first trade of the day; after a halt cross that printed nothing, the
+  // book's midpoint (lab rule; see lab/book/luld.hpp).
+  std::uint32_t luld_reference = 0;
+  std::uint64_t cross_executed = 0;  // non-printable C shares since the last NOII or Q
   bool crossed = false;
   bool locked = false;
   OrderBook book;
@@ -124,6 +165,16 @@ class BookBuilder : public itch::HandlerBase {
   void on(const itch::Trade& m);
   void on(const itch::CrossTrade& m);
   void on(const itch::BrokenTrade& m);
+  void on(const itch::Noii& m);
+  void on(const itch::LuldAuctionCollar& m);
+  void on(const itch::MwcbDeclineLevel& m);
+  void on(const itch::MwcbStatus& m);
+  void on(const itch::IpoQuotingPeriod& m);
+  void on(const itch::OperationalHalt& m);
+
+  // Market-wide circuit breaker levels (Price(8)) and the breached level.
+  const std::array<std::uint64_t, 3>& mwcb_levels() const noexcept { return mwcb_levels_; }
+  char mwcb_breached() const noexcept { return mwcb_breached_; }
 
   const IntegrityChecks& checks() const noexcept { return checks_; }
   const Instrument& instrument(std::uint16_t locate) const noexcept { return instruments_[locate]; }
@@ -163,6 +214,14 @@ class BookBuilder : public itch::HandlerBase {
   Instrument* reduce_order(std::uint64_t ref, std::uint32_t shares, bool remove_all,
                            std::uint32_t* price_out);
   void check_cross(Instrument& inst) noexcept;
+  void traded(Instrument& inst, std::uint32_t price) noexcept {
+    if (LAB_UNLIKELY(inst.trading_state == 'H' || inst.trading_state == 'P' ||
+                     inst.trading_state == 'Q')) {
+      ++checks_.trade_while_halted;
+    }
+    inst.stats.last_trade_price = price;
+    if (inst.luld_reference == 0) inst.luld_reference = price;
+  }
 
   std::vector<Instrument> instruments_;  // indexed by stock locate (0..65535)
   OrderMap orders_;
@@ -171,6 +230,8 @@ class BookBuilder : public itch::HandlerBase {
   std::uint64_t messages_ = 0;
   std::uint64_t last_timestamp_ = 0;
   std::string system_events_;
+  std::array<std::uint64_t, 3> mwcb_levels_{};
+  char mwcb_breached_ = ' ';
 };
 
 }  // namespace lab::book

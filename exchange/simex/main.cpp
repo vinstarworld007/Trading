@@ -52,6 +52,9 @@ struct Options {
   lab::feed::PublisherConfig md;
   LiquidityConfig liquidity;
   std::vector<std::string> symbols;
+  ScenarioConfig scenarios;
+  std::vector<lab::book::StripDef> strips;
+  bool scenario_all = false;
   std::string journal;
   double duration = 0;  // seconds; 0 = until Ctrl-C or end of replay
   double linger = 2;    // seconds after the replay ends
@@ -71,14 +74,20 @@ std::vector<std::string> split(const std::string& s, char sep) {
 }
 
 void usage() {
-  std::fprintf(stderr,
-               "usage: simex [--replay FILE [--rate N | --speed X] [--limit N] [--linger S]]\n"
-               "             [--symbols A,B,C] [--accounts USER:PASS,...] [--listen IP:PORT]\n"
-               "             [--drop-copy USER:PASS | --no-drop-copy]\n"
-               "             [--md-dest IP:PORT] [--md-iface IP] [--md-retrans-port N]\n"
-               "             [--md-session NAME] [--journal FILE] [--duration S]\n"
-               "             [--eos-seconds S] [--no-cancel-on-disconnect]\n"
-               "             [--matcher-cpu N] [--gateway-cpu N] [--md-cpu N]\n");
+  std::fprintf(
+      stderr,
+      "usage: simex [--replay FILE [--rate N | --speed X] [--limit N] [--linger S]]\n"
+      "             [--symbols A,B,C] [--accounts USER:PASS,...] [--listen IP:PORT]\n"
+      "             [--drop-copy USER:PASS | --no-drop-copy]\n"
+      "             [--md-dest IP:PORT] [--md-iface IP] [--md-retrans-port N]\n"
+      "             [--md-session NAME] [--journal FILE] [--duration S]\n"
+      "             [--eos-seconds S] [--no-cancel-on-disconnect]\n"
+      "             [--matcher-cpu N] [--gateway-cpu N] [--md-cpu N]\n"
+      "  scenarios:  [--scenario all] [--open-auction S] [--close-at S --close-auction S]\n"
+      "             [--noii-interval S] [--quote-period S] [--halt SYM@T+D[:REASON]]\n"
+      "             [--op-halt SYM@T+D] [--ipo SYM@T+D] [--mwcb LEVEL@T+D]\n"
+      "             [--break-at T] [--luld] [--luld-band-pct N] [--luld-limit S]\n"
+      "             [--luld-pause S] [--reg-sho] [--strip NAME=A+B]\n");
 }
 
 bool parse(int argc, char** argv, Options& o) {
@@ -95,6 +104,14 @@ bool parse(int argc, char** argv, Options& o) {
     }
     if (a == "--no-drop-copy") {
       o.gateway.drop_copy = {};
+      continue;
+    }
+    if (a == "--luld") {
+      o.scenarios.luld = true;
+      continue;
+    }
+    if (a == "--reg-sho") {
+      o.scenarios.reg_sho = true;
       continue;
     }
     if (i + 1 >= argc) return false;
@@ -140,7 +157,43 @@ bool parse(int argc, char** argv, Options& o) {
       o.gateway_cpu = std::atoi(v);
     else if (a == "--md-cpu")
       o.md_cpu = std::atoi(v);
-    else
+    else if (a == "--scenario") {
+      if (std::string{v} != "all") return false;
+      o.scenario_all = true;
+    } else if (a == "--open-auction")
+      o.scenarios.open_auction_s = std::strtod(v, nullptr);
+    else if (a == "--close-at")
+      o.scenarios.close_at_s = std::strtod(v, nullptr);
+    else if (a == "--close-auction")
+      o.scenarios.close_auction_s = std::strtod(v, nullptr);
+    else if (a == "--noii-interval")
+      o.scenarios.noii_interval_s = std::strtod(v, nullptr);
+    else if (a == "--quote-period")
+      o.scenarios.quote_period_s = std::strtod(v, nullptr);
+    else if (a == "--luld-band-pct")
+      o.scenarios.luld_band_pct = static_cast<std::uint32_t>(std::atoi(v));
+    else if (a == "--luld-limit")
+      o.scenarios.luld_limit_s = std::strtod(v, nullptr);
+    else if (a == "--luld-pause")
+      o.scenarios.luld_pause_s = std::strtod(v, nullptr);
+    else if (a == "--break-at")
+      o.scenarios.breaks.push_back(std::strtod(v, nullptr));
+    else if (a == "--halt" || a == "--op-halt" || a == "--ipo") {
+      const auto t = parse_timed(v);
+      if (!t) return false;
+      (a == "--halt"      ? o.scenarios.halts
+       : a == "--op-halt" ? o.scenarios.op_halts
+                          : o.scenarios.ipos)
+          .push_back(*t);
+    } else if (a == "--strip") {
+      const auto d = lab::book::parse_strip(v);
+      if (!d) return false;
+      o.strips.push_back(*d);
+    } else if (a == "--mwcb") {
+      const auto t = parse_timed(v);
+      if (!t || (t->symbol != "1" && t->symbol != "2" && t->symbol != "3")) return false;
+      o.scenarios.mwcb = MwcbEvent{t->symbol[0] - '0', t->at_s, t->for_s};
+    } else
       return false;
   }
   for (const auto& acc : split(accounts, ',')) {
@@ -149,6 +202,9 @@ bool parse(int argc, char** argv, Options& o) {
     o.gateway.accounts.push_back({acc.substr(0, colon), acc.substr(colon + 1)});
   }
   if (o.liquidity.path.empty() && o.symbols.empty()) o.symbols = {"AAPL", "MSFT", "SPY"};
+  if (o.scenario_all) o.scenarios = all_scenarios(o.duration, o.symbols);
+  for (const auto& ipo : o.scenarios.ipo_symbols()) o.symbols.push_back(ipo);
+  for (const auto& st : o.strips) o.symbols.push_back(st.name);
   return !o.gateway.accounts.empty();
 }
 
@@ -286,6 +342,8 @@ int main(int argc, char** argv) {
     return 2;
   }
   if (!opt.symbols.empty()) matcher->list_symbols(opt.symbols);
+  matcher->set_scenarios(opt.scenarios);
+  matcher->set_strips(opt.strips);
   std::fprintf(stderr, "simex: orders on %s (%zu accounts), market data %s\n",
                gateway->address().c_str(), opt.gateway.accounts.size(), pub->describe().c_str());
 
@@ -367,6 +425,17 @@ int main(int argc, char** argv) {
       "%llu backpressure spins\n",
       u(ms.hist_orphans), u(ms.unknown_cancels), u(ms.backpressure_spins));
   ms.command_ticks.print(stdout, "Command      producer to matched", 1.0 / clock.ticks_per_ns());
+  if (opt.scenarios.any() || !opt.strips.empty()) {
+    const auto& ss = matcher->scenario_stats();
+    std::printf(
+        "Scenarios    %llu crosses (%llu shares), %llu imbalance messages, %llu halts, "
+        "%llu LULD limit states, %llu pauses, %llu extensions, %llu operational halts, "
+        "%llu broken trades, %llu Reg SHO, %llu orders refused while halted, "
+        "%llu implied strip fills (%llu shares)\n",
+        u(ss.crosses), u(ss.cross_shares), u(ss.noii), u(ss.halts), u(ss.limit_states),
+        u(ss.pauses), u(ss.extensions), u(ss.op_halts), u(ss.broken_trades), u(ss.reg_sho),
+        u(ss.halted_rejects), u(ss.implied_fills), u(ss.implied_shares));
+  }
   std::printf(
       "Gateway      %llu connections, %llu logins (%llu rejected), %llu OUCH in, "
       "%llu out, %llu rejected at the gateway, %llu stale refs, %llu bad, %llu timeouts\n",

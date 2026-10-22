@@ -265,6 +265,50 @@ TEST(BookBuilder, RebuildsSyntheticDayExactly) {
   }
 }
 
+TEST(BookBuilder, SyntheticScenarioDayHasNoErrors) {
+  SyntheticConfig config;
+  config.symbols = 25;
+  config.book_messages = 60'000;
+  config.scenarios = true;
+  SyntheticDay day{config};
+  auto builder = std::make_unique<BookBuilder>(1u << 16);
+  day.generate([&](std::span<const std::byte> m) { builder->apply(m); });
+
+  const auto& c = builder->checks();
+  EXPECT_EQ(c.error_count(), 0u);
+  EXPECT_EQ(builder->system_events(), "OSQMEC");
+  EXPECT_EQ(builder->orders().size(), day.live_orders().size());
+  // Opening and closing crosses for 25 symbols, the IPO, the news halt and
+  // the LULD reopening: one imbalance message and one Q each.
+  EXPECT_EQ(c.crosses, 53u);
+  EXPECT_EQ(c.noii, 53u);
+  EXPECT_EQ(c.cross_overfill, 0u);
+  EXPECT_EQ(builder->mwcb_breached(), '1');
+  EXPECT_EQ(builder->mwcb_levels()[0], 465'000'000'000u);
+
+  const auto& news = builder->instrument(1);
+  EXPECT_EQ(news.imbalance.cross_type, 'C');  // the close came after the halt cross
+  const auto& luld = builder->instrument(2);
+  EXPECT_NE(luld.collar.reference, 0u);
+  EXPECT_LT(luld.collar.lower, luld.collar.reference);
+  EXPECT_GT(luld.collar.upper, luld.collar.reference);
+  EXPECT_EQ(builder->instrument(3).reg_sho_action, '1');
+  EXPECT_EQ(builder->instrument(4).operational_halt, 'T');
+  const auto& ipo = builder->instrument(26);
+  EXPECT_TRUE(ipo.listed);
+  EXPECT_EQ(ipo.ipo_qualifier, 'A');
+  EXPECT_EQ(ipo.trading_state, 'T');
+  EXPECT_EQ(ipo.stats.cross_shares, day.totals(26).cross_shares);
+  std::uint64_t broken = 0;
+  for (std::uint16_t l = 1; l <= config.symbols + 1; ++l) {
+    const auto& inst = builder->instrument(l);
+    EXPECT_EQ(inst.trading_state, 'T') << "locate " << l;
+    EXPECT_EQ(inst.stats.cross_shares, day.totals(l).cross_shares) << "locate " << l;
+    broken += inst.stats.broken_trades;
+  }
+  EXPECT_EQ(broken, 1u);
+}
+
 }  // namespace
 
 TEST(BookBuilder, DigestMatchesOnlyForTheSameBooks) {
