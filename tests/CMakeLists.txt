@@ -67,3 +67,11 @@ add_executable(fix_tests
   fix/test_session.cpp)
 target_link_libraries(fix_tests PRIVATE lab::fix GTest::gtest_main)
 gtest_discover_tests(fix_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(vendor_tests
+  vendor/test_consolidator.cpp
+  vendor/test_icf.cpp
+  vendor/test_omm_bpipe.cpp
+  vendor/test_ws_json.cpp)
+target_link_libraries(vendor_tests PRIVATE lab::vendor GTest::gtest_main)
+gtest_discover_tests(vendor_tests DISCOVERY_TIMEOUT 30)

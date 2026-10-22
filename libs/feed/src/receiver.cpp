@@ -1,6 +1,7 @@
 #include "lab/feed/receiver.hpp"
 
 #include <chrono>
+#include <thread>
 
 #include "lab/core/affinity.hpp"
 
@@ -73,11 +74,13 @@ void FeedReceiver::rx_loop() {
   };
   while (!sh.stop.load(std::memory_order_relaxed)) {
     int n = batch.receive(feed_);
+    bool idle = n <= 0;
     std::uint64_t tsc = rdtsc();
     for (int i = 0; i < n; ++i) push(batch.datagram(i), tsc);
     received += static_cast<std::uint64_t>(n);
 
     n = batch.receive(rq_);
+    idle = idle && n <= 0;
     tsc = rdtsc();
     for (int i = 0; i < n; ++i) push(batch.datagram(i), tsc);
     sh.stats.retrans_packets += static_cast<std::uint64_t>(n);
@@ -92,6 +95,9 @@ void FeedReceiver::rx_loop() {
         ++sh.stats.request_errors;
       else
         ++sh.stats.requests_sent;
+    }
+    if (idle && cfg_.idle_sleep_us != 0) {
+      std::this_thread::sleep_for(std::chrono::microseconds{cfg_.idle_sleep_us});
     }
   }
   sh.stats.packets = received;

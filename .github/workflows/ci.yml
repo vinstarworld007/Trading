@@ -81,6 +81,11 @@ jobs:
           DURATION: 12
         run: timeout 300 scripts/e2e-agents.sh build/${{ matrix.preset }}
 
+      - name: End-to-end market data vendors (ICF, Reuters, Bloomberg)
+        env:
+          DURATION: 8
+        run: timeout 300 scripts/e2e-vendors.sh build/${{ matrix.preset }}
+
       - name: Python research environment
         run: |
           python3 -m venv /tmp/venv
