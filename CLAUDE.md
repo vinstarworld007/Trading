@@ -14,6 +14,8 @@ the project playbook. Build phases are listed in README.md.
   errors; run it on a synthetic day (`itch-gen`) after any codec or book change.
 - `scripts/e2e-simex.sh` runs simex with historical liquidity, `ouch-client` and
   `itch-fh`; run it after any exchange, OUCH, SoupBinTCP or matching change.
+- `scripts/e2e-firm.sh` runs `trader` against simex; run it after any OMS, risk,
+  strategy or trader change.
 - `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
   `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
   feed, sequencing or book change.
@@ -31,7 +33,8 @@ the project playbook. Build phases are listed in README.md.
 - `libs/soup`  SoupBinTCP packets and stream reassembly
 - `libs/ouch`  OUCH 5.0 codec (same field-list pattern as `libs/itch`)
 - `libs/match`  price-time matching engine (header-only, preallocated)
-- `exchange/`, `firm/`, `tools/`, `research/`  as in the design doc
+- `firm/oms`, `firm/risk`, `firm/strategy`  header-only firm libraries; `firm/trader` the trading engine
+- `exchange/`, `tools/`, `research/`  as in the design doc
 - One library or executable per directory, each with its own CMakeLists.txt and
   tests under `tests/<lib>/`.
 

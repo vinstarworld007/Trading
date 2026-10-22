@@ -8,11 +8,16 @@ default layout is:
 | 0-1 | Linux, tools, logger, slow-path services | 1 |
 | 2 | Feed handler rx thread (`itch-fh --rx-cpu 2`): recvmmsg, retransmission requests | 3 |
 | 3 | Feed handler book thread (`itch-fh --book-cpu 3`): sequencing, decode, books | 3 |
-| 4 | Strategy engine | 5 |
-| 5 | Pre-trade risk + order entry gateway | 5 |
+| 4 | Trader trading thread (`trader --trader-cpu 4`): strategy, pre-trade risk, OMS | 5 |
+| 5 | Trader order entry thread (`trader --oe-cpu 5`): OUCH session, the only socket | 5 |
 | 6 | Exchange matching thread (`simex --matcher-cpu 6`) | 4 |
 | 7 | Exchange market data thread (`simex --md-cpu 7`), or `itch-replay --cpu 7` | 3, 4 |
 | 0-1 | Exchange gateway, journal and historical liquidity threads (`simex --gateway-cpu 1`) | 4 |
+
+The trader reuses the feed handler's split (`--rx-cpu 2 --md-cpu 3`): its
+market data thread pushes top-of-book changes for traded symbols to the
+trading thread, which makes no syscalls and hands orders to the order entry
+thread through a ring.
 
 The feed handler keeps every syscall on its rx thread. The book thread only
 reads packets from a lock-free ring, so a slow `recvmmsg` or a retransmission

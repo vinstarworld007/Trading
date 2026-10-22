@@ -60,18 +60,20 @@ struct Options {
   double rate = 5'000;
   std::uint64_t seed = 1;
   double ioc = 0.1;
+  std::uint32_t max_lots = 5;  // order sizes are 1 to max_lots round lots
   bool replay_check = false;
   bool wait_eos = false;
   double answer_timeout = 10;
 };
 
 [[noreturn]] void usage() {
-  std::fprintf(stderr,
-               "usage: ouch-client [--connect IP:PORT] [--accounts USER:PASS,...]\n"
-               "                   [--reference ITCH_FILE [--reference-symbols N] | --symbols "
-               "A,B --mid DOLLARS]\n"
-               "                   [--orders N] [--rate N] [--ioc FRACTION] [--seed S]\n"
-               "                   [--replay-check] [--wait-eos] [--answer-timeout S]\n");
+  std::fprintf(
+      stderr,
+      "usage: ouch-client [--connect IP:PORT] [--accounts USER:PASS,...]\n"
+      "                   [--reference ITCH_FILE [--reference-symbols N] | --symbols "
+      "A,B --mid DOLLARS]\n"
+      "                   [--orders N] [--rate N] [--ioc FRACTION] [--max-lots N] [--seed S]\n"
+      "                   [--replay-check] [--wait-eos] [--answer-timeout S]\n");
   std::exit(2);
 }
 
@@ -117,6 +119,8 @@ Options parse(int argc, char** argv) {
       o.rate = std::strtod(value(), nullptr);
     } else if (a == "--ioc") {
       o.ioc = std::strtod(value(), nullptr);
+    } else if (a == "--max-lots") {
+      o.max_lots = static_cast<std::uint32_t>(std::strtoul(value(), nullptr, 10));
     } else if (a == "--seed") {
       o.seed = std::strtoull(value(), nullptr, 10);
     } else if (a == "--replay-check") {
@@ -129,7 +133,7 @@ Options parse(int argc, char** argv) {
       usage();
     }
   }
-  if (o.accounts.empty() || o.rate <= 0) usage();
+  if (o.accounts.empty() || o.rate <= 0 || o.max_lots == 0) usage();
   return o;
 }
 
@@ -138,23 +142,36 @@ struct Instrument {
   std::uint64_t reference;  // Price(4)
 };
 
-// The first Add Order price of the first `n` symbols that have one.
+// A reference price for the first `n` symbols: the midpoint of the first buy
+// and the first sell Add Order seen for each (one order alone can sit far from
+// the market).
 std::vector<Instrument> reference_prices(const std::string& path, std::size_t n) {
   struct Scan : lab::itch::HandlerBase {
     using HandlerBase::on;
-    std::map<std::uint16_t, Instrument> found;
-    void add(std::uint16_t locate, const lab::itch::Symbol& s, std::uint32_t price) {
-      if (found.count(locate) != 0) return;
-      Instrument in;
-      std::memcpy(in.symbol.data(), s.data(), in.symbol.size());
-      in.reference = price;
-      found.emplace(locate, in);
+    struct Seen {
+      lab::itch::Symbol stock{};
+      std::uint32_t buy = 0, sell = 0;
+    };
+    std::map<std::uint16_t, Seen> seen;
+    std::size_t complete = 0;
+    void add(std::uint16_t locate, const lab::itch::Symbol& s, char side, std::uint32_t price) {
+      Seen& x = seen[locate];
+      if (x.buy != 0 && x.sell != 0) return;
+      x.stock = s;
+      std::uint32_t& p = side == 'B' ? x.buy : x.sell;
+      if (p != 0) return;
+      p = price;
+      if (x.buy != 0 && x.sell != 0) ++complete;
     }
-    void on(const lab::itch::AddOrder& m) { add(m.header.stock_locate, m.stock, m.price); }
-    void on(const lab::itch::AddOrderMpid& m) { add(m.header.stock_locate, m.stock, m.price); }
+    void on(const lab::itch::AddOrder& m) {
+      add(m.header.stock_locate, m.stock, m.buy_sell_indicator, m.price);
+    }
+    void on(const lab::itch::AddOrderMpid& m) {
+      add(m.header.stock_locate, m.stock, m.buy_sell_indicator, m.price);
+    }
   } scan;
   lab::itch::FileReader reader{path};
-  while (scan.found.size() < n && reader.messages_read() < 5'000'000) {
+  while (scan.complete < n && reader.messages_read() < 5'000'000) {
     const auto msg = reader.next();
     if (!msg) break;
     lab::itch::dispatch(msg->data(), msg->size(), scan);
@@ -164,7 +181,13 @@ std::vector<Instrument> reference_prices(const std::string& path, std::size_t n)
     std::exit(1);
   }
   std::vector<Instrument> out;
-  for (const auto& [locate, in] : scan.found) out.push_back(in);
+  for (const auto& [locate, x] : scan.seen) {
+    if (x.buy == 0 || x.sell == 0 || out.size() == n) continue;
+    Instrument in;
+    std::memcpy(in.symbol.data(), x.stock.data(), in.symbol.size());
+    in.reference = (x.buy / 2 + x.sell / 2) / 100 * 100;  // on the cent grid
+    out.push_back(in);
+  }
   return out;
 }
 
@@ -319,7 +342,7 @@ class Session {
       m.orig_user_ref_num = ref;
       m.user_ref_num = new_ref;
       m.price = jitter(rng, instruments[o.instrument].reference, o.side);
-      m.quantity = o.executed + 100 * static_cast<std::uint32_t>(1 + rng() % 5);
+      m.quantity = o.executed + 100 * static_cast<std::uint32_t>(1 + rng() % max_lots_);
       m.cl_ord_id = ouch::make_alpha<14>("R" + std::to_string(new_ref));
       o.want = Want::kReplace;
       o.sent_tsc = lab::rdtsc();
@@ -363,6 +386,7 @@ class Session {
   bool replay_done() const { return !replaying_; }
   const Stats& stats() const { return stats_; }
   const std::string& user() const { return user_; }
+  void set_max_lots(std::uint32_t n) { max_lots_ = n; }
 
  private:
   static std::uint64_t jitter(std::mt19937_64& rng, std::uint64_t ref, char side) {
@@ -380,7 +404,7 @@ class Session {
     ouch::EnterOrder m;
     m.user_ref_num = ref;
     m.side = (rng() & 1) != 0 ? ouch::side::kBuy : ouch::side::kSell;
-    m.quantity = 100 * static_cast<std::uint32_t>(1 + rng() % 5);
+    m.quantity = 100 * static_cast<std::uint32_t>(1 + rng() % max_lots_);
     m.symbol = instruments[i].symbol;
     m.price = jitter(rng, instruments[i].reference, m.side);
     m.time_in_force = u(rng) < ioc ? ouch::tif::kIoc : ouch::tif::kDay;
@@ -606,6 +630,7 @@ class Session {
   std::uint64_t next_seq_ = 0;
   std::uint64_t login_seq_ = 0;
   std::uint32_t next_ref_ = 1;
+  std::uint32_t max_lots_ = 5;
   std::unordered_map<std::uint32_t, Order> orders_;
   std::unordered_map<std::uint32_t, std::uint32_t> replacing_;  // new ref -> original
   std::size_t live_count_ = 0;
@@ -645,6 +670,7 @@ int main(int argc, char** argv) {
   std::vector<std::unique_ptr<Session>> sessions;
   for (const auto& [user, pass] : opt.accounts) {
     sessions.push_back(std::make_unique<Session>(user, pass, check, rtt));
+    sessions.back()->set_max_lots(opt.max_lots);
     sessions.back()->connect(to, 1);
   }
   std::printf("ouch-client: %zu accounts on %s, %zu symbols, %llu orders at %.0f/s\n",
