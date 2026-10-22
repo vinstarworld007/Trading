@@ -1,4 +1,4 @@
-add_library(lab_net src/udp.cpp)
+add_library(lab_net src/tcp.cpp src/udp.cpp)
 add_library(lab::net ALIAS lab_net)
 
 target_include_directories(lab_net PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

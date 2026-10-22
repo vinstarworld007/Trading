@@ -10,13 +10,20 @@ default layout is:
 | 3 | Feed handler book thread (`itch-fh --book-cpu 3`): sequencing, decode, books | 3 |
 | 4 | Strategy engine | 5 |
 | 5 | Pre-trade risk + order entry gateway | 5 |
-| 6 | Exchange matching engine (`simex`) | 4 |
-| 7 | Exchange market data publisher, or `itch-replay --cpu 7` | 3, 4 |
+| 6 | Exchange matching thread (`simex --matcher-cpu 6`) | 4 |
+| 7 | Exchange market data thread (`simex --md-cpu 7`), or `itch-replay --cpu 7` | 3, 4 |
+| 0-1 | Exchange gateway, journal and historical liquidity threads (`simex --gateway-cpu 1`) | 4 |
 
 The feed handler keeps every syscall on its rx thread. The book thread only
 reads packets from a lock-free ring, so a slow `recvmmsg` or a retransmission
 request never stalls book updates, and a book thread that falls behind shows
 up as "packet ring full" in the report (recovered like any other lost packet).
+
+simex's matching thread makes no syscalls: the gateway thread owns every
+socket and hands it commands through a ring, the matching thread hands back
+responses, ITCH messages and journal records through three more. Firm orders
+are taken ahead of historical liquidity, so a firm order never waits behind a
+burst of replayed flow.
 
 With fewer cores, put the exchange side (5, 6, 7) on shared cores first: its
 latency matters less than the firm's.

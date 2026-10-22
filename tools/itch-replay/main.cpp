@@ -19,24 +19,18 @@
 #include <exception>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "lab/core/affinity.hpp"
 #include "lab/core/clock.hpp"
 #include "lab/core/endian.hpp"
+#include "lab/feed/publisher.hpp"
 #include "lab/itch/file_reader.hpp"
 #include "lab/mold/fault_injector.hpp"
 #include "lab/mold/mold.hpp"
-#include "lab/mold/retransmit_store.hpp"
-#include "lab/net/udp.hpp"
 
 namespace {
 
 namespace mold = lab::mold;
-namespace net = lab::net;
-
-constexpr std::size_t kMaxPayload = 8972;  // jumbo-frame UDP payload; --payload picks the limit
-using Builder = mold::PacketBuilder<kMaxPayload>;
 
 struct Options {
   std::string path;
@@ -114,188 +108,9 @@ bool parse(int argc, char** argv, Options& o) {
     else
       return false;
   }
-  return o.payload >= mold::kHeaderSize + 64 && o.payload <= kMaxPayload && o.store_mb > 0;
+  return o.payload >= mold::kHeaderSize + 64 &&
+         o.payload <= lab::feed::MoldPublisher::kMaxPayload && o.store_mb > 0;
 }
-
-std::size_t pow2_floor(std::size_t v) {
-  std::size_t p = 1;
-  while (p * 2 <= v) p *= 2;
-  return p;
-}
-
-class Publisher {
- public:
-  Publisher(const Options& o)
-      : opt_{o},
-        session_{mold::make_session(o.session)},
-        dest_{net::parse_endpoint(o.dest)},
-        tx_{net::UdpSocket::sender(dest_, o.iface)},
-        rq_{net::UdpSocket::bound(
-            net::parse_endpoint(o.iface + ":" + std::to_string(o.retrans_port)))},
-        // ~16 bytes of index per stored message; ITCH averages about 30 bytes.
-        store_{o.store_mb << 20, pow2_floor((o.store_mb << 20) / 16)},
-        faults_{o.faults},
-        builder_{o.payload},
-        rbuilder_{o.payload},
-        held_(kMaxPayload) {
-    builder_.begin(session_, store_.next_sequence());
-  }
-
-  // Adds one message, sending the current packet first if it is full or has
-  // waited long enough.
-  void add(std::span<const std::byte> msg, std::uint64_t now) {
-    if (!builder_.empty() && now - opened_ns_ > opt_.max_delay_us * 1000) flush(now);
-    if (!builder_.add(msg)) {
-      flush(now);
-      builder_.add(msg);
-    }
-    if (builder_.count() == 1) opened_ns_ = now;
-    store_.append(msg);
-    ++messages_;
-  }
-
-  // Sends the pending packet through the fault injector.
-  void flush(std::uint64_t now) {
-    if (builder_.empty()) return;
-    const auto pkt = builder_.finish();
-    sent_next_ = builder_.next_sequence();
-    switch (faults_.next()) {
-      case mold::Fault::kDrop:
-        break;
-      case mold::Fault::kReorder:
-        if (!holding_) {
-          std::copy(pkt.begin(), pkt.end(), held_.begin());
-          held_len_ = pkt.size();
-          holding_ = true;
-          break;
-        }
-        [[fallthrough]];
-      case mold::Fault::kNone:
-        send(pkt);
-        release_held();
-        break;
-      case mold::Fault::kDuplicate:
-        send(pkt);
-        send(pkt);
-        release_held();
-        break;
-    }
-    last_send_ns_ = now;
-    builder_.begin(session_, store_.next_sequence());
-  }
-
-  // Answers waiting retransmission requests and sends a heartbeat when idle.
-  void service(std::uint64_t now) {
-    serve_requests();
-    if (now - last_send_ns_ >= opt_.heartbeat_ms * 1'000'000) {
-      mold::PacketBuilder<mold::kHeaderSize + 2> hb;
-      hb.heartbeat(session_, sent_next_);
-      send(hb.finish());
-      ++heartbeats_;
-      last_send_ns_ = now;
-    }
-  }
-
-  void finish() {
-    const std::uint64_t now = lab::mono_ns();
-    flush(now);
-    release_held();
-    const std::uint64_t end = now + static_cast<std::uint64_t>(opt_.eos_seconds * 1e9);
-    std::uint64_t next_eos = 0;
-    for (std::uint64_t t = now; t < end; t = lab::mono_ns()) {
-      if (t >= next_eos) {
-        mold::PacketBuilder<mold::kHeaderSize + 2> eos;
-        eos.end_of_session(session_, sent_next_);
-        send(eos.finish());
-        ++eos_sent_;
-        next_eos = t + 100'000'000;  // every 100 ms, so receivers finish quickly
-      }
-      serve_requests();
-    }
-  }
-
-  void report(double secs) const {
-    const auto& f = faults_.stats();
-    std::printf("Session      %s to %s, re-requests on %s\n", opt_.session.c_str(),
-                dest_.str().c_str(), rq_.local().str().c_str());
-    std::printf("Messages     %llu in %llu packets (%.2f s, %.2f M msgs/s)\n",
-                static_cast<unsigned long long>(messages_),
-                static_cast<unsigned long long>(f.packets), secs,
-                secs > 0 ? static_cast<double>(messages_) / secs / 1e6 : 0.0);
-    std::printf("Heartbeats   %llu, End of Session %llu, send errors %llu\n",
-                static_cast<unsigned long long>(heartbeats_),
-                static_cast<unsigned long long>(eos_sent_),
-                static_cast<unsigned long long>(send_errors_));
-    std::printf("Faults       dropped %llu (%llu bursts), duplicated %llu, reordered %llu\n",
-                static_cast<unsigned long long>(f.dropped),
-                static_cast<unsigned long long>(f.bursts),
-                static_cast<unsigned long long>(f.duplicated),
-                static_cast<unsigned long long>(f.reordered));
-    std::printf("Re-requests  %llu served, %llu messages resent, %llu unanswerable\n",
-                static_cast<unsigned long long>(requests_),
-                static_cast<unsigned long long>(resent_),
-                static_cast<unsigned long long>(unanswerable_));
-  }
-
- private:
-  void send(std::span<const std::byte> pkt) {
-    if (tx_.send_to(pkt, dest_) < 0) ++send_errors_;
-  }
-
-  void release_held() {
-    if (!holding_) return;
-    send({held_.data(), held_len_});
-    holding_ = false;
-  }
-
-  void serve_requests() {
-    std::array<std::byte, 64> buf;
-    net::Endpoint from;
-    for (;;) {
-      const ssize_t n = rq_.recv_from(buf, &from);
-      if (n < 0) return;
-      mold::Request r;
-      if (!mold::decode_request(buf.data(), static_cast<std::size_t>(n), r) ||
-          r.session != session_ || r.sequence >= sent_next_ || r.count == 0) {
-        ++unanswerable_;
-        continue;
-      }
-      const auto want =
-          static_cast<std::uint16_t>(std::min<std::uint64_t>(r.count, sent_next_ - r.sequence));
-      const std::uint16_t got = store_.fill(rbuilder_, session_, r.sequence, want);
-      if (got == 0) {
-        ++unanswerable_;  // evicted from the store
-        continue;
-      }
-      if (rq_.send_to(rbuilder_.finish(), from) < 0) ++send_errors_;
-      ++requests_;
-      resent_ += got;
-    }
-  }
-
-  const Options& opt_;
-  mold::Session session_;
-  net::Endpoint dest_;
-  net::UdpSocket tx_;
-  net::UdpSocket rq_;
-  mold::RetransmitStore store_;
-  mold::FaultInjector faults_;
-  Builder builder_;
-  Builder rbuilder_;
-  std::vector<std::byte> held_;  // packet held back by a reorder fault
-  std::size_t held_len_ = 0;
-  bool holding_ = false;
-  std::uint64_t sent_next_ = 1;  // next sequence number not yet sent
-  std::uint64_t opened_ns_ = 0;
-  std::uint64_t last_send_ns_ = 0;
-  std::uint64_t messages_ = 0;
-  std::uint64_t heartbeats_ = 0;
-  std::uint64_t eos_sent_ = 0;
-  std::uint64_t requests_ = 0;
-  std::uint64_t resent_ = 0;
-  std::uint64_t unanswerable_ = 0;
-  std::uint64_t send_errors_ = 0;
-};
 
 }  // namespace
 
@@ -310,9 +125,19 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "itch-replay: %s\n", reader.error().c_str());
     return 2;
   }
-  std::unique_ptr<Publisher> pub;
+  lab::feed::PublisherConfig pc;
+  pc.dest = opt.dest;
+  pc.iface = opt.iface;
+  pc.retrans_port = opt.retrans_port;
+  pc.session = opt.session;
+  pc.payload = opt.payload;
+  pc.max_delay_us = opt.max_delay_us;
+  pc.heartbeat_ms = opt.heartbeat_ms;
+  pc.store_mb = opt.store_mb;
+  pc.faults = opt.faults;
+  std::unique_ptr<lab::feed::MoldPublisher> pub;
   try {
-    pub = std::make_unique<Publisher>(opt);
+    pub = std::make_unique<lab::feed::MoldPublisher>(pc);
   } catch (const std::exception& e) {
     std::fprintf(stderr, "itch-replay: %s\n", e.what());
     return 2;
@@ -356,7 +181,7 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "itch-replay: %s after %llu messages\n", reader.error().c_str(),
                  static_cast<unsigned long long>(n));
   }
-  pub->finish();
-  pub->report(secs);
+  pub->finish(opt.eos_seconds);
+  pub->print_report(stdout, secs);
   return reader.ok() ? 0 : 2;
 }

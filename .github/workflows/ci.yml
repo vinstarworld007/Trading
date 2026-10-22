@@ -54,6 +54,13 @@ jobs:
           RATE: 200000  # sanitizer builds apply books several times slower
         run: timeout 300 scripts/e2e-live-feed.sh build/${{ matrix.preset }}
 
+      - name: End-to-end exchange (simex, OUCH client, feed handler)
+        env:
+          RATE: 50000  # sanitizer builds match several times slower
+          ORDERS: 10000
+          ORDER_RATE: 5000
+        run: timeout 300 scripts/e2e-simex.sh build/${{ matrix.preset }}
+
   format:
     runs-on: ubuntu-24.04
     steps:

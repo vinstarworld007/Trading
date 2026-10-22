@@ -6,3 +6,6 @@ target_link_libraries(itch_bench PRIVATE lab::book benchmark::benchmark_main)
 
 add_executable(mold_bench bm_mold.cpp)
 target_link_libraries(mold_bench PRIVATE lab::mold benchmark::benchmark_main)
+
+add_executable(match_bench bm_match.cpp)
+target_link_libraries(match_bench PRIVATE lab::match benchmark::benchmark_main)
