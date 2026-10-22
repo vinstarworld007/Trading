@@ -83,6 +83,27 @@ positions, PnL and transaction cost analysis (spread capture and markouts).
 top of book from an ITCH day. See `research/README.md`.
 `scripts/e2e-posttrade.sh` runs the whole loop.
 
+Trade over FIX: `fixgw` is a FIX 4.4 venue in front of simex. Each FIX
+session (by SenderCompID) trades through its own simex account; NewOrderSingle,
+OrderCancelRequest and OrderCancelReplaceRequest become OUCH, and OUCH answers
+come back as ExecutionReports and OrderCancelRejects. Sequence numbers persist
+across reconnects, and a firm that missed messages gets them again by
+ResendRequest. The subset and the mapping are in `docs/specs/fix44-subset.md`.
+
+```bash
+./build/release/exchange/simex/simex --symbols AAPL,MSFT --accounts OUCHA:pa,OUCHB:pb
+./build/release/exchange/fixgw/fixgw --session FIXA:OUCHA:pa --session FIXB:OUCHB:pb
+./build/release/tools/fix-client/fix-client --sessions FIXA,FIXB --orders 5000 --reconnect-at 2000
+```
+
+`scripts/e2e-fix.sh` runs them with a drop copy and checks every FIX fill
+against it.
+
+Trade without a replay: `agents` makes the market from a population of
+makers, noise traders, value traders and momentum traders reacting to a
+hidden fundamental value that moves a tick at a time. `scripts/e2e-agents.sh`
+runs the firm's trader in that market.
+
 Build by hand:
 
 ```bash
@@ -115,6 +136,10 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `firm/strategy` | A one-level market maker that leans against its position |
 | `firm/trader` | The firm's trading engine: market data, trading and order entry threads joined by rings |
 | `tools/dropcopy` | Records simex's drop copy (every firm execution) to CSV and prints each account's positions |
+| `libs/fix` | FIX 4.4 tag=value framing (BodyLength, CheckSum) and a session layer: logon, sequence numbers across reconnects, resend with gap fill, heartbeats and test requests |
+| `exchange/fixgw` | FIX 4.4 venue in front of simex, mapping FIX orders onto OUCH sessions |
+| `exchange/agents` | Agent-based liquidity: makers, noise, value and momentum traders around a hidden fundamental value |
+| `tools/fix-client` | Trades FIX sessions against each other through `fixgw`, drops and resumes a session, and checks every answer |
 | `research/` | Python: positions and PnL, reconciliation against the drop copy, TCA, a queue-model market-making backtest |
 | `tools/ouch-client` | Trades random orders into simex on several accounts and checks every response |
 | `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
@@ -123,13 +148,16 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `docs/core-plan.md` | Which thread runs on which core |
 | `docs/specs/itch50-layout.md` | ITCH 5.0 field tables the codec implements, with the source |
 | `docs/specs/moldudp64-layout.md` | MoldUDP64 packet and request layouts, with the source |
+| `docs/specs/fix44-subset.md` | The FIX 4.4 messages and fields `fixgw` speaks, with the source, and how they map onto OUCH |
 | `docs/specs/dropcopy-layout.md` | The lab's own drop copy Execution Report |
 | `docs/specs/soupbintcp-layout.md`, `docs/specs/ouch50-layout.md` | SoupBinTCP and OUCH 5.0 layouts, and how simex reads the spec where it leaves room |
 | `scripts/e2e-live-feed.sh` | Replays a day with packet loss into `itch-fh` and checks the books match `itch-dump` |
 | `scripts/e2e-simex.sh` | simex with historical liquidity, `ouch-client` trading into it and `itch-fh` on its feed; checks responses and that all books agree |
 | `scripts/e2e-firm.sh` | `trader` making markets on simex against noise flow; checks risk limits, OMS consistency, no self-trades, clean shutdown |
 | `scripts/e2e-posttrade.sh` | The firm session plus drop copy, then reconciliation, TCA and a backtest |
-| `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine |
+| `scripts/e2e-fix.sh` | Two FIX sessions trading through `fixgw`, one dropped and resumed midway; FIX fills checked against the drop copy |
+| `scripts/e2e-agents.sh` | `trader` making markets among the agents, with no replay |
+| `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine (with p50/p99/p99.9), FIX codec |
 
 ## Build phases
 
@@ -138,8 +166,8 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 3. **Live feed**: `itch-replay` (MoldUDP64, fault injection, retransmission) and `itch-fh`.
 4. **Exchange**: `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
 5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.
-6. **Post-trade and research** (this): drop copy, PnL, TCA, Python backtests.
-7. **Hardening**: profiling, tail latency, agent-based liquidity, a FIX venue.
+6. **Post-trade and research**: drop copy, PnL, TCA, Python backtests.
+7. **Hardening** (this): profiling, tail latency, agent-based liquidity, a FIX venue.
 
 Latency numbers measured under WSL2 are relative, not production figures: the
 Windows host schedules the VM's CPUs, and there is no kernel-bypass networking.

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "lab/core/compiler.hpp"
+#include "lab/core/huge_pages.hpp"
 
 namespace lab::match {
 
@@ -85,7 +86,7 @@ class KeyIndex {
     return static_cast<std::size_t>(key) & mask_;
   }
 
-  std::vector<Slot> slots_;
+  std::vector<Slot, HugePageAllocator<Slot>> slots_;  // random access over up to 128 MB
   std::size_t mask_ = 0;
   std::size_t size_ = 0;
   std::size_t max_ = 0;

@@ -69,6 +69,18 @@ jobs:
           DURATION: 10
         run: timeout 300 scripts/e2e-firm.sh build/${{ matrix.preset }}
 
+      - name: End-to-end FIX venue (fixgw, fix-client, reconnect with resend)
+        env:
+          ORDERS: 3000
+          ORDER_RATE: 500
+          DURATION: 30
+        run: timeout 300 scripts/e2e-fix.sh build/${{ matrix.preset }}
+
+      - name: End-to-end agent-based liquidity (agents and trader, no replay)
+        env:
+          DURATION: 12
+        run: timeout 300 scripts/e2e-agents.sh build/${{ matrix.preset }}
+
       - name: Python research environment
         run: |
           python3 -m venv /tmp/venv

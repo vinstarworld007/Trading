@@ -19,6 +19,9 @@ the project playbook. Build phases are listed in README.md.
 - `scripts/e2e-posttrade.sh` adds the drop copy and runs `research/report.py`
   (reconciliation must be clean); run it after any drop copy, fill log or
   research change, and `python3 -m unittest discover research/tests`.
+- `scripts/e2e-fix.sh` runs `fixgw` and `fix-client` against simex; run it after
+  any `libs/fix`, `fixgw` or OUCH change. `scripts/e2e-agents.sh` runs `agents`
+  and `trader`; run it after any agents or trader change.
 - `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
   `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
   feed, sequencing or book change.
@@ -35,7 +38,8 @@ the project playbook. Build phases are listed in README.md.
 - `libs/feed`  MoldUDP64 publisher and receiver threads built on `libs/mold` and `libs/net`
 - `libs/soup`  SoupBinTCP packets and stream reassembly
 - `libs/ouch`  OUCH 5.0 codec (same field-list pattern as `libs/itch`)
-- `libs/match`  price-time matching engine (header-only, preallocated)
+- `libs/match`  price-time matching engine (header-only, preallocated; tables on huge pages)
+- `libs/fix`  FIX 4.4 framing and session layer (header-only)
 - `firm/oms`, `firm/risk`, `firm/strategy`  header-only firm libraries; `firm/trader` the trading engine
 - `research/`  Python (numpy, pandas): PnL, reconciliation, TCA, backtests; stdlib unittest
 - `exchange/`, `tools/`  as in the design doc
@@ -55,7 +59,8 @@ the project playbook. Build phases are listed in README.md.
 ## Protocols
 
 - ITCH 5.0, MoldUDP64, OUCH and SoupBinTCP field layouts come from the official
-  spec PDFs in `docs/specs/`. Never guess a field offset; if the spec is missing,
+  spec PDFs in `docs/specs/`; FIX 4.4 tags and values from the FIX dictionary
+  cited in `docs/specs/fix44-subset.md`. Never guess a field offset; if the spec is missing,
   stop and ask.
 - All wire integers are big-endian: use `lab/core/endian.hpp`.
 - Prices are integers (ITCH Price(4) = 1/10000 dollars). No floating point for prices.

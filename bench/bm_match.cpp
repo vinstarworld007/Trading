@@ -1,9 +1,12 @@
 #include <benchmark/benchmark.h>
 
+#include <chrono>
 #include <memory>
 #include <random>
 #include <vector>
 
+#include "lab/core/clock.hpp"
+#include "lab/core/histogram.hpp"
 #include "lab/match/engine.hpp"
 
 namespace {
@@ -20,9 +23,9 @@ struct Null {
   void on_replaced(const OrderView&, const OrderView&) {}
 };
 
-std::unique_ptr<Engine> make_engine() {
+std::unique_ptr<Engine> make_engine(std::size_t max_orders = 1u << 20) {
   EngineConfig cfg;
-  cfg.max_orders = 1u << 20;
+  cfg.max_orders = max_orders;
   auto e = std::make_unique<Engine>(cfg);
   e->add_instrument(1);
   return e;
@@ -67,9 +70,13 @@ void BM_CrossOneLevel(benchmark::State& state) {
 BENCHMARK(BM_CrossOneLevel);
 
 // A mixed flow like simex sees: adds near the touch, cancels, replaces and
-// some crossing orders, over a book of about 10k live orders.
+// some crossing orders, over a book of about 10k live orders. The argument is
+// the engine's capacity: simex runs with 4M (1 << 22), which spreads the key
+// index over 128 MB. Besides the mean, reports p50/p99/p99.9 of single
+// commands (rdtsc ticks converted with TscClock).
 void BM_MixedFlow(benchmark::State& state) {
-  auto e = make_engine();
+  auto e = make_engine(static_cast<std::size_t>(state.range(0)));
+  lab::LatencyHistogram h;
   Null l;
   std::mt19937_64 rng{7};
   std::vector<OrderKey> live;
@@ -88,6 +95,7 @@ void BM_MixedFlow(benchmark::State& state) {
   };
   for (int i = 0; i < 10'000; ++i) add(false);
   for (auto _ : state) {
+    const std::uint64_t t0 = lab::rdtsc();
     const auto r = rng() % 100;
     if (r < 50 || live.size() < 1000) {
       add(r < 5);
@@ -109,9 +117,15 @@ void BM_MixedFlow(benchmark::State& state) {
         live.push_back(n);
       }
     }
+    h.record(lab::rdtsc() - t0);
   }
   state.SetItemsProcessed(state.iterations());
+  static const auto clock = lab::TscClock::calibrate(std::chrono::milliseconds{50});
+  const double ns = 1.0 / clock.ticks_per_ns();
+  state.counters["p50_ns"] = static_cast<double>(h.percentile(50)) * ns;
+  state.counters["p99_ns"] = static_cast<double>(h.percentile(99)) * ns;
+  state.counters["p99.9_ns"] = static_cast<double>(h.percentile(99.9)) * ns;
 }
-BENCHMARK(BM_MixedFlow);
+BENCHMARK(BM_MixedFlow)->Arg(1 << 20)->Arg(1 << 22);
 
 }  // namespace
