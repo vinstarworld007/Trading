@@ -75,6 +75,14 @@ At the end it cancels its orders and reports positions, PnL, risk blocks, and
 latency from a market data packet to the order it caused leaving the socket.
 `scripts/e2e-firm.sh` runs it against simex with noise flow from `ouch-client`.
 
+Check the day afterwards. simex sends a drop copy of every firm execution to
+its `DROP01` session, which `dropcopy` records. `research/report.py`
+reconciles the trader's own record of its fills against it, then prints
+positions, PnL and transaction cost analysis (spread capture and markouts).
+`research/backtest.py` sweeps the market maker's parameters on any symbol's
+top of book from an ITCH day. See `research/README.md`.
+`scripts/e2e-posttrade.sh` runs the whole loop.
+
 Build by hand:
 
 ```bash
@@ -91,7 +99,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `libs/core` | Lock-free SPSC ring, shared-memory regions, TSC clock, thread pinning, latency histogram, async logger, big-endian helpers |
 | `libs/itch` | ITCH 5.0 codec for all 23 message types, gzip BinaryFILE reader/writer, synthetic day generator |
 | `libs/book` | Order store, price-level books, and `BookBuilder`, which rebuilds every book from ITCH and runs data quality checks |
-| `tools/itch-dump` | Replays a day file, rebuilds all books, prints integrity checks, top symbols, a symbol's book, per-symbol CSV |
+| `tools/itch-dump` | Replays a day file, rebuilds all books, prints integrity checks, top symbols, a symbol's book, per-symbol CSV, one symbol's top of book as CSV |
 | `libs/mold` | MoldUDP64 codec, receiver-side sequencing (gaps, duplicates, reordering, retransmission requests), sender-side retransmit store, seeded fault injector |
 | `libs/net` | UDP unicast and multicast sockets, `recvmmsg` batch receive |
 | `tools/itch-replay` | Publishes a day file as a MoldUDP64 feed with pacing, heartbeats, End of Session, a re-request server and fault injection |
@@ -106,6 +114,8 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `firm/risk` | Inline pre-trade risk: kill switch, order size and notional, price collar, worst-case position, open orders, order rate |
 | `firm/strategy` | A one-level market maker that leans against its position |
 | `firm/trader` | The firm's trading engine: market data, trading and order entry threads joined by rings |
+| `tools/dropcopy` | Records simex's drop copy (every firm execution) to CSV and prints each account's positions |
+| `research/` | Python: positions and PnL, reconciliation against the drop copy, TCA, a queue-model market-making backtest |
 | `tools/ouch-client` | Trades random orders into simex on several accounts and checks every response |
 | `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
 | `tools/lab-check` | Checks the machine (CPUs, TSC, huge pages, loopback multicast, disk) and measures a core-to-core round trip |
@@ -113,10 +123,12 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `docs/core-plan.md` | Which thread runs on which core |
 | `docs/specs/itch50-layout.md` | ITCH 5.0 field tables the codec implements, with the source |
 | `docs/specs/moldudp64-layout.md` | MoldUDP64 packet and request layouts, with the source |
+| `docs/specs/dropcopy-layout.md` | The lab's own drop copy Execution Report |
 | `docs/specs/soupbintcp-layout.md`, `docs/specs/ouch50-layout.md` | SoupBinTCP and OUCH 5.0 layouts, and how simex reads the spec where it leaves room |
 | `scripts/e2e-live-feed.sh` | Replays a day with packet loss into `itch-fh` and checks the books match `itch-dump` |
 | `scripts/e2e-simex.sh` | simex with historical liquidity, `ouch-client` trading into it and `itch-fh` on its feed; checks responses and that all books agree |
 | `scripts/e2e-firm.sh` | `trader` making markets on simex against noise flow; checks risk limits, OMS consistency, no self-trades, clean shutdown |
+| `scripts/e2e-posttrade.sh` | The firm session plus drop copy, then reconciliation, TCA and a backtest |
 | `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine |
 
 ## Build phases
@@ -125,8 +137,8 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 2. **ITCH codec and offline book**: `itch-dump` rebuilds every order book from a sample day.
 3. **Live feed**: `itch-replay` (MoldUDP64, fault injection, retransmission) and `itch-fh`.
 4. **Exchange**: `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
-5. **Firm hot path** (this): order gateway, inline risk, OMS, a market-making strategy.
-6. **Post-trade and research**: drop copy, PnL, TCA, Python backtests.
+5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.
+6. **Post-trade and research** (this): drop copy, PnL, TCA, Python backtests.
 7. **Hardening**: profiling, tail latency, agent-based liquidity, a FIX venue.
 
 Latency numbers measured under WSL2 are relative, not production figures: the

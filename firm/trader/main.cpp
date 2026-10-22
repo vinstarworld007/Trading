@@ -41,6 +41,8 @@ struct Options {
   trader::TradingConfig trading;
   int md_cpu = -1;
   double duration = 0;  // 0: until the feed or the session ends
+  std::string fills_csv;
+  std::string market_csv;
 };
 
 [[noreturn]] void usage() {
@@ -50,7 +52,8 @@ struct Options {
                "              [--quote-qty N] [--max-position N] [--skew-ticks N]\n"
                "              [--risk-max-position N] [--max-order-qty N] [--collar-bps N]\n"
                "              [--max-orders-per-sec N] [--max-open-orders N]\n"
-               "              [--rx-cpu N] [--md-cpu N] [--trader-cpu N] [--oe-cpu N]\n");
+               "              [--rx-cpu N] [--md-cpu N] [--trader-cpu N] [--oe-cpu N]\n"
+               "              [--fills-csv FILE] [--market-csv FILE]\n");
   std::exit(2);
 }
 
@@ -104,6 +107,11 @@ Options parse(int argc, char** argv) {
       o.trading.limits.max_orders_per_second = std::strtod(v, nullptr);
     } else if (a == "--max-open-orders") {
       o.trading.limits.max_open_orders = static_cast<std::uint32_t>(std::strtoul(v, nullptr, 10));
+    } else if (a == "--fills-csv") {
+      o.fills_csv = v;
+      o.trading.fill_log_capacity = 1u << 20;
+    } else if (a == "--market-csv") {
+      o.market_csv = v;
     } else if (a == "--rx-cpu") {
       o.feed.rx_cpu = std::atoi(v);
     } else if (a == "--md-cpu") {
@@ -127,12 +135,29 @@ extern "C" void on_signal(int) { g_interrupted.store(true, std::memory_order_rel
 // traded ones.
 class MarketData {
  public:
-  MarketData(const std::vector<lab::oms::Symbol>& symbols, trader::TopRing& out)
+  MarketData(const std::vector<lab::oms::Symbol>& symbols, trader::TopRing& out,
+             std::size_t log_capacity)
       : symbols_{symbols},
         out_{out},
         books_{std::make_unique<lab::book::BookBuilder>()},
         instrument_of_(65536, -1),
-        last_(symbols.size()) {}
+        last_(symbols.size()) {
+    log_.reserve(log_capacity);
+  }
+
+  // After run(): every top-of-book change for the traded symbols, as CSV.
+  bool write_log(const std::string& path) const {
+    std::FILE* f = std::fopen(path.c_str(), "w");
+    if (f == nullptr) return false;
+    std::fprintf(f, "feed_ns,symbol,bid,bid_qty,ask,ask_qty\n");
+    for (const auto& t : log_) {
+      std::string sym(symbols_[t.instrument].data(), 8);
+      while (!sym.empty() && sym.back() == ' ') sym.pop_back();
+      std::fprintf(f, "%llu,%s,%u,%u,%u,%u\n", static_cast<unsigned long long>(t.feed_ns),
+                   sym.c_str(), t.bid_px[0], t.bid_qty[0], t.ask_px[0], t.ask_qty[0]);
+    }
+    return std::fclose(f) == 0;
+  }
 
   void run(lab::feed::FeedReceiver& rx, int cpu, const std::atomic<bool>& stop) {
     lab::set_thread_name("trader-md");
@@ -188,6 +213,7 @@ class MarketData {
     t.instrument = static_cast<std::uint16_t>(inst);
     t.locate = locate;
     last = t;
+    if (log_.size() < log_.capacity()) log_.push_back(t);  // reserved: no allocation
     while (!out_.try_push(t)) ++ring_full_spins_;
     ++tops_sent_;
   }
@@ -197,6 +223,7 @@ class MarketData {
   std::unique_ptr<lab::book::BookBuilder> books_;
   std::vector<int> instrument_of_;  // by stock locate
   std::vector<lab::oms::TopOfBook> last_;
+  std::vector<lab::oms::TopOfBook> log_;
   std::uint64_t tops_sent_ = 0;
   std::uint64_t ring_full_spins_ = 0;
   std::size_t listed_ = 0;
@@ -217,7 +244,8 @@ int main(int argc, char** argv) {
 
   // Everything is allocated before the threads start.
   auto rings = std::make_unique<Rings>();
-  auto md = std::make_unique<MarketData>(opt.trading.symbols, rings->tops);
+  auto md = std::make_unique<MarketData>(opt.trading.symbols, rings->tops,
+                                         opt.market_csv.empty() ? 0 : 4u << 20);
   auto oe = std::make_unique<trader::OrderEntry>(opt.oe, rings->requests, rings->responses);
   auto trading = std::make_unique<trader::Trading>(opt.trading, rings->tops, rings->requests,
                                                    rings->responses, clock);
@@ -301,6 +329,14 @@ int main(int argc, char** argv) {
   if (md->listed() != opt.trading.symbols.size()) {
     std::printf("CHECK FAILED: %zu of %zu symbols were never listed on the feed\n",
                 opt.trading.symbols.size() - md->listed(), opt.trading.symbols.size());
+    ok = false;
+  }
+  if (!opt.fills_csv.empty() && !trading->write_fills(opt.fills_csv)) {
+    std::printf("cannot write %s\n", opt.fills_csv.c_str());
+    ok = false;
+  }
+  if (!opt.market_csv.empty() && !md->write_log(opt.market_csv)) {
+    std::printf("cannot write %s\n", opt.market_csv.c_str());
     ok = false;
   }
   std::printf("Trader checks: %s\n", ok ? "OK" : "FAILED");

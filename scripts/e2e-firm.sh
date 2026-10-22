@@ -46,7 +46,7 @@ simex_pid=$!
 
 client_status=0
 "$tools/ouch-client/ouch-client" --accounts FIRM02:lab,FIRM03:lab --reference "$day" \
-  --reference-symbols 5 --orders "$orders" --rate "$order_rate" --max-lots "${MAX_LOTS:-20}" --ioc 0.5 \
+  --symbols "$symbols" --orders "$orders" --rate "$order_rate" --max-lots "${MAX_LOTS:-20}" --ioc 0.5 \
   --wait-eos > "$work/client.out" 2>&1 || client_status=$?
 trader_status=0
 wait "$trader_pid" || trader_status=$?

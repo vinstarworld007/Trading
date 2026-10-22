@@ -16,6 +16,9 @@ the project playbook. Build phases are listed in README.md.
   `itch-fh`; run it after any exchange, OUCH, SoupBinTCP or matching change.
 - `scripts/e2e-firm.sh` runs `trader` against simex; run it after any OMS, risk,
   strategy or trader change.
+- `scripts/e2e-posttrade.sh` adds the drop copy and runs `research/report.py`
+  (reconciliation must be clean); run it after any drop copy, fill log or
+  research change, and `python3 -m unittest discover research/tests`.
 - `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
   `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
   feed, sequencing or book change.
@@ -34,7 +37,8 @@ the project playbook. Build phases are listed in README.md.
 - `libs/ouch`  OUCH 5.0 codec (same field-list pattern as `libs/itch`)
 - `libs/match`  price-time matching engine (header-only, preallocated)
 - `firm/oms`, `firm/risk`, `firm/strategy`  header-only firm libraries; `firm/trader` the trading engine
-- `exchange/`, `tools/`, `research/`  as in the design doc
+- `research/`  Python (numpy, pandas): PnL, reconciliation, TCA, backtests; stdlib unittest
+- `exchange/`, `tools/`  as in the design doc
 - One library or executable per directory, each with its own CMakeLists.txt and
   tests under `tests/<lib>/`.
 

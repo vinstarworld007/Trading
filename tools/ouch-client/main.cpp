@@ -70,8 +70,8 @@ struct Options {
   std::fprintf(
       stderr,
       "usage: ouch-client [--connect IP:PORT] [--accounts USER:PASS,...]\n"
-      "                   [--reference ITCH_FILE [--reference-symbols N] | --symbols "
-      "A,B --mid DOLLARS]\n"
+      "                   [--reference ITCH_FILE [--reference-symbols N]] [--symbols A,B]\n"
+      "                   [--mid DOLLARS]   (--symbols with --reference: just those)\n"
       "                   [--orders N] [--rate N] [--ioc FRACTION] [--max-lots N] [--seed S]\n"
       "                   [--replay-check] [--wait-eos] [--answer-timeout S]\n");
   std::exit(2);
@@ -142,10 +142,12 @@ struct Instrument {
   std::uint64_t reference;  // Price(4)
 };
 
-// A reference price for the first `n` symbols: the midpoint of the first buy
-// and the first sell Add Order seen for each (one order alone can sit far from
-// the market).
-std::vector<Instrument> reference_prices(const std::string& path, std::size_t n) {
+// A reference price per symbol: the midpoint of the first buy and the first
+// sell Add Order seen for it (one order alone can sit far from the market).
+// For `wanted` symbols if given, otherwise the first `n` in locate order that
+// have both sides.
+std::vector<Instrument> reference_prices(const std::string& path, std::size_t n,
+                                         const std::vector<std::string>& wanted) {
   struct Scan : lab::itch::HandlerBase {
     using HandlerBase::on;
     struct Seen {
@@ -154,7 +156,9 @@ std::vector<Instrument> reference_prices(const std::string& path, std::size_t n)
     };
     std::map<std::uint16_t, Seen> seen;
     std::size_t complete = 0;
+    std::vector<lab::itch::Symbol> wanted;
     void add(std::uint16_t locate, const lab::itch::Symbol& s, char side, std::uint32_t price) {
+      if (!wanted.empty() && std::find(wanted.begin(), wanted.end(), s) == wanted.end()) return;
       Seen& x = seen[locate];
       if (x.buy != 0 && x.sell != 0) return;
       x.stock = s;
@@ -170,6 +174,8 @@ std::vector<Instrument> reference_prices(const std::string& path, std::size_t n)
       add(m.header.stock_locate, m.stock, m.buy_sell_indicator, m.price);
     }
   } scan;
+  for (const auto& w : wanted) scan.wanted.push_back(lab::itch::make_symbol(w));
+  if (!wanted.empty()) n = wanted.size();
   lab::itch::FileReader reader{path};
   while (scan.complete < n && reader.messages_read() < 5'000'000) {
     const auto msg = reader.next();
@@ -651,7 +657,7 @@ int main(int argc, char** argv) {
   const Options opt = parse(argc, argv);
   std::vector<Instrument> instruments;
   if (!opt.reference.empty()) {
-    instruments = reference_prices(opt.reference, opt.reference_symbols);
+    instruments = reference_prices(opt.reference, opt.reference_symbols, opt.symbols);
   } else {
     for (const auto& s :
          opt.symbols.empty() ? std::vector<std::string>{"AAPL", "MSFT", "SPY"} : opt.symbols) {

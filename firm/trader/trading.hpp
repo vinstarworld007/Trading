@@ -14,6 +14,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
+#include <string>
 #include <vector>
 
 #include "lab/core/clock.hpp"
@@ -29,7 +30,22 @@ struct TradingConfig {
   lab::strategy::MakerParams maker;
   lab::risk::Limits limits;
   int cpu = -1;
-  double cancel_wait_seconds = 3;  // at stop, how long to wait for cancels
+  double cancel_wait_seconds = 3;     // at stop, how long to wait for cancels
+  std::size_t fill_log_capacity = 0;  // fills kept for write_fills(); 0: none
+};
+
+// One fill as the OMS saw it, with the market (ours excluded) at the time.
+struct FillRecord {
+  std::uint64_t exchange_ns;
+  std::uint64_t match;
+  std::uint32_t user_ref;
+  std::uint32_t qty;
+  std::uint32_t price;
+  std::uint32_t bid;
+  std::uint32_t ask;
+  std::uint16_t instrument;
+  char side;
+  char liquidity;
 };
 
 struct TradingStats {
@@ -55,6 +71,9 @@ class Trading {
   bool report(std::FILE* out) const;
 
   lab::risk::Risk& risk() noexcept { return risk_; }
+
+  // After run(): writes the fill log as CSV (see research/lab_research/io.py).
+  bool write_fills(const std::string& path) const;
 
  private:
   struct Instrument {
@@ -91,6 +110,7 @@ class Trading {
   bool stopping_ = false;
   std::array<std::uint64_t, 256> recent_matches_{};  // to spot self-trades
   std::size_t next_match_ = 0;
+  std::vector<FillRecord> fills_;  // reserved up front; never grows on the hot path
   TradingStats stats_;
 };
 
