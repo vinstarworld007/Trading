@@ -86,6 +86,11 @@ jobs:
           DURATION: 8
         run: timeout 300 scripts/e2e-vendors.sh build/${{ matrix.preset }}
 
+      - name: End-to-end market scenarios (auctions, halts, LULD, MWCB, IPO, strips)
+        env:
+          DURATION: 20
+        run: timeout 300 scripts/e2e-scenarios.sh build/${{ matrix.preset }}
+
       - name: Python research environment
         run: |
           python3 -m venv /tmp/venv

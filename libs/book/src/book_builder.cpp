@@ -85,7 +85,13 @@ void BookBuilder::on(const itch::StockDirectory& m) {
 
 void BookBuilder::on(const itch::StockTradingAction& m) {
   see(m.header);
-  if (Instrument* inst = listed(m.header.stock_locate)) inst->trading_state = m.trading_state;
+  if (Instrument* inst = listed(m.header.stock_locate)) {
+    if ((m.trading_state == 'H' || m.trading_state == 'P') &&
+        inst->trading_state != m.trading_state)
+      ++checks_.halts;
+    inst->trading_state = m.trading_state;
+    inst->halt_reason = m.reason;
+  }
 }
 
 void BookBuilder::on(const itch::RegShoRestriction& m) {
@@ -150,7 +156,7 @@ void BookBuilder::on(const itch::OrderExecuted& m) {
   if (Instrument* inst = reduce_order(m.order_reference_number, m.executed_shares, false, &price)) {
     ++inst->stats.executions;
     inst->stats.executed_shares += m.executed_shares;
-    inst->stats.last_trade_price = price;  // E executes at the order's own price
+    traded(*inst, price);  // E executes at the order's own price
   }
 }
 
@@ -161,9 +167,10 @@ void BookBuilder::on(const itch::OrderExecutedWithPrice& m) {
     ++inst->stats.executions;
     if (m.printable == 'Y') {
       inst->stats.executed_shares += m.executed_shares;
-      inst->stats.last_trade_price = m.execution_price;
-    } else {
+      traded(*inst, m.execution_price);
+    } else {  // part of a cross, printed later by its Q message
       inst->stats.non_printable_shares += m.executed_shares;
+      inst->cross_executed += m.executed_shares;
     }
   }
 }
@@ -209,15 +216,30 @@ void BookBuilder::on(const itch::Trade& m) {
   see(m.header);
   if (Instrument* inst = listed(m.header.stock_locate)) {
     inst->stats.hidden_trade_shares += m.shares;
-    inst->stats.last_trade_price = m.price;
+    traded(*inst, m.price);
   }
 }
 
 void BookBuilder::on(const itch::CrossTrade& m) {
   see(m.header);
   if (Instrument* inst = listed(m.header.stock_locate)) {
+    ++checks_.crosses;
     inst->stats.cross_shares += m.shares;
-    if (m.shares > 0) inst->stats.last_trade_price = m.cross_price;
+    // Each crossed share executes one buy and one sell order; hidden orders
+    // get no C message, so fewer is fine and more is an error.
+    if (LAB_UNLIKELY(inst->cross_executed > 2 * m.shares)) ++checks_.cross_overfill;
+    inst->cross_executed = 0;
+    if (m.shares > 0) {
+      inst->stats.last_trade_price = m.cross_price;
+      inst->luld_reference = m.cross_price;
+    } else if (m.cross_type == 'H') {  // reopened with nothing to cross: the book's midpoint
+      const Level* b = inst->book.bids().best();
+      const Level* a = inst->book.asks().best();
+      if (b && a && b->price < a->price) {
+        inst->luld_reference =
+            static_cast<std::uint32_t>((std::uint64_t{b->price} + a->price) / 200 * 100);
+      }
+    }
     if (m.cross_type == 'O') inst->stats.opening_cross_price = m.cross_price;
     if (m.cross_type == 'C') inst->stats.closing_cross_price = m.cross_price;
   }
@@ -237,6 +259,58 @@ void BookBuilder::check_cross(Instrument& inst) noexcept {
   if (locked && !inst.locked) ++checks_.locked_book_events;
   inst.crossed = crossed;
   inst.locked = locked;
+}
+
+void BookBuilder::on(const itch::Noii& m) {
+  see(m.header);
+  ++checks_.noii;
+  if (Instrument* inst = listed(m.header.stock_locate)) {
+    Imbalance& i = inst->imbalance;
+    i.cross_type = m.cross_type;
+    i.direction = m.imbalance_direction;
+    i.variation = m.price_variation_indicator;
+    i.paired = m.paired_shares;
+    i.imbalance = m.imbalance_shares;
+    i.far_price = m.far_price;
+    i.near_price = m.near_price;
+    i.reference_price = m.current_reference_price;
+    i.timestamp = m.header.timestamp;
+    inst->cross_executed = 0;  // an auction is running: count its executions only
+  }
+}
+
+void BookBuilder::on(const itch::LuldAuctionCollar& m) {
+  see(m.header);
+  if (Instrument* inst = listed(m.header.stock_locate)) {
+    inst->collar =
+        Collar{m.reference_price, m.upper_collar_price, m.lower_collar_price, m.collar_extension};
+  }
+}
+
+void BookBuilder::on(const itch::MwcbDeclineLevel& m) {
+  see(m.header);
+  mwcb_levels_ = {m.level1, m.level2, m.level3};
+}
+
+void BookBuilder::on(const itch::MwcbStatus& m) {
+  see(m.header);
+  mwcb_breached_ = m.breached_level;
+}
+
+void BookBuilder::on(const itch::IpoQuotingPeriod& m) {
+  see(m.header);
+  if (Instrument* inst = listed(m.header.stock_locate)) {
+    inst->ipo_qualifier = m.ipo_quotation_release_qualifier;
+    inst->ipo_release_time = m.ipo_quotation_release_time;
+    inst->ipo_price = m.ipo_price;
+  }
+}
+
+void BookBuilder::on(const itch::OperationalHalt& m) {
+  see(m.header);
+  if (Instrument* inst = listed(m.header.stock_locate)) {
+    inst->operational_halt = m.operational_halt_action;
+  }
 }
 
 }  // namespace lab::book

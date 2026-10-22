@@ -102,7 +102,8 @@ struct ServerConfig {
   std::string name = "vendor";
   std::string listen = "127.0.0.1:0";
   feed::ReceiverConfig feed = idle_feed();
-  double linger_s = 1.0;  // after the feed ends, time for clients to read the last bytes
+  double linger_s = 1.0;            // after the feed ends, time for clients to read the last bytes
+  std::uint32_t luld_band_pct = 0;  // the venue's LULD percentage above $3.00 (0: 5%)
 };
 
 struct ServerStats {

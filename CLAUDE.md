@@ -25,6 +25,9 @@ the project playbook. Build phases are listed in README.md.
 - `scripts/e2e-vendors.sh` runs the three vendor servers and `vendor-client`
   against simex with agents; run it after any `libs/vendor`, `vendors/` or
   `vendor-client` change.
+- `scripts/e2e-scenarios.sh` runs simex `--scenario all` with an implied strip,
+  agents, `itch-fh` and two vendors; run it after any auction, halt, LULD,
+  strip or scenario change (`docs/scenarios.md`).
 - `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
   `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
   feed, sequencing or book change.

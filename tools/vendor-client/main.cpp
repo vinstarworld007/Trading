@@ -4,7 +4,7 @@
 //   vendor-client --vendor icf|reuters|bloomberg [--connect IP:PORT]
 //                 --symbols A,B,C [--interval-ms N] [--md GROUP:PORT]
 //                 [--iface IP] [--retrans IP:PORT] [--idle-us N] [--duration S]
-//                 [--verbose]
+//                 [--luld-band-pct N] [--verbose]
 //
 // Speaks the vendor's protocol from the client side (ICF over SoupBinTCP,
 // OMM JSON over WebSocket, B-PIPE frames), keeps a Level 1 view per symbol,
@@ -13,11 +13,12 @@
 // the vendor has not seen the symbol yet is retried. When the vendor ends
 // the session and the direct feed has ended, checks, any failure exits 1:
 //   - every symbol was subscribed and got an image;
-//   - each view's bid, ask, sizes, last price, volume and status equal the
-//     direct feed's;
+//   - each view's bid, ask, sizes, last price, volume, status, halt reason
+//     and LULD band equal the direct feed's;
 //   - the vendor closed the session in its protocol's own way.
 // Reports exchange-to-client latency through the vendor next to the direct
-// feed's, both measured from the ITCH timestamp to receipt here.
+// feed's, both measured from the ITCH timestamp to receipt here, and how many
+// auction (imbalance) updates and halts the vendor delivered.
 
 #include <array>
 #include <chrono>
@@ -63,6 +64,7 @@ struct Options {
   std::uint64_t interval_ms = 0;
   lab::feed::ReceiverConfig feed;
   double duration = 0;
+  std::uint32_t luld_band_pct = 0;  // the venue's, as given to the vendor
   bool verbose = false;
 };
 
@@ -72,8 +74,22 @@ struct View {
   std::uint32_t bid = 0, ask = 0, last = 0;
   std::uint64_t bid_size = 0, ask_size = 0, volume = 0;
   char status = 'T';
+  std::string reason;  // halt reason, trailing spaces trimmed
+  std::uint32_t band_lower = 0, band_upper = 0;
+  std::uint64_t auction_updates = 0;  // updates that carried an indicative auction
+  std::uint64_t halts = 0;            // changes into a non-trading status
   std::uint64_t updates = 0;
+
+  void set_status(char s) {
+    if (s != status && s != 'T') ++halts;
+    status = s;
+  }
 };
+
+std::string trim_right(std::string_view s) {
+  while (!s.empty() && s.back() == ' ') s.remove_suffix(1);
+  return std::string{s};
+}
 
 // What every protocol client shares.
 struct State {
@@ -241,7 +257,21 @@ class IcfClient final : public Client {
           v->volume = static_cast<std::uint64_t>(t.value);
           break;
         case icf::token::kTradingStatus:
-          v->status = static_cast<char>(t.value);
+          v->set_status(static_cast<char>(t.value));
+          break;
+        case icf::token::kHaltReason: {
+          const auto a = icf::alpha_chars(t.value);
+          v->reason = trim_right({a.data(), a.size()});
+          break;
+        }
+        case icf::token::kAuctionType:
+          if (static_cast<char>(t.value) != ' ') ++v->auction_updates;
+          break;
+        case icf::token::kLuldLower:
+          v->band_lower = static_cast<std::uint32_t>(t.value);
+          break;
+        case icf::token::kLuldUpper:
+          v->band_upper = static_cast<std::uint32_t>(t.value);
           break;
         default:
           break;
@@ -403,9 +433,17 @@ class OmmClient final : public Client {
         view->volume = num();
       } else if (name == "TRD_STATUS") {
         const auto s = static_cast<int>(num());
-        view->status = s == omm::trd_status::kNormal      ? 'T'
-                       : s == omm::trd_status::kSuspended ? 'P'
-                                                          : 'H';
+        view->set_status(s == omm::trd_status::kNormal      ? 'T'
+                         : s == omm::trd_status::kSuspended ? 'P'
+                                                            : 'H');
+      } else if (name == "HALT_REASN" && val.is_string()) {
+        view->reason = trim_right(val.text);
+      } else if (name == "IMB_ACT_TP") {
+        if (num() != 0) ++view->auction_updates;
+      } else if (name == "LOLIMIT") {
+        view->band_lower = px();
+      } else if (name == "UPLIMIT") {
+        view->band_upper = px();
       } else if ((name == "QUOTIM_NS" || name == "SALTIM_NS") && val.is_string()) {
         exch_ns = std::max(exch_ns, json::parse_time_ns(val.text).value_or(0));
       }
@@ -456,7 +494,8 @@ class BpipeClient final : public Client {
       by_cid_[cid] = s;
       std::string topic = s +
                           " US Equity?fields=BID,BID_SIZE,ASK,ASK_SIZE,LAST_PRICE,VOLUME,"
-                          "TRADING_STATUS";
+                          "TRADING_STATUS,HALT_REASON,AUCTION_TYPE,LULD_LOWER_LIMIT,"
+                          "LULD_UPPER_LIMIT";
       if (st_.opt.interval_ms) {
         char iv[32];
         std::snprintf(iv, sizeof iv, "&interval=%.3f", st_.opt.interval_ms / 1000.0);
@@ -544,11 +583,19 @@ class BpipeClient final : public Client {
       } else if (el.name == "VOLUME") {
         v->volume = static_cast<std::uint64_t>(el.value);
       } else if (el.name == "TRADING_STATUS") {
-        v->status = el.text == "TRADING"          ? 'T'
-                    : el.text == "HALTED"         ? 'H'
-                    : el.text == "PAUSED"         ? 'P'
-                    : el.text == "QUOTATION_ONLY" ? 'Q'
-                                                  : '?';
+        v->set_status(el.text == "TRADING"          ? 'T'
+                      : el.text == "HALTED"         ? 'H'
+                      : el.text == "PAUSED"         ? 'P'
+                      : el.text == "QUOTATION_ONLY" ? 'Q'
+                                                    : '?');
+      } else if (el.name == "HALT_REASON") {
+        v->reason = trim_right(el.text);
+      } else if (el.name == "AUCTION_TYPE") {
+        if (el.text != "NONE") ++v->auction_updates;
+      } else if (el.name == "LULD_LOWER_LIMIT") {
+        v->band_lower = static_cast<std::uint32_t>(el.price4());
+      } else if (el.name == "LULD_UPPER_LIMIT") {
+        v->band_upper = static_cast<std::uint32_t>(el.price4());
       }
     }
   }
@@ -567,7 +614,7 @@ class BpipeClient final : public Client {
       "usage: vendor-client --vendor icf|reuters|bloomberg [--connect IP:PORT]\n"
       "                     --symbols A,B,C [--interval-ms N] [--md GROUP:PORT]\n"
       "                     [--iface IP] [--retrans IP:PORT] [--idle-us N] [--duration S]\n"
-      "                     [--verbose]\n");
+      "                     [--luld-band-pct N] [--verbose]\n");
   std::exit(2);
 }
 
@@ -610,6 +657,8 @@ Options parse(int argc, char** argv) {
       o.feed.idle_sleep_us = std::stoull(v);
     } else if (a == "--duration") {
       o.duration = std::stod(v);
+    } else if (a == "--luld-band-pct") {
+      o.luld_band_pct = static_cast<std::uint32_t>(std::stoul(v));
     } else {
       usage();
     }
@@ -644,6 +693,7 @@ int main(int argc, char** argv) {
     // The direct feed, consolidated the way the vendor does it.
     lab::feed::FeedReceiver rx{opt.feed};
     vendor::Consolidator direct;
+    direct.set_luld_band_pct(opt.luld_band_pct);
     lab::LatencyHistogram direct_latency;
     std::vector<bool> watched(65536, false);
     rx.start();
@@ -725,6 +775,7 @@ int main(int argc, char** argv) {
     std::printf("%-8s %12s %8s %12s %8s %12s %12s %3s\n", "symbol", "bid", "size", "ask", "size",
                 "last", "volume", "st");
     int mismatches = 0;
+    std::uint64_t auctions = 0, halts = 0;
     for (const auto& [sym, v] : st.views) {
       const std::uint16_t l = direct.find(sym);
       const vendor::Record& d = direct.record(l);
@@ -744,6 +795,15 @@ int main(int argc, char** argv) {
         ++mismatches;
         continue;
       }
+      const std::string reason = trim_right({d.halt_reason.data(), d.halt_reason.size()});
+      if (v.reason != reason || v.band_lower != d.band_lower || v.band_upper != d.band_upper) {
+        std::printf("  FAIL %s: halt reason '%s' band %.4f-%.4f, direct feed '%s' %.4f-%.4f\n",
+                    sym.c_str(), v.reason.c_str(), v.band_lower / 1e4, v.band_upper / 1e4,
+                    reason.c_str(), d.band_lower / 1e4, d.band_upper / 1e4);
+        ++mismatches;
+      }
+      auctions += v.auction_updates;
+      halts += v.halts;
       if (v.bid != d.bid || v.bid_size != d.bid_size || v.ask != d.ask ||
           v.ask_size != d.ask_size || v.last != d.last || v.volume != d.volume ||
           v.status != want) {
@@ -755,6 +815,8 @@ int main(int argc, char** argv) {
         ++mismatches;
       }
     }
+    std::printf("Scenarios through the vendor: %llu auction updates, %llu halts or pauses\n",
+                static_cast<unsigned long long>(auctions), static_cast<unsigned long long>(halts));
     std::printf("Latency, ITCH timestamp to receipt here:\n");
     print_latency("through the vendor", st.latency);
     print_latency("direct feed", direct_latency);

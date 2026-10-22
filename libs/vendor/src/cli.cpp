@@ -22,7 +22,7 @@ int run_vendor(int argc, char** argv, ServerConfig cfg, std::string_view usage_e
   auto usage = [&] {
     std::fprintf(stderr,
                  "usage: %s [--listen IP:PORT] [--md GROUP:PORT] [--iface IP] [--retrans IP:PORT]\n"
-                 "       %*s [--idle-us N] [--duration S]%.*s\n",
+                 "       %*s [--idle-us N] [--luld-band-pct N] [--duration S]%.*s\n",
                  cfg.name.c_str(), static_cast<int>(cfg.name.size()), "",
                  static_cast<int>(usage_extra.size()), usage_extra.data());
     std::exit(2);
@@ -41,6 +41,8 @@ int run_vendor(int argc, char** argv, ServerConfig cfg, std::string_view usage_e
       cfg.feed.retrans = v;
     } else if (a == "--idle-us") {
       cfg.feed.idle_sleep_us = std::stoull(v);
+    } else if (a == "--luld-band-pct") {
+      cfg.luld_band_pct = static_cast<std::uint32_t>(std::stoul(v));
     } else if (a == "--duration") {
       duration = std::stod(v);
     } else if (!extra(a, v)) {

@@ -6,8 +6,10 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "lab/book/book_builder.hpp"
+#include "lab/book/implied.hpp"
 
 namespace lab::book {
 
@@ -26,5 +28,13 @@ void print_integrity(std::FILE* out, const IntegrityChecks& c);
 void print_book(std::FILE* out, const BookBuilder& b, std::uint16_t locate, std::size_t depth);
 // Top `n` instruments by matched volume.
 void print_top(std::FILE* out, const BookBuilder& b, std::size_t n);
+// Market scenarios seen: circuit breakers, and per instrument its crosses,
+// halts and pauses, latest imbalance, LULD collar, IPO and operational
+// halts. Prints nothing on a day without any.
+void print_scenarios(std::FILE* out, const BookBuilder& b);
+// Each strip's own top of book next to its implied-out depth from the legs,
+// and each leg's implied-in quote from the strip and the other leg.
+void print_implied(std::FILE* out, const BookBuilder& b, const std::vector<StripDef>& strips,
+                   std::size_t depth);
 
 }  // namespace lab::book

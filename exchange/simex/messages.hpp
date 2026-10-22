@@ -20,6 +20,8 @@ using Symbol = std::array<char, 8>;
 // Owner 0 is the historical liquidity replayed from an ITCH day; firm
 // accounts are 1..N in the order given to --accounts.
 inline constexpr std::uint16_t kHistOwner = 0;
+// The matcher's own orders that lift strip legs for implied fills.
+inline constexpr std::uint16_t kImpliedOwner = 0xFFFE;
 
 struct Command {
   enum Type : std::uint8_t {

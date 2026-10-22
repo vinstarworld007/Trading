@@ -1,6 +1,7 @@
 // itch-gen: writes a synthetic ITCH 5.0 day in Nasdaq's BinaryFILE format.
 //
 //   itch-gen synthetic.itch50.gz --symbols 200 --messages 5000000 --seed 7
+//   itch-gen scenarios.itch50.gz --scenarios     auctions, halts, LULD, MWCB, IPO, ...
 //
 // Useful for trying itch-dump and benchmarks before downloading a real day.
 
@@ -13,13 +14,23 @@
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::fprintf(stderr, "usage: itch-gen OUT[.gz] [--symbols N] [--messages N] [--seed S]\n");
+    std::fprintf(
+        stderr, "usage: itch-gen OUT[.gz] [--symbols N] [--messages N] [--seed S] [--scenarios]\n");
     return 2;
   }
   const std::string out = argv[1];
   lab::itch::SyntheticConfig config;
-  for (int i = 2; i + 1 < argc; i += 2) {
+  for (int i = 2; i < argc; i += 2) {
     const std::string flag = argv[i];
+    if (flag == "--scenarios") {
+      config.scenarios = true;
+      --i;
+      continue;
+    }
+    if (i + 1 >= argc) {
+      std::fprintf(stderr, "%s needs a value\n", flag.c_str());
+      return 2;
+    }
     const unsigned long long value = std::strtoull(argv[i + 1], nullptr, 10);
     if (flag == "--symbols")
       config.symbols = static_cast<std::uint32_t>(value);

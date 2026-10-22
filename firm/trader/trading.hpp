@@ -55,6 +55,7 @@ struct TradingStats {
   bool session_ended = false;  // the exchange ended the session first
   bool cancel_timeout = false;
   std::uint64_t self_trades = 0;
+  std::uint64_t halts = 0;  // an instrument stopped trading (halt, pause, quotation only)
 };
 
 class Trading {

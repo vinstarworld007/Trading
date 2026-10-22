@@ -229,11 +229,22 @@ class Checker {
   void print() const {
     for (const auto& e : errors_) std::printf("  ERROR  %s\n", e.c_str());
   }
-  // Each match has one adding and one removing side.
+  // Each continuous match has one adding and one removing side; both sides
+  // of an auction cross carry the cross's own flag (O, C or H), at most once
+  // per side.
   void match(std::uint64_t number, char flag) {
     auto& seen = matches_[number];
+    if (ouch::liquidity::is_cross(flag)) {
+      if ((seen & 3) != 0 || (seen >> 2) >= 2) {
+        fail("match " + std::to_string(number) + " mixes a cross with other executions");
+      }
+      seen += 4;
+      return;
+    }
     const int bit = flag == ouch::liquidity::kAdded ? 1 : 2;
-    if ((seen & bit) != 0) fail("match " + std::to_string(number) + " has two sides of one kind");
+    if ((seen & bit) != 0 || (seen >> 2) != 0) {
+      fail("match " + std::to_string(number) + " has two sides of one kind");
+    }
     seen |= bit;
   }
 

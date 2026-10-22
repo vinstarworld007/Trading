@@ -57,9 +57,15 @@ inline constexpr char kSupervisory = 'S';
 inline constexpr char kSystem = 'Z';
 }  // namespace cancel_reason
 
-namespace liquidity {
+namespace liquidity {  // Appendix D
 inline constexpr char kAdded = 'A';
 inline constexpr char kRemoved = 'R';
+inline constexpr char kOpeningCross = 'O';
+inline constexpr char kClosingCross = 'C';
+inline constexpr char kHaltCross = 'H';  // halt, IPO or LULD reopening cross
+inline constexpr bool is_cross(char f) noexcept {
+  return f == kOpeningCross || f == kClosingCross || f == kHaltCross;
+}
 }  // namespace liquidity
 
 namespace reject {

@@ -39,6 +39,15 @@ TEST(Omm, FieldIdsComeFromRdmFieldDictionary) {
   EXPECT_EQ(fid("ACVOL_1"), 32);
   EXPECT_EQ(fid("TRDVOL_1"), 178);
   EXPECT_EQ(fid("TRD_STATUS"), 6614);
+  EXPECT_EQ(fid("UPLIMIT"), 75);
+  EXPECT_EQ(fid("LOLIMIT"), 76);
+  EXPECT_EQ(fid("IMB_ACT_TP"), 4333);
+  EXPECT_EQ(fid("IMB_PR_NR"), 4335);
+  EXPECT_EQ(fid("IMB_PR_SH"), 4337);
+  EXPECT_EQ(fid("IMB_SH"), 4338);
+  EXPECT_EQ(fid("IMB_SIDE"), 4340);
+  EXPECT_EQ(fid("HALT_REASN"), 6517);
+  EXPECT_EQ(fid("SH_SAL_RES"), 6577);
   EXPECT_EQ(fid("QUOTIM_NS"), 14265);
   EXPECT_EQ(fid("SALTIM_NS"), 14266);
   EXPECT_EQ(omm::field_index("NOPE"), -1);
@@ -145,6 +154,67 @@ TEST(Bpipe, RejectsOversizeFrames) {
   p.feed(huge);
   EXPECT_FALSE(p.next());
   EXPECT_TRUE(p.malformed());
+}
+
+Record halted() {
+  Record r = sample();
+  r.status = 'P';
+  r.halt_reason = {'L', 'U', 'D', 'P'};
+  r.reg_sho = '1';
+  r.auction_type = 'H';
+  r.imbalance_side = 'B';
+  r.indicative_price = 1'000'500;
+  r.paired_shares = 500;
+  r.imbalance_shares = 200;
+  r.band_lower = 950'000;
+  r.band_upper = 1'050'000;
+  return r;
+}
+
+TEST(Omm, AuctionBandAndHaltFieldsUseDictionaryEnums) {
+  std::string out;
+  omm::update(out, 3, halted(), field::kStatus | field::kAuction | field::kBand, ~0u);
+  const auto v = json::parse(out);
+  ASSERT_TRUE(v) << out;
+  const json::Value* f = v->get("Fields");
+  ASSERT_NE(f, nullptr);
+  EXPECT_EQ(f->get("TRD_STATUS")->text, "3");  // Suspended
+  EXPECT_EQ(f->str("HALT_REASN"), "LUDP");
+  EXPECT_EQ(f->get("SH_SAL_RES")->text, "4");  // restricted
+  EXPECT_EQ(f->get("IMB_ACT_TP")->text, "3");  // Halt
+  EXPECT_EQ(f->get("IMB_SIDE")->text, "2");    // Buy imbalance
+  EXPECT_EQ(f->get("IMB_PR_NR")->text, "100.05");
+  EXPECT_EQ(f->get("IMB_PR_SH")->text, "500");
+  EXPECT_EQ(f->get("IMB_SH")->text, "200");
+  EXPECT_EQ(f->get("LOLIMIT")->text, "95");
+  EXPECT_EQ(f->get("UPLIMIT")->text, "105");
+  EXPECT_EQ(f->get("BID"), nullptr);
+}
+
+TEST(Bpipe, AuctionBandAndHaltFields) {
+  std::string out;
+  bpipe::Writer w{out};
+  bpipe::market_data(w, 7, halted(), field::kAuction, ~0u, false);
+  const auto e =
+      bpipe::decode_event({reinterpret_cast<const std::byte*>(out.data()) + 4, out.size() - 4});
+  ASSERT_TRUE(e);
+  EXPECT_EQ(e->get("MKTDATA_EVENT_SUBTYPE")->text, "AUCTION");
+  EXPECT_EQ(e->get("AUCTION_TYPE")->text, "HALT");
+  EXPECT_EQ(e->get("IMBALANCE_SIDE")->text, "BUY");
+  EXPECT_EQ(e->get("INDICATIVE_PRICE")->price4(), 1'000'500);
+  EXPECT_EQ(e->get("PAIRED_SHARES")->value, 500);
+  EXPECT_EQ(e->get("LULD_LOWER_LIMIT"), nullptr);
+
+  out.clear();
+  bpipe::market_data(w, 7, halted(), field::kAll, ~0u, true);
+  const auto all =
+      bpipe::decode_event({reinterpret_cast<const std::byte*>(out.data()) + 4, out.size() - 4});
+  ASSERT_TRUE(all);
+  EXPECT_EQ(all->get("TRADING_STATUS")->text, "PAUSED");
+  EXPECT_EQ(all->get("HALT_REASON")->text, "LUDP");
+  EXPECT_EQ(all->get("REG_SHO_RESTRICTION")->text, "IN_EFFECT");
+  EXPECT_EQ(all->get("LULD_LOWER_LIMIT")->price4(), 950'000);
+  EXPECT_EQ(all->get("LULD_UPPER_LIMIT")->price4(), 1'050'000);
 }
 
 }  // namespace

@@ -49,7 +49,9 @@ and skips any it receives.
 - Order State: L live, D dead (accepted, then canceled at once, e.g. IOC).
 - Cancel reasons: U user requested, I immediate or cancel, S supervisory,
   Z system, T time in force expired, Q self-match prevention.
-- Liquidity flags (Appendix D): A added, R removed.
+- Liquidity flags (Appendix D): A added, R removed, O opening cross, C closing cross,
+  H halt/IPO cross (the lab also uses H for LULD reopening crosses). Both sides of a
+  cross get the cross's flag.
 - Reject reasons (2-byte): 0x0006 fat finger, 0x0007 halted, 0x0009 invalid
   side, 0x000A processing error, 0x000F other, 0x0013 invalid quantity,
   0x0015 replace not allowed, 0x0017 invalid symbol, 0x001D invalid price.

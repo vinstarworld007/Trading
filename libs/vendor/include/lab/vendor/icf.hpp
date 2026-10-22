@@ -37,6 +37,7 @@ inline constexpr char kPrice = 'P';    // signed, 4 implied decimals
 inline constexpr char kInteger = 'I';  // signed
 inline constexpr char kTime = 'T';     // ns since midnight
 inline constexpr char kChar = 'C';     // ASCII in the low byte
+inline constexpr char kAlpha = 'A';    // up to 8 ASCII bytes, left-aligned, space padded
 
 namespace token {
 inline constexpr std::uint16_t kBidPrice = 1;
@@ -53,6 +54,15 @@ inline constexpr std::uint16_t kHigh = 22;
 inline constexpr std::uint16_t kLow = 23;
 inline constexpr std::uint16_t kTrades = 24;
 inline constexpr std::uint16_t kTradingStatus = 30;
+inline constexpr std::uint16_t kHaltReason = 31;
+inline constexpr std::uint16_t kRegSho = 32;
+inline constexpr std::uint16_t kAuctionType = 40;
+inline constexpr std::uint16_t kIndicativePrice = 41;
+inline constexpr std::uint16_t kPairedShares = 42;
+inline constexpr std::uint16_t kImbalanceShares = 43;
+inline constexpr std::uint16_t kImbalanceSide = 44;
+inline constexpr std::uint16_t kLuldLower = 50;
+inline constexpr std::uint16_t kLuldUpper = 51;
 }  // namespace token
 
 inline const char* token_name(std::uint16_t t) noexcept {
@@ -85,6 +95,24 @@ inline const char* token_name(std::uint16_t t) noexcept {
       return "DAY.TRADES";
     case token::kTradingStatus:
       return "STATUS.TRADING";
+    case token::kHaltReason:
+      return "STATUS.HALT_REASON";
+    case token::kRegSho:
+      return "STATUS.SHORT_SALE_RESTRICTION";
+    case token::kAuctionType:
+      return "AUCTION.TYPE";
+    case token::kIndicativePrice:
+      return "AUCTION.INDICATIVE.PRICE";
+    case token::kPairedShares:
+      return "AUCTION.PAIRED.SIZE";
+    case token::kImbalanceShares:
+      return "AUCTION.IMBALANCE.SIZE";
+    case token::kImbalanceSide:
+      return "AUCTION.IMBALANCE.SIDE";
+    case token::kLuldLower:
+      return "LULD.LOWER.PRICE";
+    case token::kLuldUpper:
+      return "LULD.UPPER.PRICE";
   }
   return "?";
 }
@@ -92,7 +120,7 @@ inline const char* token_name(std::uint16_t t) noexcept {
 // Market data message header (docs/specs/vendor-icf.md).
 inline constexpr std::size_t kHeaderSize = 37;
 inline constexpr std::size_t kTokenSize = 11;  // token 2, type 1, value 8
-inline constexpr std::size_t kMaxTokens = 16;
+inline constexpr std::size_t kMaxTokens = 24;
 inline constexpr std::size_t kMaxMessage = kHeaderSize + kMaxTokens * kTokenSize;
 
 struct Token {
@@ -112,6 +140,21 @@ struct MarketData {
   std::uint8_t count = 0;
   std::array<Token, kMaxTokens> tokens{};
 };
+
+// An alpha token's value: up to 8 ASCII bytes, first byte most significant.
+template <std::size_t N>
+inline std::int64_t alpha(const std::array<char, N>& a) noexcept {
+  static_assert(N <= 8);
+  std::uint64_t v = 0;
+  for (std::size_t i = 0; i < 8; ++i) v = (v << 8) | static_cast<unsigned char>(i < N ? a[i] : ' ');
+  return static_cast<std::int64_t>(v);
+}
+inline std::array<char, 8> alpha_chars(std::int64_t value) noexcept {
+  std::array<char, 8> a{};
+  const auto v = static_cast<std::uint64_t>(value);
+  for (std::size_t i = 0; i < 8; ++i) a[i] = static_cast<char>(v >> (56 - 8 * i));
+  return a;
+}
 
 // Encodes the tokens in `mask` from `r`. Returns the message length.
 inline std::size_t encode(const MarketData& m, std::byte* p) noexcept {
@@ -175,7 +218,22 @@ inline void fill(MarketData& m, const Record& r, std::uint32_t mask) noexcept {
   if (mask & field::kHigh) add(token::kHigh, kPrice, r.high);
   if (mask & field::kLow) add(token::kLow, kPrice, r.low);
   if (mask & field::kTrades) add(token::kTrades, kInteger, static_cast<std::int64_t>(r.trades));
-  if (mask & field::kStatus) add(token::kTradingStatus, kChar, r.status);
+  if (mask & field::kStatus) {
+    add(token::kTradingStatus, kChar, r.status);
+    add(token::kHaltReason, kAlpha, alpha(r.halt_reason));
+    add(token::kRegSho, kChar, r.reg_sho);
+  }
+  if (mask & field::kAuction) {
+    add(token::kAuctionType, kChar, r.auction_type);
+    add(token::kIndicativePrice, kPrice, r.indicative_price);
+    add(token::kPairedShares, kInteger, static_cast<std::int64_t>(r.paired_shares));
+    add(token::kImbalanceShares, kInteger, static_cast<std::int64_t>(r.imbalance_shares));
+    add(token::kImbalanceSide, kChar, r.imbalance_side);
+  }
+  if (mask & field::kBand) {
+    add(token::kLuldLower, kPrice, r.band_lower);
+    add(token::kLuldUpper, kPrice, r.band_upper);
+  }
 }
 
 // Command response.

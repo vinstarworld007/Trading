@@ -21,6 +21,7 @@ gtest_discover_tests(itch_tests DISCOVERY_TIMEOUT 30)
 add_executable(book_tests
   book/test_book_builder.cpp
   book/test_order_book.cpp
+  book/test_scenarios.cpp
   book/test_order_map.cpp)
 target_link_libraries(book_tests PRIVATE lab::book GTest::gtest_main)
 gtest_discover_tests(book_tests DISCOVERY_TIMEOUT 30)

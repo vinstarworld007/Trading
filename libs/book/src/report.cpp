@@ -104,8 +104,13 @@ void print_integrity(std::FILE* out, const IntegrityChecks& c) {
   line("book inconsistency", c.book_inconsistency, true);
   line("timestamp regressions", c.timestamp_regressions, true);
   line("system events out of order", c.system_event_out_of_order, true);
+  line("trade while halted or paused", c.trade_while_halted, true);
   line("books became crossed", c.crossed_book_events, false);
   line("books became locked", c.locked_book_events, false);
+  line("crosses (Q)", c.crosses, false);
+  line("halts and pauses (H)", c.halts, false);
+  line("imbalance messages (I)", c.noii, false);
+  line("cross executions over its print", c.cross_overfill, false);
 }
 
 void print_book(std::FILE* out, const BookBuilder& b, std::uint16_t locate, std::size_t depth) {
@@ -149,6 +154,121 @@ void print_top(std::FILE* out, const BookBuilder& b, std::size_t n) {
         format_price(inst.stats.opening_cross_price).c_str(),
         format_price(inst.stats.closing_cross_price).c_str(),
         bid ? format_price(bid->price).c_str() : "-", ask ? format_price(ask->price).c_str() : "-");
+  }
+}
+
+void print_scenarios(std::FILE* out, const BookBuilder& b) {
+  std::string body;
+  char line[256];
+  const auto& lv = b.mwcb_levels();
+  if (lv[0] != 0 || b.mwcb_breached() != ' ') {
+    std::snprintf(line, sizeof line,
+                  "  Market-wide circuit breaker levels %.2f / %.2f / %.2f, breached level %c\n",
+                  static_cast<double>(lv[0]) / 1e8, static_cast<double>(lv[1]) / 1e8,
+                  static_cast<double>(lv[2]) / 1e8,
+                  b.mwcb_breached() == ' ' ? '-' : b.mwcb_breached());
+    body += line;
+  }
+  for (const std::uint16_t l : b.listed_locates()) {
+    const Instrument& inst = b.instrument(l);
+    const bool any = inst.imbalance.cross_type != ' ' || inst.collar.reference != 0 ||
+                     inst.ipo_qualifier != ' ' || inst.operational_halt != ' ' ||
+                     inst.stats.cross_shares != 0 || inst.reg_sho_action != ' ' ||
+                     (inst.trading_state != 'T' && inst.trading_state != ' ');
+    if (!any) continue;
+    const auto sym = lab::itch::trimmed(inst.symbol);
+    const std::string reason{inst.halt_reason.data(), inst.halt_reason.size()};
+    std::snprintf(line, sizeof line, "  %-8.*s state %c %-4s open %s close %s cross shares %llu",
+                  static_cast<int>(sym.size()), sym.data(), inst.trading_state, reason.c_str(),
+                  format_price(inst.stats.opening_cross_price).c_str(),
+                  format_price(inst.stats.closing_cross_price).c_str(),
+                  static_cast<unsigned long long>(inst.stats.cross_shares));
+    body += line;
+    if (inst.reg_sho_action != ' ') {
+      std::snprintf(line, sizeof line, ", Reg SHO %c", inst.reg_sho_action);
+      body += line;
+    }
+    body += '\n';
+    const Imbalance& i = inst.imbalance;
+    if (i.cross_type != ' ') {
+      std::snprintf(line, sizeof line,
+                    "           last NOII %s cross %c: paired %llu, imbalance %llu %c, near %s, "
+                    "ref %s, variation %c\n",
+                    format_feed_time(i.timestamp).c_str(), i.cross_type,
+                    static_cast<unsigned long long>(i.paired),
+                    static_cast<unsigned long long>(i.imbalance), i.direction,
+                    format_price(i.near_price).c_str(), format_price(i.reference_price).c_str(),
+                    i.variation);
+      body += line;
+    }
+    if (inst.collar.reference != 0) {
+      std::snprintf(line, sizeof line, "           LULD collar ref %s, %s to %s, %u extension(s)\n",
+                    format_price(inst.collar.reference).c_str(),
+                    format_price(inst.collar.lower).c_str(),
+                    format_price(inst.collar.upper).c_str(), inst.collar.extensions);
+      body += line;
+    }
+    if (inst.ipo_qualifier != ' ') {
+      std::snprintf(line, sizeof line, "           IPO %c release %02u:%02u:%02u price %s\n",
+                    inst.ipo_qualifier, inst.ipo_release_time / 3600,
+                    inst.ipo_release_time / 60 % 60, inst.ipo_release_time % 60,
+                    format_price(inst.ipo_price).c_str());
+      body += line;
+    }
+    if (inst.operational_halt != ' ') {
+      std::snprintf(line, sizeof line, "           operational halt: %s\n",
+                    inst.operational_halt == 'H' ? "halted" : "resumed");
+      body += line;
+    }
+  }
+  if (body.empty()) return;
+  std::fprintf(out, "\nMarket scenarios:\n%s", body.c_str());
+}
+
+void print_implied(std::FILE* out, const BookBuilder& b, const std::vector<StripDef>& strips,
+                   std::size_t depth) {
+  for (const StripDef& d : strips) {
+    const std::uint16_t s = b.find_locate(d.name), x = b.find_locate(d.leg_a),
+                        y = b.find_locate(d.leg_b);
+    if (s == 0 || x == 0 || y == 0) {
+      std::fprintf(out, "\nStrip %s: not listed on this feed\n", d.name.c_str());
+      continue;
+    }
+    const OrderBook& sb = b.book(s);
+    const OrderBook& xb = b.book(x);
+    const OrderBook& yb = b.book(y);
+    std::fprintf(out, "\nStrip %s = %s + %s (strip volume %llu):\n", d.name.c_str(),
+                 d.leg_a.c_str(), d.leg_b.c_str(),
+                 static_cast<unsigned long long>(b.instrument(s).stats.matched_volume()));
+    const auto ib = implied_out(xb.bids(), yb.bids(), depth);
+    const auto ia = implied_out(xb.asks(), yb.asks(), depth);
+    std::fprintf(out, "  %10s %12s %12s | %-12s %-12s %-10s\n", "bid shares", "implied bid",
+                 "strip bid", "strip ask", "implied ask", "ask shares");
+    for (std::size_t i = 0; i < depth; ++i) {
+      const Level* own_b = sb.bids().level(i);
+      const Level* own_a = sb.asks().level(i);
+      const bool have_b = i < ib.size(), have_a = i < ia.size();
+      if (!own_b && !own_a && !have_b && !have_a) break;
+      std::fprintf(out, "  %10s %12s %12s | %-12s %-12s %-10s\n",
+                   have_b ? std::to_string(ib[i].shares).c_str() : "",
+                   have_b ? format_price(ib[i].price).c_str() : "",
+                   own_b ? format_price(own_b->price).c_str() : "",
+                   own_a ? format_price(own_a->price).c_str() : "",
+                   have_a ? format_price(ia[i].price).c_str() : "",
+                   have_a ? std::to_string(ia[i].shares).c_str() : "");
+    }
+    for (const auto& [leg, other] : {std::pair{x, &yb}, std::pair{y, &xb}}) {
+      const ImpliedQuote q = implied_in(sb, *other);
+      const auto sym = lab::itch::trimmed(b.instrument(leg).symbol);
+      const Level* bb = b.book(leg).bids().best();
+      const Level* ba = b.book(leg).asks().best();
+      std::fprintf(out, "  %-8.*s outright %s / %s, implied in %s / %s\n",
+                   static_cast<int>(sym.size()), sym.data(),
+                   bb ? format_price(bb->price).c_str() : "-",
+                   ba ? format_price(ba->price).c_str() : "-",
+                   q.bid ? format_price(q.bid->price).c_str() : "-",
+                   q.ask ? format_price(q.ask->price).c_str() : "-");
+    }
   }
 }
 
