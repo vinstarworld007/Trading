@@ -34,6 +34,9 @@ struct GatewayConfig {
   std::string listen = "127.0.0.1:15000";
   std::string session = "SIMEX00001";
   std::vector<AccountConfig> accounts;
+  // Receives a copy of every firm execution (docs/specs/dropcopy-layout.md);
+  // an empty user turns it off.
+  AccountConfig drop_copy{"DROP01", "lab"};
   bool cancel_on_disconnect = true;
   std::uint64_t heartbeat_ms = 1000;
   std::uint64_t idle_timeout_ms = 15000;
@@ -50,6 +53,7 @@ struct GatewayStats {
   std::uint64_t stale_refs = 0;       // UserRefNum not above the last one: ignored
   std::uint64_t bad_messages = 0;
   std::uint64_t timeouts = 0;
+  std::uint64_t drop_copies = 0;  // Execution Reports sequenced to the drop copy account
 };
 
 class Gateway {
@@ -80,7 +84,8 @@ class Gateway {
     std::vector<std::byte> stream;       // sequenced OUCH messages, back to back
     std::vector<std::uint32_t> offsets;  // start of message i (sequence i + 1)
     std::unordered_map<std::uint32_t, OrderInfo> orders;
-    Conn* conn = nullptr;  // logged-in connection, if any
+    Conn* conn = nullptr;    // logged-in connection, if any
+    bool drop_copy = false;  // receives Execution Reports, sends no orders
   };
   struct Conn {
     lab::net::TcpStream sock;
@@ -104,6 +109,7 @@ class Gateway {
   void close(Conn& c);
   void reject(Account& a, std::uint32_t ref, std::uint16_t reason, const lab::ouch::ClOrdId& id);
   void push(const Command& c);
+  void drop_copy(const Account& a, const SessionEvent& e, const OrderInfo& oi);
   std::uint64_t feed_time() const;
 
   GatewayConfig cfg_;
@@ -111,6 +117,7 @@ class Gateway {
   SessionRing& from_matcher_;
   lab::net::TcpListener listener_;
   std::vector<Account> accounts_;
+  Account* drop_ = nullptr;
   std::vector<std::unique_ptr<Conn>> conns_;
   bool open_ = true;  // still sending commands to the matcher
   GatewayStats stats_;

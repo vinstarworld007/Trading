@@ -25,6 +25,7 @@ Trading::Trading(const TradingConfig& cfg, TopRing& tops, RequestRing& requests,
       instruments_(cfg.symbols.size()) {
   for (std::size_t i = 0; i < instruments_.size(); ++i) instruments_[i].symbol = cfg.symbols[i];
   dirty_.reserve(instruments_.size());
+  fills_.reserve(cfg.fill_log_capacity);
 }
 
 void Trading::mark(std::uint16_t i) {
@@ -53,6 +54,10 @@ void Trading::on_response(const OrderResponse& r) {
   if (applied.order == nullptr) return;
   const std::uint16_t i = applied.order->instrument;
   Instrument& in = instruments_[i];
+  if (applied.fill && fills_.size() < fills_.capacity()) {
+    fills_.push_back({r.exchange_ns, r.number, r.user_ref, r.qty, r.price, in.last_market.bid,
+                      in.last_market.ask, i, applied.order->side, r.flag});
+  }
   if (r.type == OrderResponse::kReplaced) {  // our working order is now the replacement
     if (in.bid_ref == r.orig_ref) in.bid_ref = r.user_ref;
     if (in.ask_ref == r.orig_ref) in.ask_ref = r.user_ref;
@@ -275,6 +280,25 @@ bool Trading::report(std::FILE* out) const {
     ok = false;
   }
   return ok;
+}
+
+}  // namespace trader
+
+namespace trader {
+
+bool Trading::write_fills(const std::string& path) const {
+  std::FILE* f = std::fopen(path.c_str(), "w");
+  if (f == nullptr) return false;
+  std::fprintf(f, "exchange_ns,symbol,side,qty,price,match,liquidity,user_ref,bid,ask\n");
+  for (const auto& r : fills_) {
+    std::string sym(instruments_[r.instrument].symbol.data(), 8);
+    while (!sym.empty() && sym.back() == ' ') sym.pop_back();
+    std::fprintf(f, "%llu,%s,%c,%u,%u,%llu,%c,%u,%u,%u\n",
+                 static_cast<unsigned long long>(r.exchange_ns), sym.c_str(), r.side, r.qty,
+                 r.price, static_cast<unsigned long long>(r.match), r.liquidity, r.user_ref, r.bid,
+                 r.ask);
+  }
+  return std::fclose(f) == 0;
 }
 
 }  // namespace trader

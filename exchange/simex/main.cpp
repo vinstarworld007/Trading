@@ -74,6 +74,7 @@ void usage() {
   std::fprintf(stderr,
                "usage: simex [--replay FILE [--rate N | --speed X] [--limit N] [--linger S]]\n"
                "             [--symbols A,B,C] [--accounts USER:PASS,...] [--listen IP:PORT]\n"
+               "             [--drop-copy USER:PASS | --no-drop-copy]\n"
                "             [--md-dest IP:PORT] [--md-iface IP] [--md-retrans-port N]\n"
                "             [--md-session NAME] [--journal FILE] [--duration S]\n"
                "             [--eos-seconds S] [--no-cancel-on-disconnect]\n"
@@ -92,6 +93,10 @@ bool parse(int argc, char** argv, Options& o) {
       o.gateway.cancel_on_disconnect = false;
       continue;
     }
+    if (a == "--no-drop-copy") {
+      o.gateway.drop_copy = {};
+      continue;
+    }
     if (i + 1 >= argc) return false;
     const char* v = argv[++i];
     if (a == "--replay")
@@ -108,7 +113,12 @@ bool parse(int argc, char** argv, Options& o) {
       o.symbols = split(v, ',');
     else if (a == "--accounts")
       accounts = v;
-    else if (a == "--listen")
+    else if (a == "--drop-copy") {
+      const std::string d = v;
+      const auto colon = d.find(':');
+      if (colon == std::string::npos) return false;
+      o.gateway.drop_copy = {d.substr(0, colon), d.substr(colon + 1)};
+    } else if (a == "--listen")
       o.gateway.listen = v;
     else if (a == "--md-dest")
       o.md.dest = v;
@@ -362,6 +372,10 @@ int main(int argc, char** argv) {
       "%llu out, %llu rejected at the gateway, %llu stale refs, %llu bad, %llu timeouts\n",
       u(gs.connections), u(gs.logins), u(gs.login_rejects), u(gs.inbound), u(gs.outbound),
       u(gs.gateway_rejects), u(gs.stale_refs), u(gs.bad_messages), u(gs.timeouts));
+  if (!opt.gateway.drop_copy.user.empty()) {
+    std::printf("Drop copy    %llu Execution Reports to %s\n", u(gs.drop_copies),
+                opt.gateway.drop_copy.user.c_str());
+  }
   if (journal != nullptr) {
     std::printf("Journal      %llu commands to %s\n", u(journaled), opt.journal.c_str());
   }

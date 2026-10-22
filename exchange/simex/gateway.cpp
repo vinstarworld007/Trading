@@ -10,6 +10,7 @@
 #include "lab/core/clock.hpp"
 #include "lab/core/compiler.hpp"
 #include "lab/ouch/codec.hpp"
+#include "lab/ouch/drop_copy.hpp"
 
 namespace simex {
 
@@ -32,7 +33,7 @@ Gateway::Gateway(const GatewayConfig& cfg, CommandRing& to_matcher, SessionRing&
       to_matcher_{to_matcher},
       from_matcher_{from_matcher},
       listener_{lab::net::TcpListener::listen(lab::net::parse_endpoint(cfg.listen))} {
-  accounts_.reserve(cfg.accounts.size());
+  accounts_.reserve(cfg.accounts.size() + 1);
   std::uint16_t owner = 1;
   for (const auto& a : cfg.accounts) {
     Account acc;
@@ -42,6 +43,16 @@ Gateway::Gateway(const GatewayConfig& cfg, CommandRing& to_matcher, SessionRing&
     acc.offsets.reserve(1u << 20);
     acc.orders.reserve(1u << 16);
     accounts_.push_back(std::move(acc));
+  }
+  if (!cfg.drop_copy.user.empty()) {
+    Account acc;
+    acc.cfg = cfg.drop_copy;
+    acc.owner = owner++;  // never on an order: drop copy sends none
+    acc.drop_copy = true;
+    acc.stream.reserve(64u << 20);
+    acc.offsets.reserve(1u << 20);
+    accounts_.push_back(std::move(acc));
+    drop_ = &accounts_.back();
   }
   // Every account's stream opens with Start of Day.
   for (auto& a : accounts_) {
@@ -213,6 +224,7 @@ void Gateway::reject(Account& a, std::uint32_t ref, std::uint16_t reason, const 
 }
 
 void Gateway::inbound(Account& a, std::span<const std::byte> msg) {
+  if (a.drop_copy) return;  // a drop copy session only listens
   ++stats_.inbound;
   struct Handler : ouch::HandlerBase {
     Gateway& g;
@@ -391,6 +403,7 @@ void Gateway::drain_events() {
         m.match_number = e.match;
         n = ouch::encode(m, buf.data());
         done = e.remaining == 0;
+        drop_copy(a, e, oi);
         break;
       }
       case SessionEvent::kRejected: {
@@ -407,6 +420,25 @@ void Gateway::drain_events() {
     sequence(a, {buf.data(), n});
     if (done && info != a.orders.end()) a.orders.erase(info);
   }
+}
+
+void Gateway::drop_copy(const Account& a, const SessionEvent& e, const OrderInfo& oi) {
+  if (drop_ == nullptr) return;
+  lab::dropcopy::ExecutionReport r;
+  r.timestamp = e.ts_ns;
+  r.account = ouch::make_alpha<6>(a.cfg.user);
+  r.user_ref_num = e.user_ref;
+  r.side = oi.side == ouch::side::kBuy ? 'B' : 'S';
+  r.quantity = e.qty;
+  r.symbol = e.symbol;
+  r.price = e.price;
+  r.match_number = e.match;
+  r.liquidity_flag = e.liquidity;
+  r.order_reference_number = e.orn;
+  std::array<std::byte, lab::dropcopy::ExecutionReport::kSize> buf;
+  ouch::encode(r, buf.data());
+  sequence(*drop_, buf);
+  ++stats_.drop_copies;
 }
 
 void Gateway::sequence(Account& a, std::span<const std::byte> msg) {
@@ -475,7 +507,7 @@ void Gateway::close(Conn& c) {
     Account& a = *c.account;
     if (a.conn == &c) {
       a.conn = nullptr;
-      if (cfg_.cancel_on_disconnect && open_) {
+      if (cfg_.cancel_on_disconnect && open_ && !a.drop_copy) {
         Command cmd{};
         cmd.type = Command::kCancelOwner;
         cmd.owner = a.owner;

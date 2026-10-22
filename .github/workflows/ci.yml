@@ -69,6 +69,30 @@ jobs:
           DURATION: 10
         run: timeout 300 scripts/e2e-firm.sh build/${{ matrix.preset }}
 
+      - name: Python research environment
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install -q -r research/requirements.txt
+
+      - name: End-to-end post-trade (drop copy, reconciliation, TCA, backtest)
+        env:
+          PYTHON: /tmp/venv/bin/python
+          RATE: 50000
+          ORDER_RATE: 1000
+          ORDERS: 5000
+          DURATION: 10
+        run: timeout 300 scripts/e2e-posttrade.sh build/${{ matrix.preset }}
+
+  research:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install -q -r research/requirements.txt
+          /tmp/venv/bin/python -m unittest discover -v research/tests
+
   format:
     runs-on: ubuntu-24.04
     steps:

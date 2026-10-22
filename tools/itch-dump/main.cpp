@@ -4,24 +4,30 @@
 //   itch-dump ~/data/itch/01302019.NASDAQ_ITCH50.gz
 //   itch-dump FILE --symbol AAPL --depth 10      print AAPL's final book
 //   itch-dump FILE --top 20 --csv stats.csv      top symbols, all stats to CSV
+//   itch-dump FILE --symbol AAPL --tob-csv t.csv  AAPL top of book per change
 //   itch-dump FILE --limit 10000000              stop after 10M messages
 //
 // Exits 0 when every integrity check is zero, 1 when any is not, 2 on usage
 // or read errors, so it can gate scripts and CI.
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
 #include "lab/book/book_builder.hpp"
 #include "lab/book/report.hpp"
 #include "lab/core/clock.hpp"
+#include "lab/core/endian.hpp"
 #include "lab/core/histogram.hpp"
+#include "lab/itch/codec.hpp"
 #include "lab/itch/file_reader.hpp"
+#include "lab/itch/messages.hpp"
 
 namespace {
 
@@ -34,6 +40,7 @@ struct Options {
   std::string path;
   std::string symbol;
   std::string csv;
+  std::string tob_csv;  // top-of-book changes for --symbol
   std::uint64_t limit = 0;
   std::size_t depth = 10;
   std::size_t top = 10;
@@ -41,9 +48,11 @@ struct Options {
 };
 
 void usage() {
-  std::fprintf(stderr,
-               "usage: itch-dump FILE [--symbol SYM] [--depth N] [--top N] [--csv OUT] "
-               "[--limit N] [--quiet]\n");
+  std::fprintf(
+      stderr,
+      "usage: itch-dump FILE [--symbol SYM] [--depth N] [--top N] [--csv OUT] "
+      "[--limit N] [--quiet]\n"
+      "                 [--tob-csv OUT]   with --symbol: its top of book after each change\n");
 }
 
 bool parse(int argc, char** argv, Options& o) {
@@ -62,6 +71,8 @@ bool parse(int argc, char** argv, Options& o) {
       o.symbol = v;
     else if (a == "--csv")
       o.csv = v;
+    else if (a == "--tob-csv")
+      o.tob_csv = v;
     else if (a == "--limit")
       o.limit = std::strtoull(v, nullptr, 10);
     else if (a == "--depth")
@@ -71,8 +82,96 @@ bool parse(int argc, char** argv, Options& o) {
     else
       return false;
   }
-  return true;
+  return o.tob_csv.empty() || !o.symbol.empty();
 }
+
+// Writes one symbol's top of book each time it changes, for research/backtest.py,
+// with the shares that traded against the best bid and the best ask since the
+// previous row (executions of resting orders at those prices), so a backtest
+// can model its place in the queue.
+class TopOfBookCsv {
+ public:
+  TopOfBookCsv(const std::string& path, const std::string& symbol)
+      : f_{std::fopen(path.c_str(), "w")}, symbol_{symbol} {
+    if (f_ != nullptr) {
+      std::fprintf(f_, "feed_ns,bid,bid_qty,ask,ask_qty,traded_bid,traded_ask\n");
+    }
+  }
+  ~TopOfBookCsv() {
+    if (f_ != nullptr) std::fclose(f_);
+  }
+  TopOfBookCsv(const TopOfBookCsv&) = delete;
+  TopOfBookCsv& operator=(const TopOfBookCsv&) = delete;
+
+  bool ok() const noexcept { return f_ != nullptr; }
+  std::uint64_t rows() const noexcept { return rows_; }
+
+  // Before the book applies `msg`: counts an execution at the best price.
+  void before(const BookBuilder& b, std::span<const std::byte> msg) {
+    if (locate_ == 0 || msg.empty()) return;
+    const char type = static_cast<char>(msg[0]);
+    std::uint64_t ref = 0;
+    std::uint32_t shares = 0;
+    if (type == lab::itch::OrderExecuted::kType && msg.size() >= lab::itch::OrderExecuted::kSize) {
+      lab::itch::OrderExecuted e;
+      lab::itch::decode(msg.data(), e);
+      ref = e.order_reference_number;
+      shares = e.executed_shares;
+    } else if (type == lab::itch::OrderExecutedWithPrice::kType &&
+               msg.size() >= lab::itch::OrderExecutedWithPrice::kSize) {
+      lab::itch::OrderExecutedWithPrice e;
+      lab::itch::decode(msg.data(), e);
+      ref = e.order_reference_number;
+      shares = e.executed_shares;
+    } else {
+      return;
+    }
+    const auto* o = b.orders().find(ref);
+    if (o == nullptr || o->locate != locate_) return;
+    const auto& book = b.book(locate_);
+    if (o->side == lab::book::Side::kBuy) {
+      if (const auto* best = book.bids().best(); best && best->price == o->price)
+        traded_bid_ += shares;
+    } else if (const auto* best = book.asks().best(); best && best->price == o->price) {
+      traded_ask_ += shares;
+    }
+  }
+
+  void after(const BookBuilder& b, std::span<const std::byte> msg) {
+    if (msg.size() < 3) return;
+    const std::uint16_t locate = lab::load_be16(msg.data() + 1);
+    if (locate_ == 0) {
+      if (static_cast<char>(msg[0]) != 'R') return;
+      locate_ = b.find_locate(symbol_);
+      if (locate_ == 0) return;
+    }
+    if (locate != locate_) return;
+    const auto& book = b.book(locate_);
+    const auto* bid = book.bids().best();
+    const auto* ask = book.asks().best();
+    const std::array<std::uint64_t, 4> now{bid ? bid->price : 0, bid ? bid->shares : 0,
+                                           ask ? ask->price : 0, ask ? ask->shares : 0};
+    if (now == last_ && traded_bid_ == 0 && traded_ask_ == 0) return;
+    last_ = now;
+    std::fprintf(f_, "%llu,%llu,%llu,%llu,%llu,%llu,%llu\n",
+                 static_cast<unsigned long long>(b.last_timestamp()),
+                 static_cast<unsigned long long>(now[0]), static_cast<unsigned long long>(now[1]),
+                 static_cast<unsigned long long>(now[2]), static_cast<unsigned long long>(now[3]),
+                 static_cast<unsigned long long>(traded_bid_),
+                 static_cast<unsigned long long>(traded_ask_));
+    traded_bid_ = traded_ask_ = 0;
+    ++rows_;
+  }
+
+ private:
+  std::FILE* f_;
+  std::string symbol_;
+  std::uint16_t locate_ = 0;
+  std::array<std::uint64_t, 4> last_{};
+  std::uint64_t traded_bid_ = 0;
+  std::uint64_t traded_ask_ = 0;
+  std::uint64_t rows_ = 0;
+};
 
 bool write_csv(const BookBuilder& b, const std::string& path) {
   std::FILE* f = std::fopen(path.c_str(), "w");
@@ -125,12 +224,21 @@ int main(int argc, char** argv) {
   }
 
   auto builder = std::make_unique<BookBuilder>();
+  std::unique_ptr<TopOfBookCsv> tob;
+  if (!opt.tob_csv.empty()) {
+    tob = std::make_unique<TopOfBookCsv>(opt.tob_csv, opt.symbol);
+    if (!tob->ok()) {
+      std::fprintf(stderr, "itch-dump: cannot write %s\n", opt.tob_csv.c_str());
+      return 2;
+    }
+  }
   lab::LatencyHistogram apply_ticks;  // sampled cost of decode + book update
   const auto clock = lab::TscClock::calibrate(std::chrono::milliseconds{20});
   const auto wall_start = std::chrono::steady_clock::now();
   std::uint64_t n = 0;
 
   while (auto msg = reader.next()) {
+    if (tob) tob->before(*builder, *msg);
     if ((n & 63) == 0) {
       const std::uint64_t t0 = lab::rdtsc();
       builder->apply(*msg);
@@ -138,6 +246,7 @@ int main(int argc, char** argv) {
     } else {
       builder->apply(*msg);
     }
+    if (tob) tob->after(*builder, *msg);
     ++n;
     if (opt.progress && (n % 50'000'000) == 0) {
       std::fprintf(stderr, "  %llu M messages, feed time %s\n",
@@ -173,6 +282,11 @@ int main(int argc, char** argv) {
   }
 
   lab::book::print_top(stdout, b, opt.top);
+  if (tob) {
+    std::printf("\nWrote %llu top-of-book changes for %s to %s\n",
+                static_cast<unsigned long long>(tob->rows()), opt.symbol.c_str(),
+                opt.tob_csv.c_str());
+  }
 
   if (!opt.symbol.empty()) {
     if (const auto l = b.find_locate(opt.symbol))
