@@ -34,6 +34,22 @@ target_link_libraries(mold_tests PRIVATE lab::mold lab::book GTest::gtest_main)
 gtest_discover_tests(mold_tests DISCOVERY_TIMEOUT 30)
 
 add_executable(net_tests
+  net/test_tcp.cpp
   net/test_udp.cpp)
 target_link_libraries(net_tests PRIVATE lab::net GTest::gtest_main)
 gtest_discover_tests(net_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(match_tests
+  match/test_engine.cpp)
+target_link_libraries(match_tests PRIVATE lab::match GTest::gtest_main)
+gtest_discover_tests(match_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(soup_tests
+  soup/test_soup.cpp)
+target_link_libraries(soup_tests PRIVATE lab::soup GTest::gtest_main)
+gtest_discover_tests(soup_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(ouch_tests
+  ouch/test_codec.cpp)
+target_link_libraries(ouch_tests PRIVATE lab::ouch GTest::gtest_main)
+gtest_discover_tests(ouch_tests DISCOVERY_TIMEOUT 30)

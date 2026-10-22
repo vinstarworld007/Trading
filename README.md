@@ -43,6 +43,24 @@ same integrity checks and `Book digest` line as `itch-dump`: equal digests
 mean the live feed rebuilt exactly the books the file did.
 `scripts/e2e-live-feed.sh` does all of this in one command, and CI runs it.
 
+Run the exchange: `simex` matches orders from firms over OUCH 5.0/SoupBinTCP
+against a replayed day's order flow, which it uses as historical liquidity, and
+publishes its own ITCH feed over MoldUDP64. In three terminals:
+
+```bash
+./build/release/tools/itch-fh/itch-fh --group 127.0.0.1:31001 --retrans 127.0.0.1:31002
+./build/release/exchange/simex/simex --replay ~/data/itch/01302019.NASDAQ_ITCH50.gz \
+    --rate 200000 --md-dest 127.0.0.1:31001 --journal /tmp/simex.journal --duration 60
+./build/release/tools/ouch-client/ouch-client --reference ~/data/itch/01302019.NASDAQ_ITCH50.gz \
+    --accounts FIRM01:lab,FIRM02:lab --orders 50000 --rate 10000 --replay-check
+```
+
+`simex` rebuilds books from its own feed while it runs and, at the close,
+checks they equal the matching engine's books. `ouch-client` checks every
+response (sequence numbers, fills inside limits, every request answered, a
+re-login replaying byte for byte) and reports order round trips.
+`scripts/e2e-simex.sh` runs all three, and CI runs it under every sanitizer.
+
 Build by hand:
 
 ```bash
@@ -64,21 +82,30 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `libs/net` | UDP unicast and multicast sockets, `recvmmsg` batch receive |
 | `tools/itch-replay` | Publishes a day file as a MoldUDP64 feed with pacing, heartbeats, End of Session, a re-request server and fault injection |
 | `tools/itch-fh` | Feed handler: rx thread plus book thread, gap recovery, live books, latency and integrity report |
+| `libs/feed` | MoldUDP64 publisher (packing, heartbeats, re-request server, faults) and receiver (rx thread, sequencing, recovery) shared by the tools, simex and the firm |
+| `libs/net` (TCP) | Non-blocking TCP streams with a send queue, and listeners |
+| `libs/soup` | SoupBinTCP 3.00 packets, login, and a stream reassembler |
+| `libs/ouch` | OUCH 5.0 codec, one field list per message as in `libs/itch` |
+| `libs/match` | Price-time matching engine: preallocated order pool, open-addressing key index, IOC and day orders, replace, cancel-on-disconnect |
+| `exchange/simex` | The exchange: gateway thread (OUCH sessions), matching thread (sequencer and engine), market data thread (ITCH over MoldUDP64), journal, historical liquidity |
+| `tools/ouch-client` | Trades random orders into simex on several accounts and checks every response |
 | `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
 | `tools/lab-check` | Checks the machine (CPUs, TSC, huge pages, loopback multicast, disk) and measures a core-to-core round trip |
 | `scripts/` | WSL setup, sample data download, `.wslconfig` template |
 | `docs/core-plan.md` | Which thread runs on which core |
 | `docs/specs/itch50-layout.md` | ITCH 5.0 field tables the codec implements, with the source |
 | `docs/specs/moldudp64-layout.md` | MoldUDP64 packet and request layouts, with the source |
+| `docs/specs/soupbintcp-layout.md`, `docs/specs/ouch50-layout.md` | SoupBinTCP and OUCH 5.0 layouts, and how simex reads the spec where it leaves room |
 | `scripts/e2e-live-feed.sh` | Replays a day with packet loss into `itch-fh` and checks the books match `itch-dump` |
-| `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64 |
+| `scripts/e2e-simex.sh` | simex with historical liquidity, `ouch-client` trading into it and `itch-fh` on its feed; checks responses and that all books agree |
+| `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine |
 
 ## Build phases
 
 1. **Foundations**: build system, core library, WSL setup, CI.
 2. **ITCH codec and offline book**: `itch-dump` rebuilds every order book from a sample day.
-3. **Live feed** (this): `itch-replay` (MoldUDP64, fault injection, retransmission) and `itch-fh`.
-4. **Exchange**: `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
+3. **Live feed**: `itch-replay` (MoldUDP64, fault injection, retransmission) and `itch-fh`.
+4. **Exchange** (this): `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
 5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.
 6. **Post-trade and research**: drop copy, PnL, TCA, Python backtests.
 7. **Hardening**: profiling, tail latency, agent-based liquidity, a FIX venue.
