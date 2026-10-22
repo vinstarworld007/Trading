@@ -14,12 +14,14 @@
 
 namespace lab::vendor::json {
 
+struct Member;
+
 struct Value {
   enum class Type { kNull, kBool, kNumber, kString, kArray, kObject } type = Type::kNull;
   bool b = false;
   std::string text;  // number text or string contents
   std::vector<Value> items;
-  std::vector<std::pair<std::string, Value>> members;  // in source order
+  std::vector<Member> members;  // in source order
 
   bool is_null() const noexcept { return type == Type::kNull; }
   bool is_string() const noexcept { return type == Type::kString; }
@@ -27,17 +29,28 @@ struct Value {
   bool is_array() const noexcept { return type == Type::kArray; }
   bool is_object() const noexcept { return type == Type::kObject; }
 
-  const Value* get(std::string_view key) const noexcept {
-    for (const auto& [k, v] : members) {
-      if (k == key) return &v;
-    }
-    return nullptr;
-  }
-  std::string_view str(std::string_view key) const noexcept {
-    const Value* v = get(key);
-    return v != nullptr && v->is_string() ? std::string_view{v->text} : std::string_view{};
-  }
+  const Value* get(std::string_view key) const noexcept;
+  std::string_view str(std::string_view key) const noexcept;
 };
+
+// An object member. A plain struct rather than std::pair<std::string, Value>:
+// std::pair's constructor traits need Value complete, which it is not inside
+// its own definition, and clang rejects that.
+struct Member {
+  std::string first;
+  Value second;
+};
+
+inline const Value* Value::get(std::string_view key) const noexcept {
+  for (const auto& [k, v] : members) {
+    if (k == key) return &v;
+  }
+  return nullptr;
+}
+inline std::string_view Value::str(std::string_view key) const noexcept {
+  const Value* v = get(key);
+  return v != nullptr && v->is_string() ? std::string_view{v->text} : std::string_view{};
+}
 
 class Parser {
  public:
@@ -134,7 +147,7 @@ class Parser {
         ++i_;
         Value m;
         if (!value(m)) return false;
-        v.members.emplace_back(std::move(k), std::move(m));
+        v.members.push_back({std::move(k), std::move(m)});
         ws();
         if (i_ < s_.size() && s_[i_] == ',') {
           ++i_;
