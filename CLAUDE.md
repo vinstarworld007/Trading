@@ -22,6 +22,9 @@ the project playbook. Build phases are listed in README.md.
 - `scripts/e2e-fix.sh` runs `fixgw` and `fix-client` against simex; run it after
   any `libs/fix`, `fixgw` or OUCH change. `scripts/e2e-agents.sh` runs `agents`
   and `trader`; run it after any agents or trader change.
+- `scripts/e2e-vendors.sh` runs the three vendor servers and `vendor-client`
+  against simex with agents; run it after any `libs/vendor`, `vendors/` or
+  `vendor-client` change.
 - `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
   `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
   feed, sequencing or book change.
@@ -41,6 +44,9 @@ the project playbook. Build phases are listed in README.md.
 - `libs/match`  price-time matching engine (header-only, preallocated; tables on huge pages)
 - `libs/fix`  FIX 4.4 framing and session layer (header-only)
 - `firm/oms`, `firm/risk`, `firm/strategy`  header-only firm libraries; `firm/trader` the trading engine
+- `libs/vendor`  vendor ticker plant: `Consolidator` (Level 1 records from `BookBuilder`), a
+  single-threaded distribution `Server` with conflation, and the ICF, OMM JSON/WebSocket and
+  B-PIPE sessions; `vendors/{icf,rtws,bpipe}` the three servers
 - `research/`  Python (numpy, pandas): PnL, reconciliation, TCA, backtests; stdlib unittest
 - `exchange/`, `tools/`  as in the design doc
 - One library or executable per directory, each with its own CMakeLists.txt and
@@ -58,6 +64,9 @@ the project playbook. Build phases are listed in README.md.
 
 ## Protocols
 
+- Vendor protocols: `docs/specs/vendor-omm-json.md` (public Refinitiv API, cites its
+  sources); `vendor-icf.md` and `vendor-bpipe.md` are lab-defined look-alikes and are
+  themselves the spec.
 - ITCH 5.0, MoldUDP64, OUCH and SoupBinTCP field layouts come from the official
   spec PDFs in `docs/specs/`; FIX 4.4 tags and values from the FIX dictionary
   cited in `docs/specs/fix44-subset.md`. Never guess a field offset; if the spec is missing,

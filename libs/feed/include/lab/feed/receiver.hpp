@@ -54,6 +54,9 @@ struct ReceiverConfig {
   std::uint64_t timeout_ms = 20;     // re-request when a request makes no progress
   std::uint32_t retries = 10;        // requests without progress before a gap is given up
   std::size_t window = 1u << 18;     // messages held ahead of a gap
+  // 0: the receive thread spins (the hot path). Otherwise it sleeps this long
+  // when nothing arrived, for processes off the hot path sharing few cores.
+  std::uint64_t idle_sleep_us = 0;
 };
 
 struct RxStats {

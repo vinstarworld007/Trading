@@ -167,7 +167,16 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 4. **Exchange**: `simex` matching engine, OUCH/SoupBinTCP, ITCH output, historical liquidity.
 5. **Firm hot path**: order gateway, inline risk, OMS, a market-making strategy.
 6. **Post-trade and research**: drop copy, PnL, TCA, Python backtests.
-7. **Hardening** (this): profiling, tail latency, agent-based liquidity, a FIX venue.
+7. **Hardening**: profiling, tail latency, agent-based liquidity, a FIX venue.
+8. **Market data vendors** (this): three vendors that consolidate simex's feed and
+   redistribute it: `icf-server` (an ICE Consolidated Feed look-alike over
+   SoupBinTCP), `rt-server` (the public Refinitiv WebSocket API, OMM JSON with
+   RDMFieldDictionary field ids) and `bpipe-server` (a Bloomberg B-PIPE
+   look-alike carrying BLPAPI's session, service, subscription and event
+   model). `vendor-client` subscribes through any of them and checks the
+   result against the direct feed. ICE's and Bloomberg's wire formats are
+   licensed, so those two protocols are the lab's own, documented in
+   `docs/specs/vendor-*.md`.
 
 Latency numbers measured under WSL2 are relative, not production figures: the
 Windows host schedules the VM's CPUs, and there is no kernel-bypass networking.
