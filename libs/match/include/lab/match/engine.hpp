@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "lab/core/compiler.hpp"
+#include "lab/core/huge_pages.hpp"
 #include "lab/match/key_index.hpp"
 
 namespace lab::match {
@@ -445,7 +446,7 @@ class Engine {
   }
 
   EngineConfig cfg_;
-  std::vector<Node> nodes_;
+  std::vector<Node, HugePageAllocator<Node>> nodes_;  // see lab/core/huge_pages.hpp
   std::vector<std::uint32_t> free_;
   KeyIndex index_;
   std::vector<Book> books_;

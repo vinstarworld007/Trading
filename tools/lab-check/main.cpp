@@ -104,7 +104,12 @@ void check_memory() {
          "sudo sysctl -w vm.nr_hugepages=1024 (scripts/wsl-setup.sh persists it)");
 
   const std::string thp = trim(read_file("/sys/kernel/mm/transparent_hugepage/enabled"));
-  if (!thp.empty()) info("transparent huge pages: " + thp);
+  if (thp.find("[never]") != std::string::npos) {
+    warn("transparent huge pages: " + thp + " (the matching engine's tables want them)",
+         "echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled");
+  } else if (!thp.empty()) {
+    ok("transparent huge pages: " + thp + " (used by lab::HugePageAllocator)");
+  }
 
   struct statvfs shm {};
   if (statvfs("/dev/shm", &shm) == 0) {

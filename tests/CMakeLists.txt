@@ -5,6 +5,7 @@ add_executable(core_tests
   core/test_clock.cpp
   core/test_endian.cpp
   core/test_histogram.cpp
+  core/test_huge_pages.cpp
   core/test_log.cpp
   core/test_shm.cpp
   core/test_spsc_ring.cpp)
@@ -60,3 +61,9 @@ add_executable(firm_tests
   firm/test_risk.cpp)
 target_link_libraries(firm_tests PRIVATE lab::strategy lab::risk lab::oms GTest::gtest_main)
 gtest_discover_tests(firm_tests DISCOVERY_TIMEOUT 30)
+
+add_executable(fix_tests
+  fix/test_codec.cpp
+  fix/test_session.cpp)
+target_link_libraries(fix_tests PRIVATE lab::fix GTest::gtest_main)
+gtest_discover_tests(fix_tests DISCOVERY_TIMEOUT 30)
