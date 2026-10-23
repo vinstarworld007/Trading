@@ -177,8 +177,9 @@ void BookBuilder::on(const itch::OrderExecutedWithPrice& m) {
 
 void BookBuilder::on(const itch::OrderCancel& m) {
   see(m.header);
+  // X pulls the order from the book; Nasdaq sends nothing further for it.
   if (Instrument* inst =
-          reduce_order(m.order_reference_number, m.cancelled_shares, false, nullptr)) {
+          reduce_order(m.order_reference_number, m.cancelled_shares, true, nullptr)) {
     ++inst->stats.cancels;
   }
 }
