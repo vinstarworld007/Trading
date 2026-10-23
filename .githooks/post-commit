@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Auto-push after every commit.
+# Activated on any machine by: git config core.hooksPath .githooks
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "HEAD")
+echo "[post-commit] pushing $branch to origin..."
+git push origin "$branch"
