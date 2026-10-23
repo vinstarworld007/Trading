@@ -239,7 +239,8 @@ let top3Locs      = new Set();
 let top3Syms      = [];
 let msgIdx        = 0;
 let sessionTrades = 0;
-let paused        = false;
+let paused        = false;   // session/internal pause
+let userPaused    = false;   // user-controlled play/pause
 let execQueue     = [];
 
 async function init() {
@@ -292,7 +293,7 @@ function processTick() {
 }
 
 function dequeueExec() {
-  if (paused || execQueue.length === 0) {
+  if (paused || userPaused || execQueue.length === 0) {
     setTimeout(dequeueExec, 150);
     return;
   }
@@ -376,8 +377,17 @@ header{background:#050709;border-bottom:1px solid var(--border);padding:8px 18px
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--exec));
   border-radius:4px;transition:width .5s ease}
 .live{width:7px;height:7px;border-radius:50%;background:var(--bid);
-  animation:pulse 1.4s infinite;margin-left:auto}
+  animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+#pp-btn{margin-left:auto;border:none;border-radius:6px;padding:6px 18px;
+  font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:7px;transition:all .2s;letter-spacing:.04em}
+#pp-btn.playing{background:rgba(239,68,68,.15);color:var(--ask);border:1px solid rgba(239,68,68,.4)}
+#pp-btn.playing:hover{background:rgba(239,68,68,.28)}
+#pp-btn.paused{background:rgba(34,212,94,.15);color:var(--bid);border:1px solid rgba(34,212,94,.4)}
+#pp-btn.paused:hover{background:rgba(34,212,94,.28)}
+#pp-btn.trade-flash{animation:btnFlash .5s ease}
+@keyframes btnFlash{0%{box-shadow:0 0 0 0 rgba(245,158,11,.7)}70%{box-shadow:0 0 0 8px rgba(245,158,11,0)}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
 
 /* session-end overlay */
 #sess-ov{position:fixed;inset:0;background:rgba(5,7,9,.88);z-index:200;
@@ -532,6 +542,7 @@ main{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
     <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
   </div>
   <div class="live"></div>
+  <button id="pp-btn" class="playing" onclick="togglePause()">&#9646;&#9646; PAUSE</button>
 </header>
 
 <main id="grid"></main>
@@ -714,6 +725,30 @@ function showDetail(d, durationMs) {
   detailTimer=setTimeout(()=>ov.classList.remove('show'), durationMs);
 }
 
+// ── play / pause ─────────────────────────────────────────────────────────────
+let isPaused = false;
+function togglePause() {
+  isPaused = !isPaused;
+  fetch(isPaused ? '/pause' : '/play');
+  setBtn(isPaused);
+}
+function setBtn(paused) {
+  const btn = document.getElementById('pp-btn');
+  if (paused) {
+    btn.className = 'paused';
+    btn.innerHTML = '&#9654; PLAY';
+  } else {
+    btn.className = 'playing';
+    btn.innerHTML = '&#9646;&#9646; PAUSE';
+  }
+}
+function flashBtn() {
+  const btn = document.getElementById('pp-btn');
+  btn.classList.remove('trade-flash');
+  void btn.offsetWidth;
+  btn.classList.add('trade-flash');
+}
+
 // ── session end ───────────────────────────────────────────────────────────────
 let sessTimer=null;
 function showSessionEnd() {
@@ -739,7 +774,10 @@ es.addEventListener('trade', e=>{
   if(d.book) updateBook(d.sym,d.book,d.stat||{});
   flashTrade(d.sym,d.side,d.price,d.shares,d.ts);
   if(d.isDetail && d.detail) showDetail(d.detail, d.pauseMs);
+  flashBtn();
 });
+es.addEventListener('paused',  ()=>{ isPaused=true;  setBtn(true); });
+es.addEventListener('playing', ()=>{ isPaused=false; setBtn(false); });
 
 es.addEventListener('session_end', ()=>showSessionEnd());
 es.addEventListener('session_start', ()=>{
@@ -757,6 +795,16 @@ const server = http.createServer((req, res) => {
       "Access-Control-Allow-Origin":"*",Connection:"keep-alive"});
     res.write("retry:2000\n\n");
     clients.add(res); req.on("close",()=>clients.delete(res)); return;
+  }
+  if (req.url === "/pause") {
+    userPaused = true;
+    push("paused", {});
+    res.writeHead(200); res.end(); return;
+  }
+  if (req.url === "/play") {
+    userPaused = false;
+    push("playing", {});
+    res.writeHead(200); res.end(); return;
   }
   res.writeHead(200,{"Content-Type":"text/html"}); res.end(HTML);
 });
