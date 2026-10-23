@@ -241,6 +241,7 @@ let msgIdx        = 0;
 let sessionTrades = 0;
 let paused        = false;   // session/internal pause
 let userPaused    = false;   // user-controlled play/pause
+let nextExecAt    = 0;       // wall-clock ms when next exec may fire
 let execQueue     = [];
 
 async function init() {
@@ -293,8 +294,10 @@ function processTick() {
 }
 
 function dequeueExec() {
-  if (paused || userPaused || execQueue.length === 0) {
-    setTimeout(dequeueExec, 150);
+  const now = Date.now();
+  // poll every 100 ms — responds to userPaused within 100 ms
+  if (paused || userPaused || execQueue.length === 0 || now < nextExecAt) {
+    setTimeout(dequeueExec, 100);
     return;
   }
 
@@ -328,11 +331,13 @@ function dequeueExec() {
     paused = true;
     execQueue = [];
     push("session_end", {});
-    setTimeout(() => { paused = false; push("session_start", { syms: top3Syms }); }, 5000);
+    setTimeout(() => { paused = false; nextExecAt = 0; push("session_start", { syms: top3Syms }); }, 5000);
+    setTimeout(dequeueExec, 100);
     return;
   }
 
-  setTimeout(dequeueExec, pauseMs);
+  nextExecAt = now + pauseMs;
+  setTimeout(dequeueExec, 100);
 }
 
 function startBookPush() {
@@ -377,17 +382,15 @@ header{background:#050709;border-bottom:1px solid var(--border);padding:8px 18px
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--exec));
   border-radius:4px;transition:width .5s ease}
 .live{width:7px;height:7px;border-radius:50%;background:var(--bid);
-  animation:pulse 1.4s infinite}
+  animation:pulse 1.4s infinite;margin-left:auto}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-#pp-btn{margin-left:auto;border:none;border-radius:6px;padding:6px 18px;
-  font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;gap:7px;transition:all .2s;letter-spacing:.04em}
-#pp-btn.playing{background:rgba(239,68,68,.15);color:var(--ask);border:1px solid rgba(239,68,68,.4)}
-#pp-btn.playing:hover{background:rgba(239,68,68,.28)}
-#pp-btn.paused{background:rgba(34,212,94,.15);color:var(--bid);border:1px solid rgba(34,212,94,.4)}
-#pp-btn.paused:hover{background:rgba(34,212,94,.28)}
-#pp-btn.trade-flash{animation:btnFlash .5s ease}
-@keyframes btnFlash{0%{box-shadow:0 0 0 0 rgba(245,158,11,.7)}70%{box-shadow:0 0 0 8px rgba(245,158,11,0)}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+/* inline pause/play buttons on banners and overlays */
+.pp{border:none;border-radius:5px;padding:5px 13px;font-family:inherit;
+  font-size:.75rem;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:all .15s}
+.pp.pause{background:rgba(239,68,68,.15);color:var(--ask);border:1px solid rgba(239,68,68,.45)}
+.pp.pause:hover{background:rgba(239,68,68,.3)}
+.pp.play {background:rgba(34,212,94,.15);color:var(--bid);border:1px solid rgba(34,212,94,.45)}
+.pp.play:hover{background:rgba(34,212,94,.3)}
 
 /* session-end overlay */
 #sess-ov{position:fixed;inset:0;background:rgba(5,7,9,.88);z-index:200;
@@ -524,12 +527,15 @@ main{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
     <div class="mini-book" id="d-book"></div>
     <div class="steps" id="d-steps"></div>
     <div>
-      <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:6px">
         <span>Best bid: <b id="d-bb" style="color:var(--bid)"></b></span>
         <span>Spread: <b id="d-sp" style="color:var(--exec)"></b></span>
         <span>Best ask: <b id="d-ba" style="color:var(--ask)"></b></span>
       </div>
-      <div class="detail-timer"><div class="detail-timer-fill" id="d-timer" style="width:100%"></div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="detail-timer" style="flex:1"><div class="detail-timer-fill" id="d-timer" style="width:100%"></div></div>
+        <button class="pp pause" id="d-pp" onclick="detailToggle()">&#9646;&#9646; PAUSE</button>
+      </div>
     </div>
   </div>
 </div>
@@ -542,7 +548,6 @@ main{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
     <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
   </div>
   <div class="live"></div>
-  <button id="pp-btn" class="playing" onclick="togglePause()">&#9646;&#9646; PAUSE</button>
 </header>
 
 <main id="grid"></main>
@@ -568,7 +573,10 @@ function buildCol(sym) {
         <div class="st"><span class="k">Vol</span><span class="v b" id="svl-\${sym}">—</span></div>
       </div>
     </div>
-    <div class="f-banner" id="bn-\${sym}"></div>
+    <div class="f-banner" id="bn-\${sym}">
+      <span class="bn-txt"></span>
+      <button class="pp pause bn-pp" onclick="bannerToggle(this)">&#9646;&#9646; PAUSE</button>
+    </div>
     <div class="book">
       <div class="asks" id="asks-\${sym}"></div>
       <div class="spread-row">
@@ -660,10 +668,15 @@ function flashTrade(sym, side, price, shares, ts) {
   c.el.classList.remove('flash-buy','flash-sell');
   void c.el.offsetWidth;
   c.el.classList.add(side==='BUY'?'flash-buy':'flash-sell');
+  // banner — update text, reset pause btn, show
   const b = c.banner;
+  b.querySelector('.bn-txt').textContent = (side==='BUY'?'▲':'▼') + '  FILLED  ' + shares.toLocaleString() + ' sh @ $' + price;
+  const btn = b.querySelector('.bn-pp');
+  btn.className='pp pause bn-pp'; btn.innerHTML='&#9646;&#9646; PAUSE';
   b.className = 'f-banner '+side+' show';
-  b.textContent = (side==='BUY'?'▲':'▼') + '  FILLED  ' + shares.toLocaleString() + ' sh @ $' + price;
-  setTimeout(()=>{ b.className='f-banner '+side; }, side==='BUY'?1800:1800);
+  // auto-hide banner after pauseMs unless user paused
+  if (c.bannerTimer) clearTimeout(c.bannerTimer);
+  c.bannerTimer = setTimeout(()=>{ if(!isPaused) b.className='f-banner '+side; }, 1800);
   // tape
   const row=document.createElement('div');
   row.className=\`trow \${side} new-trade\`;
@@ -714,6 +727,8 @@ function showDetail(d, durationMs) {
   });
 
   // timer bar
+  detailRemaining = durationMs;
+  if (detailAutoClose) { clearTimeout(detailAutoClose); detailAutoClose = null; }
   const tf=document.getElementById('d-timer');
   tf.style.transition='none'; tf.style.width='100%';
   void tf.offsetWidth;
@@ -727,26 +742,45 @@ function showDetail(d, durationMs) {
 
 // ── play / pause ─────────────────────────────────────────────────────────────
 let isPaused = false;
-function togglePause() {
-  isPaused = !isPaused;
+
+function setPaused(val) {
+  isPaused = val;
   fetch(isPaused ? '/pause' : '/play');
-  setBtn(isPaused);
+  // sync all banner buttons
+  document.querySelectorAll('.bn-pp').forEach(btn => {
+    btn.className = isPaused ? 'pp play bn-pp' : 'pp pause bn-pp';
+    btn.innerHTML = isPaused ? '&#9654; PLAY' : '&#9646;&#9646; PAUSE';
+  });
+  // sync detail overlay button
+  const dp = document.getElementById('d-pp');
+  if (dp) { dp.className = isPaused ? 'pp play' : 'pp pause';
+    dp.innerHTML = isPaused ? '&#9654; PLAY' : '&#9646;&#9646; PAUSE'; }
 }
-function setBtn(paused) {
-  const btn = document.getElementById('pp-btn');
-  if (paused) {
-    btn.className = 'paused';
-    btn.innerHTML = '&#9654; PLAY';
+
+// called from fill banner button
+function bannerToggle(btn) { setPaused(!isPaused); }
+
+// called from detail overlay button — also pauses/resumes the timer bar
+let detailPausedAt = 0, detailRemaining = 0, detailDuration = 0, detailAutoClose = null;
+function detailToggle() {
+  if (!isPaused) {
+    // pausing: freeze timer bar
+    const tf = document.getElementById('d-timer');
+    const computed = getComputedStyle(tf).width;
+    tf.style.transition = 'none';
+    tf.style.width = computed;
+    detailPausedAt = Date.now();
   } else {
-    btn.className = 'playing';
-    btn.innerHTML = '&#9646;&#9646; PAUSE';
+    // resuming: restart timer bar for remaining time
+    const tf = document.getElementById('d-timer');
+    detailRemaining = Math.max(0, detailRemaining - (Date.now() - detailPausedAt));
+    void tf.offsetWidth;
+    tf.style.transition = \`width \${detailRemaining}ms linear\`;
+    tf.style.width = '0%';
+    if (detailAutoClose) clearTimeout(detailAutoClose);
+    detailAutoClose = setTimeout(()=>document.getElementById('detail-ov').classList.remove('show'), detailRemaining);
   }
-}
-function flashBtn() {
-  const btn = document.getElementById('pp-btn');
-  btn.classList.remove('trade-flash');
-  void btn.offsetWidth;
-  btn.classList.add('trade-flash');
+  setPaused(!isPaused);
 }
 
 // ── session end ───────────────────────────────────────────────────────────────
@@ -774,10 +808,9 @@ es.addEventListener('trade', e=>{
   if(d.book) updateBook(d.sym,d.book,d.stat||{});
   flashTrade(d.sym,d.side,d.price,d.shares,d.ts);
   if(d.isDetail && d.detail) showDetail(d.detail, d.pauseMs);
-  flashBtn();
 });
-es.addEventListener('paused',  ()=>{ isPaused=true;  setBtn(true); });
-es.addEventListener('playing', ()=>{ isPaused=false; setBtn(false); });
+es.addEventListener('paused',  ()=>{ isPaused=true;  document.querySelectorAll('.bn-pp').forEach(b=>{b.className='pp play bn-pp';b.innerHTML='&#9654; PLAY';}); const dp=document.getElementById('d-pp');if(dp){dp.className='pp play';dp.innerHTML='&#9654; PLAY';} });
+es.addEventListener('playing', ()=>{ isPaused=false; document.querySelectorAll('.bn-pp').forEach(b=>{b.className='pp pause bn-pp';b.innerHTML='&#9646;&#9646; PAUSE';}); const dp=document.getElementById('d-pp');if(dp){dp.className='pp pause';dp.innerHTML='&#9646;&#9646; PAUSE';} });
 
 es.addEventListener('session_end', ()=>showSessionEnd());
 es.addEventListener('session_start', ()=>{
