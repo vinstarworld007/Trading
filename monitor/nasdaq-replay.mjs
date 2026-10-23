@@ -305,8 +305,8 @@ function dequeueExec() {
   if (!top3Locs.has(e.loc)) { setTimeout(dequeueExec, 0); return; }
 
   sessionTrades++;
-  const isDetail  = (sessionTrades % 10 === 0);
-  const pauseMs   = isDetail ? DETAIL_PAUSE : NORMAL_PAUSE;
+  const isDetail  = true;
+  const pauseMs   = DETAIL_PAUSE;
   const snap      = bookSnap(e.loc);
   const st        = statSnap(e.loc);
   const detail    = isDetail ? buildDetail({ ...e, session: sessionTrades }, e.snapBefore) : null;
