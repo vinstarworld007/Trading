@@ -1,0 +1,125 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        preset: [release, asan, tsan]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ninja-build clang-18 libclang-rt-18-dev libgtest-dev libbenchmark-dev zlib1g-dev
+
+      - name: Select compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = clang ]; then
+            echo "CXX=clang++-18" >> "$GITHUB_ENV"
+          else
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -DLAB_WERROR=ON
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+      - name: Machine check
+        if: matrix.preset == 'release'
+        run: ./build/release/tools/lab-check/lab-check --no-pingpong
+
+      - name: End-to-end synthetic day
+        if: matrix.preset != 'tsan'
+        run: |
+          dir=build/${{ matrix.preset }}/tools
+          $dir/itch-gen/itch-gen /tmp/synth.itch50.gz --symbols 100 --messages 1000000
+          $dir/itch-dump/itch-dump /tmp/synth.itch50.gz --symbol SYM0001 --quiet
+
+      - name: End-to-end live feed with packet loss
+        env:
+          RATE: 200000  # sanitizer builds apply books several times slower
+        run: timeout 300 scripts/e2e-live-feed.sh build/${{ matrix.preset }}
+
+      - name: End-to-end exchange (simex, OUCH client, feed handler)
+        env:
+          RATE: 50000  # sanitizer builds match several times slower
+          ORDERS: 10000
+          ORDER_RATE: 5000
+        run: timeout 300 scripts/e2e-simex.sh build/${{ matrix.preset }}
+
+      - name: End-to-end firm (trader making markets on simex)
+        env:
+          RATE: 50000
+          ORDER_RATE: 1000
+          ORDERS: 5000
+          DURATION: 10
+        run: timeout 300 scripts/e2e-firm.sh build/${{ matrix.preset }}
+
+      - name: End-to-end FIX venue (fixgw, fix-client, reconnect with resend)
+        env:
+          ORDERS: 3000
+          ORDER_RATE: 500
+          DURATION: 30
+        run: timeout 300 scripts/e2e-fix.sh build/${{ matrix.preset }}
+
+      - name: End-to-end agent-based liquidity (agents and trader, no replay)
+        env:
+          DURATION: 12
+        run: timeout 300 scripts/e2e-agents.sh build/${{ matrix.preset }}
+
+      - name: End-to-end market data vendors (ICF, Reuters, Bloomberg)
+        env:
+          DURATION: 8
+        run: timeout 300 scripts/e2e-vendors.sh build/${{ matrix.preset }}
+
+      - name: End-to-end market scenarios (auctions, halts, LULD, MWCB, IPO, strips)
+        env:
+          DURATION: 20
+        run: timeout 300 scripts/e2e-scenarios.sh build/${{ matrix.preset }}
+
+      - name: Python research environment
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install -q -r research/requirements.txt
+
+      - name: End-to-end post-trade (drop copy, reconciliation, TCA, backtest)
+        env:
+          PYTHON: /tmp/venv/bin/python
+          RATE: 50000
+          ORDER_RATE: 1000
+          ORDERS: 5000
+          DURATION: 10
+        run: timeout 300 scripts/e2e-posttrade.sh build/${{ matrix.preset }}
+
+  research:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install -q -r research/requirements.txt
+          /tmp/venv/bin/python -m unittest discover -v research/tests
+
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: |
+          sudo apt-get install -y -qq clang-format-18
+          find libs tests bench tools -name '*.hpp' -o -name '*.cpp' | xargs clang-format-18 --dry-run --Werror

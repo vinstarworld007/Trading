@@ -1,0 +1,9 @@
+build/
+.cache/
+compile_commands.json
+*.pcap
+*.gz
+data/
+work/
+__pycache__/
+.venv/
