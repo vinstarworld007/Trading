@@ -124,7 +124,7 @@ class OrderMap {
       j = (j + 1) & mask_;
       if (slots_[j].key == kEmpty) break;
       const std::size_t k = home(slots_[j].key);
-      const bool stays = (i <= j) ? (i < k && k <= j) : (i < k || k <= j);
+      const bool stays = (i <= j) ? (i < k && k <= j) : (i < k || k < j);
       if (stays) continue;
       slots_[i] = slots_[j];
       i = j;
