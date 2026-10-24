@@ -9,7 +9,7 @@ namespace lab::book {
 std::string format_price(std::uint32_t p) {
   if (p == 0) return "-";
   char buf[32];
-  std::snprintf(buf, sizeof buf, "%u.%u", p / 10000, p % 10000);
+  std::snprintf(buf, sizeof buf, "%u.%04u", p / 10000, p % 10000);
   return buf;
 }
 

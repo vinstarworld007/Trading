@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "lab/book/book_builder.hpp"
+#include "lab/book/report.hpp"
 #include "lab/itch/synthetic.hpp"
 
 namespace {
@@ -328,4 +329,11 @@ TEST(BookBuilder, DigestMatchesOnlyForTheSameBooks) {
 
   Feed empty;
   EXPECT_NE(empty.b().digest(), a.b().digest());
+}
+
+TEST(Report, FormatsPricesWithFourDecimals) {
+  EXPECT_EQ(lab::book::format_price(160'600), "16.0600");
+  EXPECT_EQ(lab::book::format_price(1'000'001), "100.0001");
+  EXPECT_EQ(lab::book::format_price(2'345'000), "234.5000");
+  EXPECT_EQ(lab::book::format_price(0), "-");
 }

@@ -72,3 +72,21 @@ TEST(OrderMap, MatchesReferenceMapUnderRandomChurnAndGrowth) {
 }
 
 }  // namespace
+
+namespace {
+
+// A probe run that wraps past the end of the table: the entry in slot 0 sits
+// at its own home, so erasing from slot 14 must not pull it backwards to 15.
+TEST(OrderMap, EraseKeepsAnEntryAtItsHomeAfterTheRunWraps) {
+  OrderMap m{16};
+  ASSERT_EQ(m.capacity(), 16u);
+  ASSERT_TRUE(m.insert(14, Order{14, 1, 1, Side::kBuy}));  // slot 14
+  ASSERT_TRUE(m.insert(30, Order{30, 1, 1, Side::kBuy}));  // home 14, slot 15
+  ASSERT_TRUE(m.insert(0, Order{0, 1, 1, Side::kBuy}));    // home 0, slot 0
+  ASSERT_TRUE(m.erase(14));
+  EXPECT_NE(m.find(30), nullptr);
+  ASSERT_NE(m.find(0), nullptr);
+  EXPECT_EQ(m.size(), 2u);
+}
+
+}  // namespace
