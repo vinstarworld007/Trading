@@ -66,6 +66,7 @@ def reconcile(firm: pd.DataFrame, dropcopy: pd.DataFrame, account: str) -> Recon
     bad = both[
         (both["side_firm"] != both["side_ex"])
         | (both["qty_firm"] != both["qty_ex"])
+        | (both["price_firm"] != both["price_ex"])
         | (both["symbol_firm"] != both["symbol_ex"])
     ]
     return Reconciliation(len(both) - len(bad), only_firm, only_ex, bad)

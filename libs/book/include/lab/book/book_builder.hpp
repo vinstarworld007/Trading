@@ -130,7 +130,7 @@ struct Instrument {
 
 class BookBuilder : public itch::HandlerBase {
  public:
-  explicit BookBuilder(std::size_t expected_live_orders = 1u << 22);
+  explicit BookBuilder(std::size_t expected_live_orders = 1u << 24);  // more room so orders are not lost
 
   // Applies one raw ITCH message.
   void apply(const std::byte* msg, std::size_t len) {
