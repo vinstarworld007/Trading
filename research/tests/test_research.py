@@ -112,5 +112,17 @@ class BacktestTest(unittest.TestCase):
         self.assertEqual(len(res), 6)
 
 
+class ReconcilePriceTest(unittest.TestCase):
+    def test_flags_a_price_break(self):
+        firm = fills([(1, "AAA", "B", 100, 100_000, 7, "A", 1, 0, 0)])
+        dc = pd.DataFrame([(1, "FIRM01", 1, "B", 100, "AAA", 100_100, 7, "A", 11)],
+                          columns=["exchange_ns", "account", "user_ref", "side", "qty", "symbol",
+                                   "price", "match", "liquidity", "order_ref"])
+        r = pnl.reconcile(firm, dc, "FIRM01")
+        self.assertEqual(r.matched, 0)
+        self.assertEqual(list(r.mismatched["match"]), [7])
+        self.assertFalse(r.clean)
+
+
 if __name__ == "__main__":
     unittest.main()
