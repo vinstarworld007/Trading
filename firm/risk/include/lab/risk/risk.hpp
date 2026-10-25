@@ -109,9 +109,8 @@ class Risk {
                 std::uint64_t now_tsc) noexcept {
     if (killed()) return Verdict::kKill;
     if (qty == 0 || qty > limits_.max_order_qty) return Verdict::kQuantity;
-    if (static_cast<std::uint64_t>(qty) * price > limits_.max_order_notional) {
-      return Verdict::kNotional;
-    }
+    const std::uint64_t notional = qty * price;
+    if (notional > limits_.max_order_notional) return Verdict::kNotional;
     if (reference == 0) return Verdict::kNoReference;
     const std::uint64_t band = static_cast<std::uint64_t>(reference) * limits_.collar_bps / 10'000;
     if (price + band < reference || price > reference + band) return Verdict::kCollar;
