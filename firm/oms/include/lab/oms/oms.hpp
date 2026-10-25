@@ -262,7 +262,7 @@ class Oms {
   Applied on_canceled(const OrderResponse& r) noexcept {
     Order* o = get(r.user_ref);
     if (o == nullptr || o->state != State::kLive || r.qty > o->open) return inconsistent();
-    take_open(*o, r.qty);
+    o->open -= r.qty;
     if (o->open > 0) return {o, false, false};
     // A user cancel of an order with a replace in flight is how the exchange
     // answers a replace for no more than the executed shares.
