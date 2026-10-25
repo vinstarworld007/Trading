@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     marks = {}
     if market is not None:
         m = tca.mids(market)
-        marks = {s: int(g["mid"].iloc[-1]) for s, g in m.groupby("symbol")}
+        marks = {r.symbol: int(r.mid) for r in m.drop_duplicates("symbol").itertuples()}
 
     print(f"== Positions and PnL ({len(fills)} fills, marked at the last mid)")
     pos = pnl.positions(fills, marks)
