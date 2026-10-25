@@ -157,8 +157,8 @@ void Trading::reconcile(std::uint16_t i) {
   // Self-match prevention: never bid at or above our own working ask, or offer
   // at or below our own bid, while the other side is still being moved.
   const std::uint32_t tick = cfg_.maker.tick;
-  if (aopen != 0 && q.bid_qty != 0 && q.bid_px >= ask_reach) q.bid_px = ask_reach - tick;
-  if (bopen != 0 && q.ask_qty != 0 && q.ask_px <= bid_reach) q.ask_px = bid_reach + tick;
+  if (aopen != 0 && q.bid_qty != 0 && q.bid_px > ask_reach) q.bid_px = ask_reach - tick;
+  if (bopen != 0 && q.ask_qty != 0 && q.ask_px < bid_reach) q.ask_px = bid_reach + tick;
   in.last_market = m;
   in.last_quote = q;
   work_side(in, i, 'B', in.bid_ref, q.bid_px, q.bid_qty, m.mid());
