@@ -360,8 +360,9 @@ class Session {
         on_logout(h);
         return;
       }
+      // Process it now rather than stall the session; the resend fills in behind.
       request_resend(*seq);
-      return;
+      next_in_ = *seq;
     }
     if (*seq < next_in_) {
       if (m.flag(tag::kPossDupFlag)) {
