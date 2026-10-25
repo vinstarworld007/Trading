@@ -52,6 +52,7 @@ class RetransmitStore {
   std::optional<std::span<const std::byte>> get(std::uint64_t seq) const noexcept {
     if (seq < first_ || seq >= next_ || next_ - seq > index_.size()) return std::nullopt;
     const Entry& e = index_[seq & mask_];
+    if (written_ - e.start > arena_.size()) return std::nullopt;  // bytes overwritten
     const std::size_t at = static_cast<std::size_t>(e.start % arena_.size());
     return std::span<const std::byte>{arena_.data() + at, e.len};
   }
