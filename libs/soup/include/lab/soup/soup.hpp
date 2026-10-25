@@ -197,7 +197,7 @@ class StreamParser {
       bad_ = true;
       return std::nullopt;
     }
-    if (end_ - begin_ < 2 + len) return std::nullopt;
+    if (end_ - begin_ < len) return std::nullopt;  // len counts the type byte
     const std::byte* p = buf_.data() + begin_;
     begin_ += 2 + len;
     return Packet{static_cast<char>(p[2]), {p + kHeaderSize, len - 1}};
