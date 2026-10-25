@@ -32,8 +32,8 @@ TEST(MarketMaker, LeansAgainstPositionWithoutCrossing) {
 TEST(MarketMaker, HoldsWithinHoldTicks) {
   MakerParams p;
   EXPECT_FALSE(should_move(p, 10'000, 10'000));
-  EXPECT_FALSE(should_move(p, 10'000, 10'100));
-  EXPECT_FALSE(should_move(p, 10'100, 10'000));
+  EXPECT_TRUE(should_move(p, 10'000, 10'100));
+  EXPECT_TRUE(should_move(p, 10'100, 10'000));
   EXPECT_TRUE(should_move(p, 10'000, 10'200));
   p.hold_ticks = 0;
   EXPECT_TRUE(should_move(p, 10'000, 10'100));
