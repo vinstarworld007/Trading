@@ -484,7 +484,7 @@ class Engine {
         ++stats_.executions;
         stats_.executed_shares += q;
         const bool filled = rest.remaining == 0;
-        l.on_execution(view(rest), view(x), q, x.price, ++match_);
+        l.on_execution(view(rest), view(x), q, lv.price, ++match_);
         if (filled) {
           rest.on_book = false;
           lv.head = rest.next;
