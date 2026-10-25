@@ -68,6 +68,13 @@ class TcaTest(unittest.TestCase):
         s = tca.summary(m).set_index("symbol")
         self.assertAlmostEqual(s.loc["ALL", "capture_cents"], 1.0)
 
+    def test_marks_use_the_last_mid(self):
+        market = pd.DataFrame([
+            (5, "AAA", 99_800, 100, 100_000, 100),
+            (0, "AAA", 100_000, 100, 100_200, 100),  # out of order on purpose
+        ], columns=["feed_ns", "symbol", "bid", "bid_qty", "ask", "ask_qty"])
+        self.assertEqual(tca.last_mids(market), {"AAA": 99_900})
+
 
 class BacktestTest(unittest.TestCase):
     def test_quote_matches_the_strategy(self):
