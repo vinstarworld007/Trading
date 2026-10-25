@@ -28,7 +28,7 @@ struct MakerParams {
 inline bool should_move(const MakerParams& p, std::uint32_t working,
                         std::uint32_t wanted) noexcept {
   const std::uint32_t diff = working > wanted ? working - wanted : wanted - working;
-  return diff >= p.hold_ticks * p.tick;
+  return diff > p.hold_ticks * p.tick;
 }
 
 // The best prices of everyone but us; 0 when a side is empty.
