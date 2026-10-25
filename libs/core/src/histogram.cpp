@@ -19,7 +19,7 @@ std::uint64_t LatencyHistogram::percentile(double p) const noexcept {
   if (count_ == 0) return 0;
   p = std::clamp(p, 0.0, 100.0);
   // Rank of the requested value, 1-based: p50 of 4 values is the 2nd.
-  auto rank = static_cast<std::uint64_t>(std::ceil(p / 100.0 * static_cast<double>(count_)));
+  auto rank = static_cast<std::uint64_t>(p / 100.0 * static_cast<double>(count_));
   rank = std::clamp<std::uint64_t>(rank, 1, count_);
   std::uint64_t seen = 0;
   for (std::size_t i = 0; i < kBuckets; ++i) {
