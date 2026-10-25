@@ -99,7 +99,6 @@ class Sequencer {
         eos_seen_ = true;
         eos_sequence_ = p.header.sequence;
       }
-      if (p.header.sequence > high_) high_ = p.header.sequence;
     } else {
       const bool complete = p.for_each([&](std::uint64_t seq, std::span<const std::byte> msg) {
         if (seq + 1 > high_) high_ = seq + 1;
