@@ -100,4 +100,18 @@ TEST(Risk, NotionalDoesNotWrapForLargeOrders) {
   EXPECT_EQ(r.check_new(o, 0, 'B', 900, px, px, 1), Verdict::kNotional);
 }
 
+TEST(Risk, IdleTimeRefillsNoMoreThanTheBurst) {
+  auto l = limits();
+  l.max_open_orders = 100;
+  risk::Risk r{l, kTicksPerSecond};
+  oms::Oms o{1};
+  const std::uint32_t px = 1'000'000;
+  EXPECT_EQ(r.check_new(o, 0, 'B', 1, px, px, 1), Verdict::kOk);
+  // A quiet minute earns 600 tokens at 10 a second, but the bucket holds 2.
+  const std::uint64_t later = 60'000'000'000ULL;
+  EXPECT_EQ(r.check_new(o, 0, 'B', 1, px, px, later), Verdict::kOk);
+  EXPECT_EQ(r.check_new(o, 0, 'B', 1, px, px, later), Verdict::kOk);
+  EXPECT_EQ(r.check_new(o, 0, 'B', 1, px, px, later), Verdict::kRate);
+}
+
 }  // namespace

@@ -133,6 +133,7 @@ class Risk {
   void refill(std::uint64_t now_tsc) noexcept {
     if (last_tsc_ != 0 && now_tsc > last_tsc_) {
       tokens_ += static_cast<double>(now_tsc - last_tsc_) * tokens_per_tick_;
+      if (tokens_ > limits_.burst) tokens_ = limits_.burst;
     }
     last_tsc_ = now_tsc;
   }
