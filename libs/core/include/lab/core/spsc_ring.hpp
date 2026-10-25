@@ -69,8 +69,7 @@ class SpscRing {
   }
 
   LAB_ALWAYS_INLINE void commit() noexcept {
-    // x86 is TSO: a plain store is already ordered after the slot write.
-    head_.store(head_.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    head_.store(head_.load(std::memory_order_relaxed) + 1, std::memory_order_release);
   }
 
   // Consumer side.
@@ -116,8 +115,8 @@ class SpscRing {
   alignas(kCacheLine) std::atomic<std::uint64_t> head_{0};
   std::uint64_t cached_tail_{0};
 
-  // Consumer side.
-  std::atomic<std::uint64_t> tail_{0};
+  // Consumer-owned line.
+  alignas(kCacheLine) std::atomic<std::uint64_t> tail_{0};
   std::uint64_t cached_head_{0};
 
   // Zeroed on construction, which also faults the pages in before the hot path runs.
