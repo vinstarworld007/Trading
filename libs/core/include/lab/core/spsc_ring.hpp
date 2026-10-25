@@ -69,7 +69,8 @@ class SpscRing {
   }
 
   LAB_ALWAYS_INLINE void commit() noexcept {
-    head_.store(head_.load(std::memory_order_relaxed) + 1, std::memory_order_release);
+    // x86 is TSO: a plain store is already ordered after the slot write.
+    head_.store(head_.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
   }
 
   // Consumer side.
