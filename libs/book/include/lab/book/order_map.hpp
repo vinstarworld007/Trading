@@ -114,7 +114,8 @@ class OrderMap {
   // collision-free. (A multiplicative hash measured ~35% slower on the
   // itch_bench book rebuild.)
   LAB_ALWAYS_INLINE std::size_t home(std::uint64_t key) const noexcept {
-    return static_cast<std::size_t>(key) & mask_;
+    // Fibonacci hashing spreads sequential keys so probe runs stay short.
+    return static_cast<std::size_t>((key * 0x9E3779B97F4A7C15ULL) >> 20) & mask_;
   }
 
   void erase_slot(std::size_t i) noexcept {
