@@ -151,9 +151,9 @@ void Trading::reconcile(std::uint16_t i) {
   const std::uint32_t ask_reach = aopen != 0 ? reach(in.ask_ref, 'S', apx) : 0;
   if (m.mid() != 0) in.last_mid = m.mid();
   auto q = maker_.quote(m, oms_.position(i).shares);
-  // Halted: the exchange refuses orders, so pull both sides (cancels are
-  // still accepted) and wait for trading to resume.
-  if (in.top.trading_state == 'H') q.bid_qty = q.ask_qty = 0;
+  // Halted, paused or quoting only: the exchange refuses orders, so pull both
+  // sides (cancels are still accepted) and wait for trading to resume.
+  if (in.top.trading_state != 'T') q.bid_qty = q.ask_qty = 0;
   // Self-match prevention: never bid at or above our own working ask, or offer
   // at or below our own bid, while the other side is still being moved.
   const std::uint32_t tick = cfg_.maker.tick;
