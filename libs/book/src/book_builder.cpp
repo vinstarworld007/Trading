@@ -9,7 +9,8 @@ constexpr std::string_view kSystemEventOrder = "OSQMEC";
 }  // namespace
 
 BookBuilder::BookBuilder(std::size_t expected_live_orders) : instruments_(65536) {
-  orders_.reserve(expected_live_orders);
+  // Typical days peak well under the default; grow if needed and save the RSS.
+  orders_.reserve(expected_live_orders / 4);
 }
 
 std::uint16_t BookBuilder::find_locate(std::string_view symbol) const noexcept {
