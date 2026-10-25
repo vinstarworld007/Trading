@@ -174,4 +174,17 @@ TEST(FixSession, LogoutIsAnswered) {
   EXPECT_EQ(p.v.disconnects, 1);
 }
 
+TEST(FixSession, HoldsMessagesBehindAGapUntilTheResendFillsIt) {
+  Pair p;
+  ASSERT_TRUE(p.connect(true));
+  p.firm.skip_outbound(2);
+  p.send_order(p.firm, "after-gap");
+  p.pump();
+  // The order is processed once, in sequence, when it is resent: nothing is
+  // taken out of order and then thrown away as a duplicate.
+  EXPECT_EQ(p.venue.stats().duplicates_ignored, 0u);
+  EXPECT_EQ(p.v.app, (std::vector<std::string>{"after-gap"}));
+  EXPECT_EQ(p.venue.next_in_seq(), p.firm.next_out_seq());
+}
+
 }  // namespace
