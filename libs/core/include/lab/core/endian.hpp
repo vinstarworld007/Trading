@@ -21,7 +21,9 @@ LAB_ALWAYS_INLINE std::uint16_t load_be16(const void* p) noexcept {
 }
 
 LAB_ALWAYS_INLINE std::uint32_t load_be32(const void* p) noexcept {
-  return __builtin_bswap32(*static_cast<const std::uint32_t*>(p));
+  std::uint32_t v;
+  std::memcpy(&v, p, sizeof v);
+  return __builtin_bswap32(v);
 }
 
 LAB_ALWAYS_INLINE std::uint64_t load_be64(const void* p) noexcept {
