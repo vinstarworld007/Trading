@@ -29,6 +29,12 @@ def mids(market: pd.DataFrame) -> pd.DataFrame:
     return m.assign(mid=(m["bid"] + m["ask"]) / 2)[["feed_ns", "symbol", "mid"]]
 
 
+def last_mids(market: pd.DataFrame) -> dict[str, int]:
+    """Each symbol's last mid of the session, in Price(4), for marking positions."""
+    m = mids(market).sort_values("feed_ns", kind="stable")
+    return {s: int(g["mid"].iloc[-1]) for s, g in m.groupby("symbol")}
+
+
 def mid_at(mid: pd.DataFrame, symbol: str, times_ns: np.ndarray,
            strictly_before: bool = False) -> np.ndarray:
     """The last mid at or before each time (strictly before, if asked), NaN
