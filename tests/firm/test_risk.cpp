@@ -90,4 +90,14 @@ TEST(Risk, OpenOrdersRateAndKillSwitch) {
   EXPECT_EQ(r.blocked(Verdict::kRate), 1u);
 }
 
+TEST(Risk, NotionalDoesNotWrapForLargeOrders) {
+  auto l = limits();
+  l.max_order_qty = 1'000;
+  risk::Risk r{l, kTicksPerSecond};
+  oms::Oms o{1};
+  // 900 shares at $5,000 is $4.5M: qty * price does not fit in 32 bits.
+  const std::uint32_t px = 50'000'000;
+  EXPECT_EQ(r.check_new(o, 0, 'B', 900, px, px, 1), Verdict::kNotional);
+}
+
 }  // namespace
