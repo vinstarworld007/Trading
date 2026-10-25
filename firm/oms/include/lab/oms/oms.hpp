@@ -137,7 +137,7 @@ class Oms {
 
   std::uint32_t replace_quantity(std::uint32_t nref) const noexcept {
     const Order* n = find(nref);
-    return n == nullptr ? 0 : n->open;
+    return n == nullptr ? 0 : n->executed + n->open;
   }
 
   // Marks a full cancel as sent. False if the order is not live or a replace
@@ -262,7 +262,7 @@ class Oms {
   Applied on_canceled(const OrderResponse& r) noexcept {
     Order* o = get(r.user_ref);
     if (o == nullptr || o->state != State::kLive || r.qty > o->open) return inconsistent();
-    o->open -= r.qty;
+    take_open(*o, r.qty);
     if (o->open > 0) return {o, false, false};
     // A user cancel of an order with a replace in flight is how the exchange
     // answers a replace for no more than the executed shares.
