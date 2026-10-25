@@ -115,11 +115,11 @@ class Risk {
     const std::uint64_t band = static_cast<std::uint64_t>(reference) * limits_.collar_bps / 10'000;
     if (price + band < reference || price > reference + band) return Verdict::kCollar;
     const oms::Position& p = oms.position(instrument);
+    // Worst case if every working share on this side fills, plus this order.
+    const auto worst = static_cast<std::int64_t>(p.open_buy + added);
     if (side == 'B') {
-      if (p.shares + static_cast<std::int64_t>(p.open_buy + added) > limits_.max_position) {
-        return Verdict::kPosition;
-      }
-    } else if (p.shares - static_cast<std::int64_t>(p.open_sell + added) < -limits_.max_position) {
+      if (p.shares + worst > limits_.max_position) return Verdict::kPosition;
+    } else if (p.shares - worst < -limits_.max_position) {
       return Verdict::kPosition;
     }
     if (oms.working() >= limits_.max_open_orders) return Verdict::kOpenOrders;
