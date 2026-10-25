@@ -109,17 +109,18 @@ class Risk {
                 std::uint64_t now_tsc) noexcept {
     if (killed()) return Verdict::kKill;
     if (qty == 0 || qty > limits_.max_order_qty) return Verdict::kQuantity;
-    const std::uint64_t notional = qty * price;
-    if (notional > limits_.max_order_notional) return Verdict::kNotional;
+    if (static_cast<std::uint64_t>(qty) * price > limits_.max_order_notional) {
+      return Verdict::kNotional;
+    }
     if (reference == 0) return Verdict::kNoReference;
     const std::uint64_t band = static_cast<std::uint64_t>(reference) * limits_.collar_bps / 10'000;
     if (price + band < reference || price > reference + band) return Verdict::kCollar;
     const oms::Position& p = oms.position(instrument);
-    // Worst case if every working share on this side fills, plus this order.
-    const auto worst = static_cast<std::int64_t>(p.open_buy + added);
     if (side == 'B') {
-      if (p.shares + worst > limits_.max_position) return Verdict::kPosition;
-    } else if (p.shares - worst < -limits_.max_position) {
+      if (p.shares + static_cast<std::int64_t>(p.open_buy + added) > limits_.max_position) {
+        return Verdict::kPosition;
+      }
+    } else if (p.shares - static_cast<std::int64_t>(p.open_sell + added) < -limits_.max_position) {
       return Verdict::kPosition;
     }
     if (oms.working() >= limits_.max_open_orders) return Verdict::kOpenOrders;
@@ -132,6 +133,7 @@ class Risk {
   void refill(std::uint64_t now_tsc) noexcept {
     if (last_tsc_ != 0 && now_tsc > last_tsc_) {
       tokens_ += static_cast<double>(now_tsc - last_tsc_) * tokens_per_tick_;
+      if (tokens_ > limits_.burst) tokens_ = limits_.burst;
     }
     last_tsc_ = now_tsc;
   }

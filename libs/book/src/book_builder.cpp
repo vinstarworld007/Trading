@@ -9,8 +9,7 @@ constexpr std::string_view kSystemEventOrder = "OSQMEC";
 }  // namespace
 
 BookBuilder::BookBuilder(std::size_t expected_live_orders) : instruments_(65536) {
-  // Typical days peak well under the default; grow if needed and save the RSS.
-  orders_.reserve(expected_live_orders / 4);
+  orders_.reserve(expected_live_orders);
 }
 
 std::uint16_t BookBuilder::find_locate(std::string_view symbol) const noexcept {
@@ -166,9 +165,10 @@ void BookBuilder::on(const itch::OrderExecutedWithPrice& m) {
   if (Instrument* inst =
           reduce_order(m.order_reference_number, m.executed_shares, false, nullptr)) {
     ++inst->stats.executions;
-    inst->stats.executed_shares += m.executed_shares;
-    traded(*inst, m.execution_price);
-    if (m.printable != 'Y') {  // part of a cross: also tracked for the Q check
+    if (m.printable == 'Y') {
+      inst->stats.executed_shares += m.executed_shares;
+      traded(*inst, m.execution_price);
+    } else {  // part of a cross, printed later by its Q message
       inst->stats.non_printable_shares += m.executed_shares;
       inst->cross_executed += m.executed_shares;
     }
