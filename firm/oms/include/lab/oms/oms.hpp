@@ -137,7 +137,7 @@ class Oms {
 
   std::uint32_t replace_quantity(std::uint32_t nref) const noexcept {
     const Order* n = find(nref);
-    return n == nullptr ? 0 : n->executed + n->open;
+    return n == nullptr ? 0 : n->open;
   }
 
   // Marks a full cancel as sent. False if the order is not live or a replace
