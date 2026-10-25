@@ -115,8 +115,8 @@ class SpscRing {
   alignas(kCacheLine) std::atomic<std::uint64_t> head_{0};
   std::uint64_t cached_tail_{0};
 
-  // Consumer-owned line.
-  alignas(kCacheLine) std::atomic<std::uint64_t> tail_{0};
+  // Consumer side.
+  std::atomic<std::uint64_t> tail_{0};
   std::uint64_t cached_head_{0};
 
   // Zeroed on construction, which also faults the pages in before the hot path runs.
