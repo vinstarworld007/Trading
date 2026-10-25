@@ -73,4 +73,12 @@ TEST(LatencyHistogram, PrintsOneLine) {
   EXPECT_NE(std::string(buf).find("p50=50"), std::string::npos) << buf;
 }
 
+TEST(LatencyHistogram, PercentileRankRoundsUp) {
+  LatencyHistogram h;
+  for (std::uint64_t v = 1; v <= 50; ++v) h.record(v);
+  // p99 of 50 values is rank 49.5, which rounds up to the 50th value.
+  EXPECT_EQ(h.percentile(99), 50u);
+  EXPECT_EQ(h.percentile(50), 25u);
+}
+
 }  // namespace
