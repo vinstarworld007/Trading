@@ -166,9 +166,10 @@ void BookBuilder::on(const itch::OrderExecutedWithPrice& m) {
   if (Instrument* inst =
           reduce_order(m.order_reference_number, m.executed_shares, false, nullptr)) {
     ++inst->stats.executions;
-    inst->stats.executed_shares += m.executed_shares;
-    traded(*inst, m.execution_price);
-    if (m.printable != 'Y') {  // part of a cross: also tracked for the Q check
+    if (m.printable == 'Y') {
+      inst->stats.executed_shares += m.executed_shares;
+      traded(*inst, m.execution_price);
+    } else {  // part of a cross, printed later by its Q message
       inst->stats.non_printable_shares += m.executed_shares;
       inst->cross_executed += m.executed_shares;
     }
