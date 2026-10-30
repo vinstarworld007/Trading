@@ -1,0 +1,7682 @@
+{
+ "BASE": {
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "bigday": {
+   "rc": 0,
+   "digest": "b0edde0a27a2eaa4",
+   "secs": 13.9,
+   "live": 3567340,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     100
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "bench_book": {
+   "rc": 0,
+   "median": [
+    "7.93951M"
+   ],
+   "tail": [
+    "  L2 Unified 2048 KiB (x4)",
+    "  L3 Unified 266240 KiB (x1)",
+    "Load Average: 1.06, 0.93, 0.55",
+    "***WARNING*** Library was built as DEBUG. Timings may be affected."
+   ]
+  },
+  "bench_ring": {
+   "rc": 0,
+   "median": [
+    "507.975k"
+   ],
+   "tail": [
+    "  L2 Unified 2048 KiB (x4)",
+    "  L3 Unified 266240 KiB (x1)",
+    "Load Average: 1.05, 0.93, 0.56",
+    "***WARNING*** Library was built as DEBUG. Timings may be affected."
+   ]
+  }
+ },
+ "CPP01": {
+  "id": "CPP01",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "AsyncLogger.BackgroundThreadDrainsManyProducers"
+   ],
+   "secs": 60
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.5,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9402 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 911 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     637 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2914 FIX fills match the drop copy; 27 messages resent after the reconnect"
+   ]
+  },
+  "secs": 127
+ },
+ "CPP02": {
+  "id": "CPP02",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Affinity.NamesThread"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.4,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9561 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 961 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     677 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2868 FIX fills match the drop copy; 24 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "CPP03": {
+  "id": "CPP03",
+  "build": {
+   "ok": true,
+   "secs": 10,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.6,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9227 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 904 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     679 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2882 FIX fills match the drop copy; 18 messages resent after the reconnect"
+   ]
+  },
+  "asan": {
+   "failed": 0,
+   "tests": [],
+   "secs": 158
+  },
+  "secs": 232
+ },
+ "CPP04": {
+  "id": "CPP04",
+  "build": {
+   "ok": true,
+   "secs": 10,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 6,
+   "tests": [
+    "FixSession.LogsOnAndDeliversInOrder",
+    "FixSession.FillsAGapWithResendAndGapFill",
+    "FixSession.ResendsWhatWasMissedWhileDisconnected",
+    "FixSession.LogsOutALogonWithASequenceNumberTooLow",
+    "FixSession.AnswersTestRequestsAndHeartbeats",
+    "FixSession.LogoutIsAnswered"
+   ],
+   "secs": 5
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 1,
+   "secs": 19.8,
+   "lines": [
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "FAIL: trader exited 2",
+    "FAIL: ouch-client exited 1"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     678 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 1,
+   "secs": 34.0,
+   "lines": [
+    "Heartbeats   31, End of Session 20, send errors 0",
+    "FAIL: fix-client",
+    "FAIL: fixgw",
+    "FAIL: dropcopy"
+   ]
+  },
+  "secs": 77
+ },
+ "CPP05": {
+  "id": "CPP05",
+  "build": {
+   "ok": true,
+   "secs": 4,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.6,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.5,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 7309 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 915 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     682 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2916 FIX fills match the drop copy; 15 messages resent after the reconnect"
+   ]
+  },
+  "secs": 69
+ },
+ "CPP06": {
+  "id": "CPP06",
+  "build": {
+   "ok": true,
+   "secs": 18,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Mold.SessionIsSpacePaddedAndTrimmed"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9709 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 989 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     713 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2838 FIX fills match the drop copy; 34 messages resent after the reconnect"
+   ]
+  },
+  "asan": {
+   "failed": 0,
+   "tests": [],
+   "secs": 73
+  },
+  "secs": 155
+ },
+ "CPP07": {
+  "id": "CPP07",
+  "build": {
+   "ok": true,
+   "secs": 21,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10432 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1047 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     692 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2890 FIX fills match the drop copy; 19 messages resent after the reconnect"
+   ]
+  },
+  "secs": 85
+ },
+ "CPP08": {
+  "id": "CPP08",
+  "build": {
+   "ok": true,
+   "secs": 12,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9446 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 906 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     682 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2864 FIX fills match the drop copy; 32 messages resent after the reconnect"
+   ]
+  },
+  "asan": {
+   "failed": 0,
+   "tests": [],
+   "secs": 80
+  },
+  "secs": 156
+ },
+ "CPP09": {
+  "id": "CPP09",
+  "build": {
+   "ok": true,
+   "secs": 25,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "OrderMap.MatchesReferenceMapUnderRandomChurnAndGrowth"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9190 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 882 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     684 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 33.9,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2880 FIX fills match the drop copy; 20 messages resent after the reconnect"
+   ]
+  },
+  "bigday": {
+   "rc": 1,
+   "digest": "3895e6c2ddc65217",
+   "secs": 11.9,
+   "live": 3567341,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "ERROR",
+     1
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     100
+    ]
+   },
+   "bad": [
+    "ERROR unknown order reference 1"
+   ],
+   "tail": [
+    "  SYM0048  state T      open 198.1300 close 198.1300 cross shares 14000",
+    "  SYM0049  state T      open 336.8800 close 336.8800 cross shares 11000",
+    "  SYM0050  state T      open 213.8300 close 213.8300 cross shares 14000"
+   ]
+  },
+  "secs": 100
+ },
+ "CPP10": {
+  "id": "CPP10",
+  "build": {
+   "ok": true,
+   "secs": 24,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9338 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 921 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     679 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2882 FIX fills match the drop copy; 19 messages resent after the reconnect"
+   ]
+  },
+  "bigday": {
+   "rc": 0,
+   "digest": "b0edde0a27a2eaa4",
+   "secs": 13.3,
+   "live": 3567340,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     100
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "asan": {
+   "failed": 0,
+   "tests": [],
+   "secs": 84
+  },
+  "secs": 185
+ },
+ "MD01": {
+  "id": "MD01",
+  "build": {
+   "ok": true,
+   "secs": 19,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9165 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 881 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     676 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2920 FIX fills match the drop copy; 24 messages resent after the reconnect"
+   ]
+  },
+  "secs": 82
+ },
+ "MD02": {
+  "id": "MD02",
+  "build": {
+   "ok": true,
+   "secs": 22,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "OrderBook.DetectsLockedAndCrossed"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9150 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 940 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     676 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2770 FIX fills match the drop copy; 29 messages resent after the reconnect"
+   ]
+  },
+  "secs": 86
+ },
+ "MD03": {
+  "id": "MD03",
+  "build": {
+   "ok": true,
+   "secs": 22,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "BookBuilder.CountsTradesThatDoNotTouchTheBook"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10298 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 968 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.0,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     674 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2860 FIX fills match the drop copy; 20 messages resent after the reconnect"
+   ]
+  },
+  "secs": 87
+ },
+ "MD04": {
+  "id": "MD04",
+  "build": {
+   "ok": true,
+   "secs": 22,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 4,
+   "tests": [
+    "BookBuilder.RebuildsSyntheticDayExactly",
+    "BookBuilder.SyntheticScenarioDayHasNoErrors",
+    "Pipeline.CleanFeedRebuildsTheSameBooks",
+    "Pipeline.LossyFeedRecoversEveryMessage"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 1,
+   "digest": "c6b245d5e92dfe1b",
+   "secs": 0.4,
+   "live": 158943,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "ERROR",
+     59325
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     24
+    ]
+   },
+   "bad": [
+    "ERROR unknown order reference 59325"
+   ],
+   "tail": [
+    "  SYM0048  state T      open 198.1300 close 198.1300 cross shares 17000",
+    "  SYM0049  state T      open 336.8800 close 336.8800 cross shares 15000",
+    "  SYM0050  state T      open 213.8300 close 213.8300 cross shares 12000"
+   ]
+  },
+  "digest_changed": true,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.2,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9428 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 943 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 1,
+   "secs": 3.8,
+   "lines": []
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2884 FIX fills match the drop copy; 23 messages resent after the reconnect"
+   ]
+  },
+  "secs": 81
+ },
+ "MD05": {
+  "id": "MD05",
+  "build": {
+   "ok": true,
+   "secs": 37,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 9,
+   "tests": [
+    "Endian.LoadsBigEndian",
+    "Endian.StoreRoundTrips",
+    "ItchCodec.DecodesAddOrderFromSpecLayout",
+    "ItchCodec.EveryMessageTypeRoundTrips",
+    "BookBuilder.RebuildsSyntheticDayExactly",
+    "BookBuilder.SyntheticScenarioDayHasNoErrors",
+    "Pipeline.CleanFeedRebuildsTheSameBooks",
+    "Pipeline.LossyFeedRecoversEveryMessage",
+    "Consolidator.ReportsQuoteTradeAndStatusChanges"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 1,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "ERROR",
+     999931
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [
+    "ERROR timestamp regressions 999931"
+   ],
+   "tail": [
+    "  SYM0048  state T      open 198.1300 close 198.1300 cross shares 17000",
+    "  SYM0049  state T      open 336.8800 close 336.8800 cross shares 15000",
+    "  SYM0050  state T      open 213.8300 close 213.8300 cross shares 12000"
+   ]
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 1,
+   "secs": 19.9,
+   "lines": [
+    "Books        861458 integrity errors, 9737 top-of-book updates to the trader",
+    "CHECK FAILED: market data lost messages or failed integrity checks",
+    "Trader checks: FAILED",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "FAIL: trader exited 1",
+    "FAIL: simex exited 1"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 1,
+   "secs": 4.0,
+   "lines": []
+  },
+  "e2e_fix": {
+   "rc": 1,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "Heartbeats   23, End of Session 20, send errors 0",
+    "FAIL: simex"
+   ]
+  },
+  "secs": 96
+ },
+ "MD06": {
+  "id": "MD06",
+  "build": {
+   "ok": true,
+   "secs": 36,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.1,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9302 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 954 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     669 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.3,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2890 FIX fills match the drop copy; 19 messages resent after the reconnect"
+   ]
+  },
+  "secs": 101
+ },
+ "MD07": {
+  "id": "MD07",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 1 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 0 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     677 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2882 FIX fills match the drop copy; 16 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "MD08": {
+  "id": "MD08",
+  "build": {
+   "ok": true,
+   "secs": 21,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9409 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 903 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.0,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     685 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2874 FIX fills match the drop copy; 20 messages resent after the reconnect"
+   ]
+  },
+  "secs": 85
+ },
+ "MD09": {
+  "id": "MD09",
+  "build": {
+   "ok": true,
+   "secs": 20,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9081 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 880 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     688 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2904 FIX fills match the drop copy; 13 messages resent after the reconnect"
+   ]
+  },
+  "secs": 84
+ },
+ "MD10": {
+  "id": "MD10",
+  "build": {
+   "ok": true,
+   "secs": 24,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "ItchCodec.DecodesOrderReplaceFromSpecLayout"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "cdca4bc4e094b543",
+   "secs": 0.4,
+   "live": 181806,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "INFO",
+     116
+    ],
+    "books became locked": [
+     "INFO",
+     2
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": true,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10837 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1001 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     687 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2888 FIX fills match the drop copy; 24 messages resent after the reconnect"
+   ]
+  },
+  "secs": 88
+ },
+ "NET01": {
+  "id": "NET01",
+  "build": {
+   "ok": true,
+   "secs": 24,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     591 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9096 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 933 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     684 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2882 FIX fills match the drop copy; 14 messages resent after the reconnect"
+   ]
+  },
+  "secs": 88
+ },
+ "NET02": {
+  "id": "NET02",
+  "build": {
+   "ok": true,
+   "secs": 1,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9398 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 969 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     679 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2882 FIX fills match the drop copy; 26 messages resent after the reconnect"
+   ]
+  },
+  "secs": 65
+ },
+ "NET03": {
+  "id": "NET03",
+  "build": {
+   "ok": true,
+   "secs": 1,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Udp.ParsesEndpoints"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9540 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1005 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     655 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2866 FIX fills match the drop copy; 15 messages resent after the reconnect"
+   ]
+  },
+  "secs": 66
+ },
+ "NET04": {
+  "id": "NET04",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Tcp.QueuesWhatTheKernelDoesNotTake"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9769 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 947 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     693 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.4,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2884 FIX fills match the drop copy; 11 messages resent after the reconnect"
+   ]
+  },
+  "secs": 66
+ },
+ "NET05": {
+  "id": "NET05",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 2,
+   "tests": [
+    "Tcp.ReportsPeerClose",
+    "FixSession.ResendsWhatWasMissedWhileDisconnected"
+   ],
+   "secs": 2
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9485 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 907 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     678 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 1,
+   "secs": 33.9,
+   "lines": [
+    "Heartbeats   27, End of Session 20, send errors 0",
+    "FAIL: fix-client"
+   ]
+  },
+  "secs": 67
+ },
+ "NET06": {
+  "id": "NET06",
+  "build": {
+   "ok": true,
+   "secs": 14,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Sequencer.ReorderedPacketFillsTheGapWithoutARequest"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9680 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 940 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     1075 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2864 FIX fills match the drop copy; 16 messages resent after the reconnect"
+   ]
+  },
+  "secs": 77
+ },
+ "NET07": {
+  "id": "NET07",
+  "build": {
+   "ok": true,
+   "secs": 19,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 1,
+   "secs": 20.2,
+   "lines": [
+    "Books        543 integrity errors, 0 top-of-book updates to the trader",
+    "CHECK FAILED: market data lost messages or failed integrity checks",
+    "CHECK FAILED: 5 of 5 symbols were never listed on the feed",
+    "Trader checks: FAILED",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "FAIL: trader exited 1"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 1,
+   "secs": 28.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     1197 sent, 0 send errors, 0 ring full",
+    "FAIL: itch-fh exited 3"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2938 FIX fills match the drop copy; 17 messages resent after the reconnect"
+   ]
+  },
+  "secs": 103
+ },
+ "NET08": {
+  "id": "NET08",
+  "build": {
+   "ok": true,
+   "secs": 18,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Sequencer.IgnoresOtherSessionsAndMalformedPackets"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10478 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1043 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     677 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2930 FIX fills match the drop copy; 30 messages resent after the reconnect"
+   ]
+  },
+  "secs": 82
+ },
+ "NET09": {
+  "id": "NET09",
+  "build": {
+   "ok": true,
+   "secs": 16,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "RetransmitStore.ForgetsMessagesWhoseBytesWereOverwritten"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9268 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 943 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     693 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2896 FIX fills match the drop copy; 13 messages resent after the reconnect"
+   ]
+  },
+  "secs": 80
+ },
+ "NET10": {
+  "id": "NET10",
+  "build": {
+   "ok": true,
+   "secs": 6,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.3,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9864 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1040 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.0,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     665 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2958 FIX fills match the drop copy; 27 messages resent after the reconnect"
+   ]
+  },
+  "secs": 70
+ },
+ "LAT01": {
+  "id": "LAT01",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 2,
+   "tests": [
+    "FixSession.FillsAGapWithResendAndGapFill",
+    "FixSession.ResendsWhatWasMissedWhileDisconnected"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.1,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 8735 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 728 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.0,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     680 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2900 FIX fills match the drop copy; 36 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "LAT02": {
+  "id": "LAT02",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9292 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 923 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     688 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2900 FIX fills match the drop copy; 29 messages resent after the reconnect"
+   ]
+  },
+  "secs": 66
+ },
+ "LAT03": {
+  "id": "LAT03",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10280 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 991 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     665 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2968 FIX fills match the drop copy; 20 messages resent after the reconnect"
+   ]
+  },
+  "secs": 66
+ },
+ "LAT04": {
+  "id": "LAT04",
+  "build": {
+   "ok": true,
+   "secs": 2,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9612 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1014 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 10.1,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     644 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.9,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2832 FIX fills match the drop copy; 25 messages resent after the reconnect"
+   ]
+  },
+  "secs": 68
+ },
+ "LAT05": {
+  "id": "LAT05",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9853 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1040 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.4,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     627 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2890 FIX fills match the drop copy; 19 messages resent after the reconnect"
+   ]
+  },
+  "secs": 68
+ },
+ "LAT06": {
+  "id": "LAT06",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.6,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 21.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9527 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1003 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.1,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     325 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2886 FIX fills match the drop copy; 17 messages resent after the reconnect"
+   ]
+  },
+  "secs": 68
+ },
+ "LAT07": {
+  "id": "LAT07",
+  "build": {
+   "ok": true,
+   "secs": 27,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.1,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9085 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 871 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     615 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.8,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2860 FIX fills match the drop copy; 15 messages resent after the reconnect"
+   ]
+  },
+  "bench_book": {
+   "rc": 0,
+   "median": [
+    "8.71529M"
+   ],
+   "tail": [
+    "  L2 Unified 2048 KiB (x4)",
+    "  L3 Unified 266240 KiB (x1)",
+    "Load Average: 4.15, 4.02, 4.02",
+    "***WARNING*** Library was built as DEBUG. Timings may be affected."
+   ]
+  },
+  "secs": 96
+ },
+ "LAT08": {
+  "id": "LAT08",
+  "build": {
+   "ok": true,
+   "secs": 29,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.3,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9762 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 992 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     628 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2916 FIX fills match the drop copy; 36 messages resent after the reconnect"
+   ]
+  },
+  "bench_ring": {
+   "rc": 0,
+   "median": [
+    "477.081k"
+   ],
+   "tail": [
+    "  L2 Unified 2048 KiB (x4)",
+    "  L3 Unified 266240 KiB (x1)",
+    "Load Average: 4.07, 4.06, 4.04",
+    "***WARNING*** Library was built as DEBUG. Timings may be affected."
+   ]
+  },
+  "secs": 96
+ },
+ "LAT09": {
+  "id": "LAT09",
+  "build": {
+   "ok": true,
+   "secs": 34,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.6,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 23.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9510 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 972 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 10.4,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     609 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.6,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2828 FIX fills match the drop copy; 26 messages resent after the reconnect"
+   ]
+  },
+  "secs": 104
+ },
+ "LAT10": {
+  "id": "LAT10",
+  "build": {
+   "ok": true,
+   "secs": 13,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9839 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1062 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     547 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2868 FIX fills match the drop copy; 18 messages resent after the reconnect"
+   ]
+  },
+  "secs": 78
+ },
+ "TRD01": {
+  "id": "TRD01",
+  "build": {
+   "ok": true,
+   "secs": 15,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 21.2,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10033 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 944 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     600 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.5,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2898 FIX fills match the drop copy; 14 messages resent after the reconnect"
+   ]
+  },
+  "secs": 81
+ },
+ "TRD02": {
+  "id": "TRD02",
+  "build": {
+   "ok": true,
+   "secs": 8,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "MarketMaker.LeansAgainstPositionWithoutCrossing"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 7129 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 72 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.4,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     632 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.3,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2876 FIX fills match the drop copy; 24 messages resent after the reconnect"
+   ]
+  },
+  "secs": 74
+ },
+ "TRD03": {
+  "id": "TRD03",
+  "build": {
+   "ok": true,
+   "secs": 7,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "MarketMaker.LeansAgainstPositionWithoutCrossing"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 11055 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1069 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.5,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     681 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 33.9,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2810 FIX fills match the drop copy; 17 messages resent after the reconnect"
+   ]
+  },
+  "secs": 71
+ },
+ "TRD04": {
+  "id": "TRD04",
+  "build": {
+   "ok": true,
+   "secs": 8,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Oms.EnterAcceptFillTracksPositionCashAndExposure"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.6,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9996 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 966 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.4,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     674 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2932 FIX fills match the drop copy; 21 messages resent after the reconnect"
+   ]
+  },
+  "secs": 71
+ },
+ "TRD05": {
+  "id": "TRD05",
+  "build": {
+   "ok": true,
+   "secs": 8,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Risk.OrderSizeNotionalAndCollar"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.6,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9699 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 956 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     703 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 33.9,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2818 FIX fills match the drop copy; 16 messages resent after the reconnect"
+   ]
+  },
+  "secs": 71
+ },
+ "TRD06": {
+  "id": "TRD06",
+  "build": {
+   "ok": true,
+   "secs": 7,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 1,
+   "secs": 19.7,
+   "lines": [
+    "Books        0 integrity errors, 9412 top-of-book updates to the trader",
+    "CHECK FAILED: 1 fills traded against our own orders",
+    "CHECK FAILED: 65 orders still working after stop",
+    "Trader checks: FAILED",
+    "Heartbeats   2, End of Session 20, send errors 0",
+    "FAIL: trader exited 1"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     687 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 33.9,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2952 FIX fills match the drop copy; 25 messages resent after the reconnect"
+   ]
+  },
+  "secs": 70
+ },
+ "TRD07": {
+  "id": "TRD07",
+  "build": {
+   "ok": true,
+   "secs": 9,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 3,
+   "tests": [
+    "EngineTest.MatchesAtTheRestingPriceInTimePriority",
+    "EngineTest.ReplaceLosesPriorityAndCanTrade",
+    "EngineFuzz.MatchesAReferenceModel"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9936 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1009 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.4,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     724 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2868 FIX fills match the drop copy; 17 messages resent after the reconnect"
+   ]
+  },
+  "secs": 72
+ },
+ "TRD08": {
+  "id": "TRD08",
+  "build": {
+   "ok": true,
+   "secs": 12,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "Oms.ReplaceForNoMoreThanExecutedIsAnsweredByCancel"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9578 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 970 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.5,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     674 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2968 FIX fills match the drop copy; 17 messages resent after the reconnect"
+   ]
+  },
+  "secs": 75
+ },
+ "TRD09": {
+  "id": "TRD09",
+  "build": {
+   "ok": true,
+   "secs": 11,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.5,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10826 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1092 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.6,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     680 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2884 FIX fills match the drop copy; 31 messages resent after the reconnect"
+   ]
+  },
+  "secs": 75
+ },
+ "TRD10": {
+  "id": "TRD10",
+  "build": {
+   "ok": true,
+   "secs": 9,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 1,
+   "secs": 19.6,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9552 top-of-book updates to the trader",
+    "CHECK FAILED: 3 fills traded against our own orders",
+    "Trader checks: FAILED",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "FAIL: trader exited 1"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     691 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2904 FIX fills match the drop copy; 16 messages resent after the reconnect"
+   ]
+  },
+  "secs": 73
+ },
+ "GW01": {
+  "id": "GW01",
+  "build": {
+   "ok": true,
+   "secs": 4,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.2,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9262 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 920 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.0,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     668 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 33.9,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2858 FIX fills match the drop copy; 21 messages resent after the reconnect"
+   ]
+  },
+  "secs": 68
+ },
+ "GW02": {
+  "id": "GW02",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9915 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 976 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.9,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     635 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2894 FIX fills match the drop copy; 26 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "GW03": {
+  "id": "GW03",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.9,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9410 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 907 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     674 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.3,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2922 FIX fills match the drop copy; 16 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "GW04": {
+  "id": "GW04",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.2,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10665 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 982 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.8,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     656 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2910 FIX fills match the drop copy; 25 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "GW05": {
+  "id": "GW05",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10153 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1026 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.3,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     639 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2890 FIX fills match the drop copy; 23 messages resent after the reconnect"
+   ]
+  },
+  "secs": 68
+ },
+ "GW06": {
+  "id": "GW06",
+  "build": {
+   "ok": true,
+   "secs": 3,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.7,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9672 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 978 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     669 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.0,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2966 FIX fills match the drop copy; 17 messages resent after the reconnect"
+   ]
+  },
+  "secs": 67
+ },
+ "GW07": {
+  "id": "GW07",
+  "build": {
+   "ok": true,
+   "secs": 9,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 9,
+   "tests": [
+    "FixWriter.MatchesThePublishedExample",
+    "FixStreamParser.SplitsAStreamInAnyChunking",
+    "FixStreamParser.DropsGarbledMessagesAndResynchronizes",
+    "FixSession.LogsOnAndDeliversInOrder",
+    "FixSession.FillsAGapWithResendAndGapFill",
+    "FixSession.ResendsWhatWasMissedWhileDisconnected",
+    "FixSession.LogsOutALogonWithASequenceNumberTooLow",
+    "FixSession.AnswersTestRequestsAndHeartbeats",
+    "FixSession.LogoutIsAnswered"
+   ],
+   "secs": 5
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 19.8,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9501 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 914 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.2,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     677 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 1,
+   "secs": 34.1,
+   "lines": [
+    "Heartbeats   31, End of Session 20, send errors 0",
+    "FAIL: fix-client"
+   ]
+  },
+  "secs": 77
+ },
+ "GW08": {
+  "id": "GW08",
+  "build": {
+   "ok": true,
+   "secs": 10,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 1,
+   "tests": [
+    "FixSession.FillsAGapWithResendAndGapFill"
+   ],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.5,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.0,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 10688 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 1078 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     648 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.2,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2930 FIX fills match the drop copy; 29 messages resent after the reconnect"
+   ]
+  },
+  "secs": 74
+ },
+ "GW09": {
+  "id": "GW09",
+  "build": {
+   "ok": true,
+   "secs": 5,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.4,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.2,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9368 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 934 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 9.0,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     679 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2892 FIX fills match the drop copy; 24 messages resent after the reconnect"
+   ]
+  },
+  "secs": 69
+ },
+ "GW10": {
+  "id": "GW10",
+  "build": {
+   "ok": true,
+   "secs": 6,
+   "errors": []
+  },
+  "ctest": {
+   "failed": 0,
+   "tests": [],
+   "secs": 1
+  },
+  "digest": {
+   "rc": 0,
+   "digest": "d83084b06609fdf5",
+   "secs": 0.6,
+   "live": 178612,
+   "checks": {
+    "unknown message type": [
+     "OK",
+     0
+    ],
+    "truncated message": [
+     "OK",
+     0
+    ],
+    "unknown order reference": [
+     "OK",
+     0
+    ],
+    "duplicate order reference": [
+     "OK",
+     0
+    ],
+    "over-execution": [
+     "OK",
+     0
+    ],
+    "locate without directory": [
+     "OK",
+     0
+    ],
+    "locate/symbol mismatch": [
+     "OK",
+     0
+    ],
+    "book inconsistency": [
+     "OK",
+     0
+    ],
+    "timestamp regressions": [
+     "OK",
+     0
+    ],
+    "system events out of order": [
+     "OK",
+     0
+    ],
+    "trade while halted or paused": [
+     "OK",
+     0
+    ],
+    "books became crossed": [
+     "OK",
+     0
+    ],
+    "books became locked": [
+     "OK",
+     0
+    ],
+    "crosses (Q)": [
+     "INFO",
+     100
+    ],
+    "halts and pauses (H)": [
+     "OK",
+     0
+    ],
+    "imbalance messages (I)": [
+     "OK",
+     0
+    ],
+    "cross executions over its print": [
+     "INFO",
+     27
+    ]
+   },
+   "bad": [],
+   "tail": []
+  },
+  "digest_changed": false,
+  "e2e_firm": {
+   "rc": 0,
+   "secs": 20.4,
+   "lines": [
+    "Requests     0 sent, 0 send errors, 0 ring full",
+    "Books        0 integrity errors, 9065 top-of-book updates to the trader",
+    "Heartbeats   3, End of Session 20, send errors 0",
+    "PASS: trader made markets with 938 fills; all checks clean"
+   ]
+  },
+  "e2e_live-feed": {
+   "rc": 0,
+   "secs": 8.7,
+   "lines": [
+    "Heartbeats   1, End of Session 20, send errors 0",
+    "Requests     704 sent, 0 send errors, 0 ring full",
+    "PASS: live feed rebuilt identical books (digest 0f90093c8381dcfd)"
+   ]
+  },
+  "e2e_fix": {
+   "rc": 0,
+   "secs": 34.1,
+   "lines": [
+    "session      new  cancel replace  accept  reject   fills    shares    cxld   rplcd cxl_rej  resent gapfill errors",
+    "PASS: 2936 FIX fills match the drop copy; 14 messages resent after the reconnect"
+   ]
+  },
+  "secs": 70
+ }
+}
