@@ -31,6 +31,9 @@ the project playbook. Build phases are listed in README.md.
 - `scripts/e2e-live-feed.sh` replays a day over UDP with packet loss into
   `itch-fh` and checks its book digest matches `itch-dump`'s; run it after any
   feed, sequencing or book change.
+- `scripts/e2e-quant-lab.sh` runs `quant-lab` (all four strategies for a shortened
+  year) and builds the Quant Research Lab page; run it after any strategy,
+  `tools/quant-lab` or `research/quant_lab.py` change.
 - Benchmarks: `./build/release/bench/core_bench`. Any hot-path change comes with
   before/after numbers from the same machine.
 
@@ -46,7 +49,10 @@ the project playbook. Build phases are listed in README.md.
 - `libs/ouch`  OUCH 5.0 codec (same field-list pattern as `libs/itch`)
 - `libs/match`  price-time matching engine (header-only, preallocated; tables on huge pages)
 - `libs/fix`  FIX 4.4 framing and session layer (header-only)
-- `firm/oms`, `firm/risk`, `firm/strategy`  header-only firm libraries; `firm/trader` the trading engine
+- `firm/oms`, `firm/risk`, `firm/strategy`  header-only firm libraries (strategy: market maker, pairs,
+  trend, thesis, execution helpers); `firm/trader` the trading engine
+- `tools/quant-lab`  the Quant Research Lab: a simulated year of all four strategies on the engine,
+  feed, BookBuilder, risk and OMS; `web/index.html` is the page template `research/quant_lab.py` fills
 - `libs/vendor`  vendor ticker plant: `Consolidator` (Level 1 records from `BookBuilder`), a
   single-threaded distribution `Server` with conflation, and the ICF, OMM JSON/WebSocket and
   B-PIPE sessions; `vendors/{icf,rtws,bpipe}` the three servers

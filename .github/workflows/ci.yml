@@ -91,6 +91,11 @@ jobs:
           DURATION: 20
         run: timeout 300 scripts/e2e-scenarios.sh build/${{ matrix.preset }}
 
+      - name: End-to-end quant lab (four strategies on engine, feed, risk and OMS)
+        env:
+          DAYS: 60
+        run: timeout 300 scripts/e2e-quant-lab.sh build/${{ matrix.preset }}
+
       - name: Python research environment
         run: |
           python3 -m venv /tmp/venv

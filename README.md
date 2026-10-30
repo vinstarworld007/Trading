@@ -133,14 +133,15 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `exchange/simex` | The exchange: gateway thread (OUCH sessions), matching thread (sequencer and engine), market data thread (ITCH over MoldUDP64), journal, historical liquidity |
 | `firm/oms` | Order management: order states through enter/replace/cancel, positions, cash and worst-case exposure |
 | `firm/risk` | Inline pre-trade risk: kill switch, order size and notional, price collar, worst-case position, open orders, order rate |
-| `firm/strategy` | A one-level market maker that leans against its position |
+| `firm/strategy` | A one-level market maker that leans against its position; pairs statistical arbitrage, trend following (moving-average cross), a fundamental thesis state machine, and execution helpers (work toward a target, participation of volume) |
+| `tools/quant-lab` | The Quant Research Lab: a simulated year with all four strategies trading on the engine, ITCH feed, `BookBuilder`, risk and OMS, written out as JSON; `web/index.html` replays it |
 | `firm/trader` | The firm's trading engine: market data, trading and order entry threads joined by rings |
 | `tools/dropcopy` | Records simex's drop copy (every firm execution) to CSV and prints each account's positions |
 | `libs/fix` | FIX 4.4 tag=value framing (BodyLength, CheckSum) and a session layer: logon, sequence numbers across reconnects, resend with gap fill, heartbeats and test requests |
 | `exchange/fixgw` | FIX 4.4 venue in front of simex, mapping FIX orders onto OUCH sessions |
 | `exchange/agents` | Agent-based liquidity: makers, noise, value and momentum traders around a hidden fundamental value |
 | `tools/fix-client` | Trades FIX sessions against each other through `fixgw`, drops and resumes a session, and checks every answer |
-| `research/` | Python: positions and PnL, reconciliation against the drop copy, TCA, a queue-model market-making backtest |
+| `research/` | Python: positions and PnL, reconciliation against the drop copy, TCA, a queue-model market-making backtest, and `quant_lab.py`, which runs the quant lab over several seeds and builds its page |
 | `tools/ouch-client` | Trades random orders into simex on several accounts and checks every response |
 | `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
 | `tools/lab-check` | Checks the machine (CPUs, TSC, huge pages, loopback multicast, disk) and measures a core-to-core round trip |
@@ -158,6 +159,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `scripts/e2e-fix.sh` | Two FIX sessions trading through `fixgw`, one dropped and resumed midway; FIX fills checked against the drop copy |
 | `scripts/e2e-agents.sh` | `trader` making markets among the agents, with no replay |
 | `scripts/e2e-scenarios.sh` | simex `--scenario all` with an implied strip, agents, `itch-fh` and two vendors; checks every scenario ran and every book agrees |
+| `scripts/e2e-quant-lab.sh` | The quant lab for a shortened year: clean books every day, consistent OMS, every strategy trades within its limits, and the page builds |
 | `docs/scenarios.md` | Auctions, halts, LULD, circuit breakers, IPOs and implied strips: what each part of the lab does |
 | `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine (with p50/p99/p99.9), FIX codec |
 
@@ -185,6 +187,38 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
    broken trade, Reg SHO, and implied strip books, in simex, on the feed, in
    the feed handler, in the synthetic day and through the vendors. See
    `docs/scenarios.md`.
+10. **Quant Research Lab** (this): stat arb, trend and fundamental strategies
+    beside the market maker, run together for a simulated year by
+    `quant-lab`, and a page that replays the run (see below).
+
+## Quant Research Lab
+
+`quant-lab` runs four strategies for a simulated year in one process, on the
+lab's own code. A market model moves a hidden value for five stocks;
+liquidity providers and takers send orders around it to the matching engine.
+Every engine event goes out as an ITCH 5.0 message into a fresh `BookBuilder`
+each day, and the strategies trade only from those rebuilt books, through
+pre-trade risk and the OMS, back into the same engine:
+
+| Strategy | Symbols | Code | Decides |
+| --- | --- | --- | --- |
+| Market making | AAPL | `market_maker.hpp` | every book update |
+| Statistical arbitrage | SEMA / SEMB | `pairs.hpp` + `work_toward()` | every 5 minutes |
+| Trend following | TRND | `trend.hpp` + `work_toward()` | at each close |
+| Fundamental | VALU | `thesis.hpp` + `pov_child()` | at each close; trades at 6% of volume |
+
+```bash
+./build/release/tools/quant-lab/quant-lab --days 252 --seed 3 --out /tmp/quant-lab.json
+python3 research/quant_lab.py --bin build/release/tools/quant-lab/quant-lab \
+    --seed 3 --seeds 1-10 --page /tmp/quant-research-lab.html
+```
+
+The run exits 1 unless every day's books have zero integrity errors and match
+the engine's at the close and every OMS response is consistent. The page
+shows a scoreboard, replays each strategy (900 book updates for the market
+maker, the year for the others) and compares ten seeds. SEMA, SEMB, TRND and
+VALU are made-up symbols and all prices are simulated; no fees or rebates
+are counted.
 
 Latency numbers measured under WSL2 are relative, not production figures: the
 Windows host schedules the VM's CPUs, and there is no kernel-bypass networking.
