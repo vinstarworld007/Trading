@@ -96,6 +96,9 @@ jobs:
           DAYS: 60
         run: timeout 300 scripts/e2e-quant-lab.sh build/${{ matrix.preset }}
 
+      - name: End-to-end quant lab on replayed data (queue-model fills, daily bars)
+        run: timeout 300 scripts/e2e-quant-real.sh build/${{ matrix.preset }}
+
       - name: Python research environment
         run: |
           python3 -m venv /tmp/venv

@@ -134,6 +134,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `firm/oms` | Order management: order states through enter/replace/cancel, positions, cash and worst-case exposure |
 | `firm/risk` | Inline pre-trade risk: kill switch, order size and notional, price collar, worst-case position, open orders, order rate |
 | `firm/strategy` | A one-level market maker that leans against its position; pairs statistical arbitrage, trend following (moving-average cross), a fundamental thesis state machine, and execution helpers (work toward a target, participation of volume) |
+| `tools/quant-real` | The Quant Research Lab's strategies backtested on real Nasdaq data: a TotalView-ITCH day replayed through `BookBuilder` with a queue-position fill model, and daily bars for the slower strategies |
 | `tools/quant-lab` | The Quant Research Lab: a simulated year with all four strategies trading on the engine, ITCH feed, `BookBuilder`, risk and OMS, written out as JSON; `web/index.html` replays it |
 | `firm/trader` | The firm's trading engine: market data, trading and order entry threads joined by rings |
 | `tools/dropcopy` | Records simex's drop copy (every firm execution) to CSV and prints each account's positions |
@@ -159,6 +160,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `scripts/e2e-fix.sh` | Two FIX sessions trading through `fixgw`, one dropped and resumed midway; FIX fills checked against the drop copy |
 | `scripts/e2e-agents.sh` | `trader` making markets among the agents, with no replay |
 | `scripts/e2e-scenarios.sh` | simex `--scenario all` with an implied strip, agents, `itch-fh` and two vendors; checks every scenario ran and every book agrees |
+| `scripts/e2e-quant-real.sh` | `quant-real` on a synthetic day and made-up daily bars: clean books, consistent OMS, strategies trade within limits, and the real-data page builds |
 | `scripts/e2e-quant-lab.sh` | The quant lab for a shortened year: clean books every day, consistent OMS, every strategy trades within its limits, and the page builds |
 | `docs/scenarios.md` | Auctions, halts, LULD, circuit breakers, IPOs and implied strips: what each part of the lab does |
 | `bench/` | Microbenchmarks: core library, ITCH codec and books, MoldUDP64, matching engine (with p50/p99/p99.9), FIX codec |
@@ -219,6 +221,25 @@ shows a scoreboard, replays each strategy (900 book updates for the market
 maker, the year for the others) and compares ten seeds. SEMA, SEMB, TRND and
 VALU are made-up symbols and all prices are simulated; no fees or rebates
 are counted.
+
+### On real Nasdaq data
+
+`quant-real` backtests the same strategy code on history instead:
+
+| Strategy | Data | Fills |
+| --- | --- | --- |
+| Market making, AAPL | Nasdaq TotalView-ITCH, Jan 30, 2019, every message | resting orders join the back of their level; they fill once executions at that price have used up the shares ahead (`queue_model.hpp`) |
+| Stat arb, GOOGL / GOOG | the same ITCH day, sampled each minute | marketable orders take the displayed size |
+| Trend, QQQ | Nasdaq daily bars, 2019 (warmed up from Jun 2018) | next open plus 2 bps |
+| Fundamental, AAPL | Nasdaq daily bars, 2019; fair value = fiscal 2018 EPS $11.91 x 15 | 6% of each day's volume at the typical price plus 5 bps |
+
+```bash
+scripts/run-quant-real.sh build/release ~/data/quant-real   # downloads 4.8 GB + daily bars
+```
+
+The firm's orders never reach the historical book, so they have no market
+impact. `research/fetch_daily.py` undoes Apple's 2020 split so the daily bars
+match the prices on the ITCH day, and `quant-real` warns if they do not.
 
 Latency numbers measured under WSL2 are relative, not production figures: the
 Windows host schedules the VM's CPUs, and there is no kernel-bypass networking.

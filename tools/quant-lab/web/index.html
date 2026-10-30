@@ -117,10 +117,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, .tile:focus-vis
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">MarketData lab · tools/quant-lab</div>
-    <h1>Quant Research Lab</h1>
+    <div class="eyebrow" id="eyebrow">MarketData lab · tools/quant-lab</div>
+    <h1 id="title">Quant Research Lab</h1>
     <p class="lede" id="lede">Four strategies traded a simulated year on the lab's own stack. Everything below is a replay of that run.</p>
-    <div class="pipeline" aria-label="What the run goes through">
+    <div class="pipeline" id="pipeline" aria-label="What the run goes through">
       <span>market model</span><i>→</i><span>match::Engine</span><i>→</i><span>ITCH 5.0 A E X D</span><i>→</i><span>BookBuilder</span><i>→</i><span>strategy</span><i>→</i><span>risk::Risk</span><i>→</i><span>oms::Oms</span><i>→</i><span>match::Engine</span>
     </div>
     <div class="checks" id="checks"></div>
@@ -148,7 +148,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .tile:focus-vis
       </div>
       <div class="side">
         <div class="card"><p id="pitch"></p><div class="stats" id="stats"></div></div>
-        <div class="card"><h3>How it made money in this run</h3><ol class="steps" id="steps"></ol></div>
+        <div class="card"><h3 id="steps-h">How it made money in this run</h3><ol class="steps" id="steps"></ol></div>
         <div class="card"><h3>What it read from the feed</h3><div class="chips" id="chips"></div><p class="note" id="feednote"></p><p class="code" id="codeplace"></p></div>
       </div>
     </div>
@@ -182,9 +182,11 @@ const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 
 // ---------- header
 const M = D.meta;
-$('lede').innerHTML = `Four strategies traded <b>${M.days} simulated days</b> on the lab's own code. The market model sent orders to the matching engine, which published <b>${fmt(M.messages)} ITCH messages</b>. Each day's books were rebuilt by <code>BookBuilder</code>, and the strategies traded only from those books, through pre-trade risk and the OMS, back into the same engine. Seed ${M.seed}; the run took ${M.wall_s.toFixed(1)} s.`;
+const REAL = M.mode === 'real';
+const longDate = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+if (!REAL) $('lede').innerHTML = `Four strategies traded <b>${M.days} simulated days</b> on the lab's own code. The market model sent orders to the matching engine, which published <b>${fmt(M.messages)} ITCH messages</b>. Each day's books were rebuilt by <code>BookBuilder</code>, and the strategies traded only from those books, through pre-trade risk and the OMS, back into the same engine. Seed ${M.seed}; the run took ${M.wall_s.toFixed(1)} s.`;
 const ok = (v) => `<b class="${v ? 'bad' : ''}">${fmt(v)}</b>`;
-$('checks').innerHTML = `<span>book integrity errors ${ok(M.integrity_errors)}</span><span>rebuilt vs engine book mismatches ${ok(M.book_mismatches)}</span><span>OMS inconsistent responses ${ok(M.oms_inconsistent)}</span><span>engine executions <b>${fmt(M.engine.executions)}</b></span>`;
+if (!REAL) $('checks').innerHTML = `<span>book integrity errors ${ok(M.integrity_errors)}</span><span>rebuilt vs engine book mismatches ${ok(M.book_mismatches)}</span><span>OMS inconsistent responses ${ok(M.oms_inconsistent)}</span><span>engine executions <b>${fmt(M.engine.executions)}</b></span>`;
 
 // ---------- canvas helpers
 const cv = $('cv'); const ctx = cv.getContext('2d'); let W = 0, H = 0;
@@ -205,7 +207,7 @@ function line(c2, vals, x, y, w, h, color, o = {}) {
 }
 
 // ---------- strategies
-const feedChips = (syms) => { const t = { A: 0, E: 0, X: 0, D: 0 }; for (const s of syms) for (const k in t) t[k] += M.feed[s][k]; return [['A', 'Add Order', t.A], ['E', 'Executed', t.E], ['X', 'Cancel', t.X], ['D', 'Delete', t.D]]; };
+const feedChips = (syms) => { const t = { A: 0, E: 0, X: 0, D: 0 }; if (!syms.some((s) => M.feed[s])) return [['1d', 'Daily bars', S[cur].len()]]; for (const s of syms) for (const k in t) t[k] += M.feed[s] ? M.feed[s][k] : 0; return [['A', 'Add Order', t.A], ['E', 'Executed', t.E], ['X', 'Cancel', t.X], ['D', 'Delete', t.D]]; };
 const S = {
   mm: {
     name: 'HFT market making', color: 'hft', sym: 'AAPL', data: D.mm, rate: 5,
@@ -267,6 +269,61 @@ const S = {
 const order = ['mm', 'arb', 'trend', 'fund'];
 const hm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
+// ---------- real Nasdaq data: same drawings, different story
+if (REAL) {
+  const day = longDate(M.itch_date), A = D.pairs.symbols[0], B = D.pairs.symbols[1], T = D.trend.symbol, F = D.fund.symbol, MM = D.mm.symbol;
+  const dt = (i, arr) => longDate(arr[i]);
+  document.title = 'Quant Research Lab: real data';
+  $('title').textContent = 'Quant Research Lab: real Nasdaq data';
+  $('eyebrow').textContent = 'MarketData lab · tools/quant-real';
+  $('steps-h').textContent = 'How it trades';
+  $('lede').innerHTML = `The same four strategies, backtested on real history. Market making and stat arb replayed Nasdaq's full TotalView-ITCH feed for <b>${day}</b> (<code>${M.itch_file}</code>, <b>${fmt(M.messages)} messages</b>) through <code>BookBuilder</code> and traded from the rebuilt books. Trend and fundamental ran on Nasdaq's daily bars from ${longDate(M.from)} to ${longDate(M.to)}. Every order went through pre-trade risk and the OMS. The run took ${M.wall_s.toFixed(1)} s.`;
+  $('pipeline').innerHTML = '<span>Nasdaq ITCH 5.0 file</span><i>→</i><span>BookBuilder</span><i>→</i><span>strategy</span><i>→</i><span>risk::Risk</span><i>→</i><span>oms::Oms</span><i>→</i><span>queue-position fill model</span><i>→</i><span>oms::Oms</span>';
+  $('checks').innerHTML = `<span>book integrity errors ${ok(M.integrity_errors)}</span><span>OMS inconsistent responses ${ok(M.oms_inconsistent)}</span><span>simulated fills <b>${fmt(M.oms_executions)}</b></span><span>${MM} traded that day <b>${fmt(M.feed[MM].volume)} sh</b> on Nasdaq</span>`;
+  $('foot').textContent = `Real Nasdaq data: the order books are rebuilt from Nasdaq's TotalView-ITCH sample file for ${day}, and the daily bars are Nasdaq's historical quotes. The firm's orders are simulated: they never reached Nasdaq, so they had no market impact, and a resting order fills only after the displayed shares ahead of it at its price have traded. Daily strategies fill at the next open (trend, plus 2 bps) or at the day's typical price (fundamental, plus 5 bps, at most 6% of the day's volume). Dividends, fees and rebates are not counted. One day and one year are a small sample. Nothing here is investment advice.`;
+  Object.assign(S.mm, {
+    sym: MM, syms: [MM],
+    pitch: `Quotes both sides of ${MM} on ${day}, from Nasdaq's own book. Below: ${fmt(D.mm.frames.length)} consecutive book updates from ${hm(570 + D.mm.from_minute)}, as the strategy saw them. Our orders are not in Nasdaq's book, so they wait behind everyone already at their price.`,
+    steps: ['<b>Quote both sides</b> at the best prices others show, one cent inside when the spread is 3 cents or more.', '<b>Wait in the queue.</b> Our order joins the back of its price level. Only executions after the shares ahead of us have traded can fill it.', '<b>Get filled, then filled back.</b> A buy and a sell 100 shares each earn the spread.', '<b>Lean against inventory</b> when the price runs through us, a cent per 100 shares.'],
+    code: '<b>firm/strategy/market_maker.hpp</b> on the real book; fills from <b>tools/quant-real/queue_model.hpp</b>',
+    feednote: `Every Nasdaq message for ${MM} that day, applied to a full-depth book. The ladder is Nasdaq's rebuilt book; our order is drawn at the back of its level.`,
+    clock: (i) => { const ns = D.mm.frames[i].t; const s = Math.floor(ns / 1e9); return `${MM} · ${day} ${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}.${String(Math.floor(ns % 1e9)).padStart(9, '0').slice(0, 6)}`; },
+    stats: (i) => { const f = D.mm.frames[i], s = D.mm.summary; return [['P&L in this replay', money(f.pnl - D.mm.frames[0].pnl, 2), cls(f.pnl - D.mm.frames[0].pnl)], ['Inventory', (f.pos > 0 ? '+' : '') + f.pos + ' sh', ''], ['Day P&L', big(s.pnl), cls(s.pnl)], ['Day fills', fmt(s.fills), '']]; },
+    phase: (i) => { const f = D.mm.frames[i], p = D.mm.frames[Math.max(0, i - 1)]; if (!f.m.some((m) => m.endsWith('|1'))) return (f.ub || f.ua) ? 1 : 0; return Math.abs(f.pos) > Math.abs(p.pos) ? (Math.abs(f.pos) >= 300 ? 3 : 1) : 2; },
+    range: (n) => ['update 1', `update ${fmt(n)}`]
+  });
+  Object.assign(S.arb, {
+    syms: [A, B], rate: 6,
+    pitch: `Trades ${A} against ${B}, Alphabet's two share classes: one company, two prices. Samples both mids every minute on ${day}; when the gap is more than 2 standard deviations from its last hour, it sells the rich class and buys the cheap one, $${fmt(D.pairs.leg_notional)} a leg, and is flat by the close.`,
+    steps: [`<b>Sample both books</b> every minute and compute the log price gap's z-score over the last ${D.pairs.window} minutes.`, '<b>Gap past ±2:</b> sell the rich one, buy the cheap one with marketable orders at the displayed prices.', '<b>Hold</b> while the gap closes. Market moves cancel out between the two classes.', '<b>Close near zero</b>, or stop out past ±4. Each round trip pays two spreads, which on real books is most of the edge.'],
+    code: '<b>firm/strategy/pairs.hpp</b> · PairsTrader, window 60, entry 2.0, exit 0.3, stop 4.0; legs worked with <b>execution.hpp</b> work_toward()',
+    feednote: `Top of book for ${A} and ${B} from Nasdaq's feed, sampled once a minute.`,
+    clock: (i) => `${A} vs ${B} · ${day} ${hm(571 + i)}`,
+    stats: (i) => { const r = D.pairs.rows[i]; return [['P&L', big(r[6]), cls(r[6])], ['Position', r[4] === 0 && r[5] === 0 ? 'Flat' : `${r[4] > 0 ? '+' : ''}${fmt(r[4])} ${A} / ${r[5] > 0 ? '+' : ''}${fmt(r[5])} ${B}`, ''], ['Gap (z)', (r[2] >= 0 ? '+' : '') + r[2].toFixed(2), ''], ['Round trips (day)', `${D.pairs.wins} won · ${D.pairs.losses} lost`, '']]; },
+    log: (i) => { const out = []; for (let j = i; j >= 0 && out.length < 6; j--) { const r = D.pairs.rows[j]; if (!r[7]) continue; const when = hm(571 + j); if (r[7] === 'in') out.push(['us', `${when}  z ${r[2] >= 0 ? '+' : ''}${r[2].toFixed(2)}: ${r[3] < 0 ? `sell ${A}, buy ${B}` : `buy ${A}, sell ${B}`}`]); else { let k = j - 1; while (k > 0 && D.pairs.rows[k][7] !== 'in') k--; const pl = r[6] - D.pairs.rows[k][6]; out.push([r[7] === 'stop' ? 'warn' : pl >= 0 ? 'fill' : 'warn', `${when}  z ${r[2] >= 0 ? '+' : ''}${r[2].toFixed(2)}: ${r[7] === 'stop' ? 'stop loss' : 'gap closed'}, ${money(pl)}`]); } } return out; },
+    range: () => ['09:31', '16:00']
+  });
+  Object.assign(S.trend, {
+    syms: [T],
+    pitch: `${T}, Nasdaq-100's tracking fund, from ${longDate(M.from)} to ${longDate(M.to)}. Long $1M while the 20-day average is above the 50-day, short while below. Decided at the close, filled at the next day's open plus 2 bps.`,
+    steps: ['<b>Read the daily bars:</b> open, high, low and close.', '<b>The averages cross.</b> Set a new target of ±$1M, filled at the next open.', '<b>Ride the trend.</b> A long trend pays for many small losses.', '<b>Get whipsawed</b> when the market goes sideways: each flip costs a little.'],
+    feednote: `Nasdaq's daily bars for ${T}: one record a day. The averages warm up on the months before the test starts.`,
+    clock: (i) => `${T} · ${dt(i, D.trend.dates)}`,
+    log: (i) => { const out = []; for (let j = i; j >= 0 && out.length < 6; j--) { const r = D.trend.rows[j]; if (!r[9]) continue; let k = j - 1; while (k > 0 && !D.trend.rows[k][9]) k--; const pl = k > 0 ? r[8] - D.trend.rows[k][8] : 0; out.push([k > 0 ? (pl >= 0 ? 'fill' : 'warn') : 'us', `${dt(j, D.trend.dates)}  20-day ${r[4].toFixed(2)} ${r[6] > 0 ? 'above' : 'below'} 50-day ${r[5].toFixed(2)}: go ${r[6] > 0 ? 'long' : 'short'}${k > 0 ? `  (last trade ${money(pl)})` : ''}`]); } return out; },
+    range: (n) => [dt(0, D.trend.dates), dt(n - 1, D.trend.dates)]
+  });
+  Object.assign(S.fund, {
+    syms: [F],
+    pitch: `A value thesis on ${F} with a fair value fixed before the test: trailing earnings per share $${D.fund.eps.toFixed(2)} × ${D.fund.pe} = $${D.fund.fair_value.toFixed(2)}. Buys up to ${fmt(D.fund.target_shares)} shares while the price is 10% or more below it, at most 6% of each day's volume, and sells within 3% of it.`,
+    steps: ['<b>Research.</b> The fair value comes from the annual report, not the feed. Wait out the research period.', '<b>Build</b> at 6% of each day\'s volume while the price is 10%+ below fair value.', '<b>Hold.</b> The thesis says the market will rerate the stock.', '<b>Sell</b> once the price is within 3% of fair value, again at 6% of volume. A drop of 25% below cost would have stopped it out.'],
+    feednote: `Nasdaq's daily bars set the pace: each day's volume decides how much it may trade. On ${day} the ITCH file gives the half-hour volume too. EPS $${D.fund.eps.toFixed(2)} is a lab input (Apple's fiscal 2018 diluted EPS for the default run); P/E ${D.fund.pe} is roughly where the stock had traded in the years before.`,
+    clock: (i) => `${F} · ${dt(i, D.fund.dates)} · ${D.fund.rows[i][5]}`,
+    phase: (i) => ({ research: 0, build: 1, hold: 2, exit: 3, done: 3 }[D.fund.rows[i][5]]),
+    log: (i) => { const out = []; let prev = null; for (let j = 0; j <= i; j++) { const r = D.fund.rows[j]; if (r[5] !== prev) { out.unshift([r[5] === 'build' || r[5] === 'exit' ? 'us' : r[5] === 'done' ? 'fill' : 'mkt', `${dt(j, D.fund.dates)}  ${{ research: 'research: no position', build: `$${r[0].toFixed(2)} is 10%+ below fair value: start buying`, hold: `holding ${fmt(r[2])} shares at $${r[3].toFixed(2)}`, exit: `$${r[0].toFixed(2)} near fair value: start selling`, done: `sold out, P&L ${big(r[4])}` }[r[5]]}`]); prev = r[5]; } if (j + 1 === D.fund.catalyst_day) out.unshift(['warn', `${dt(j, D.fund.dates)}  the ITCH day: the order books above are from this session`]); } return out.slice(0, 6); },
+    range: (n) => [dt(0, D.fund.dates), dt(n - 1, D.fund.dates)]
+  });
+}
+
 // ---------- draw: market making
 function drawMm(i) {
   const f = D.mm.frames[i]; const narrow = W < 600;
@@ -274,6 +331,7 @@ function drawMm(i) {
   const bb = f.b.length ? f.b[0][0] : 0, ba = f.a.length ? f.a[0][0] : 0; const center = Math.round((bb + ba) / 2);
   const cx = lw / 2, pw = 64; const barMax = cx - pw / 2 - pad - 34;
   const qty = new Map(); let maxQ = 400; for (const [p, q] of f.b) { qty.set('b' + p, q); maxQ = Math.max(maxQ, q); } for (const [p, q] of f.a) { qty.set('a' + p, q); maxQ = Math.max(maxQ, q); }
+  if (REAL) maxQ += 200;
   const fills = new Set(f.m.filter((m) => m.startsWith('E')).map((m) => +m.split('|')[3] / 100));
   txt('BID SIZE', cx - pw / 2 - 8, 22, C.muted, 10.5, 'right', 600); txt('PRICE', cx, 22, C.muted, 10.5, 'center', 600); txt('ASK SIZE', cx + pw / 2 + 8, 22, C.muted, 10.5, 'left', 600);
   for (let r = 0; r < rows; r++) {
@@ -283,12 +341,14 @@ function drawMm(i) {
     const unit = barMax / maxQ;
     const bq = qty.get('b' + p) || 0, aq = qty.get('a' + p) || 0;
     const ub = f.ub && f.ub[0] === p ? f.ub[1] : 0, ua = f.ua && f.ua[0] === p ? f.ua[1] : 0;
-    if (bq) { const w = bq * unit, wu = ub * unit; ctx.fillStyle = C.bid; ctx.globalAlpha = 0.7; ctx.fillRect(cx - pw / 2 - 4 - w, y + 3, w - wu, rh - 6); ctx.globalAlpha = 1; if (ub) { ctx.fillStyle = C.hft; ctx.fillRect(cx - pw / 2 - 4 - wu, y + 3, wu, rh - 6); } txt(String(bq), cx - pw / 2 - 8 - w, y + rh / 2, C.muted, 10.5, 'right', 400, 'middle'); }
-    if (aq) { const w = aq * unit, wu = ua * unit; if (ua) { ctx.fillStyle = C.hft; ctx.fillRect(cx + pw / 2 + 4, y + 3, wu, rh - 6); } ctx.fillStyle = C.ask; ctx.globalAlpha = 0.7; ctx.fillRect(cx + pw / 2 + 4 + wu, y + 3, w - wu, rh - 6); ctx.globalAlpha = 1; txt(String(aq), cx + pw / 2 + 8 + w, y + rh / 2, C.muted, 10.5, 'left', 400, 'middle'); }
+    if (REAL && (bq || ub)) { const w = bq * unit, wu = ub * unit; if (bq) { ctx.fillStyle = C.bid; ctx.globalAlpha = 0.7; ctx.fillRect(cx - pw / 2 - 4 - w, y + 3, w, rh - 6); ctx.globalAlpha = 1; } if (ub) { ctx.fillStyle = C.hft; ctx.fillRect(cx - pw / 2 - 4 - w - wu, y + 3, wu, rh - 6); } txt(String(bq + ub), cx - pw / 2 - 8 - w - wu, y + rh / 2, C.muted, 10.5, 'right', 400, 'middle'); }
+    else if (bq) { const w = bq * unit, wu = ub * unit; ctx.fillStyle = C.bid; ctx.globalAlpha = 0.7; ctx.fillRect(cx - pw / 2 - 4 - w, y + 3, w - wu, rh - 6); ctx.globalAlpha = 1; if (ub) { ctx.fillStyle = C.hft; ctx.fillRect(cx - pw / 2 - 4 - wu, y + 3, wu, rh - 6); } txt(String(bq), cx - pw / 2 - 8 - w, y + rh / 2, C.muted, 10.5, 'right', 400, 'middle'); }
+    if (REAL && (aq || ua)) { const w = aq * unit, wu = ua * unit; if (aq) { ctx.fillStyle = C.ask; ctx.globalAlpha = 0.7; ctx.fillRect(cx + pw / 2 + 4, y + 3, w, rh - 6); ctx.globalAlpha = 1; } if (ua) { ctx.fillStyle = C.hft; ctx.fillRect(cx + pw / 2 + 4 + w, y + 3, wu, rh - 6); } txt(String(aq + ua), cx + pw / 2 + 8 + w + wu, y + rh / 2, C.muted, 10.5, 'left', 400, 'middle'); }
+    else if (aq) { const w = aq * unit, wu = ua * unit; if (ua) { ctx.fillStyle = C.hft; ctx.fillRect(cx + pw / 2 + 4, y + 3, wu, rh - 6); } ctx.fillStyle = C.ask; ctx.globalAlpha = 0.7; ctx.fillRect(cx + pw / 2 + 4 + wu, y + 3, w - wu, rh - 6); ctx.globalAlpha = 1; txt(String(aq), cx + pw / 2 + 8 + w, y + rh / 2, C.muted, 10.5, 'left', 400, 'middle'); }
     const best = p === bb || p === ba;
     txt(cents(p), cx, y + rh / 2, best ? C.ink : C.muted, 12, 'center', best ? 600 : 400, 'middle');
   }
-  ctx.fillStyle = C.hft; ctx.fillRect(pad, lh - 12, 10, 8); txt('our order (inside the level, at the front only if it was there first)', pad + 14, lh - 4, C.muted, 10);
+  ctx.fillStyle = C.hft; ctx.fillRect(pad, lh - 12, 10, 8); txt(REAL ? `our order, behind ${fmt((f.ub ? f.ub[2] : 0) + (f.ua ? f.ua[2] : 0))} sh still ahead in the queue (not in Nasdaq's book)` : 'our order (inside the level, at the front only if it was there first)', pad + 14, lh - 4, C.muted, 10);
   const rx = narrow ? pad : lw + 16, ry = narrow ? lh + 10 : 24, rw = narrow ? W - 2 * pad : W - lw - 30, rhh = narrow ? H - lh - 18 : H - 48;
   const ch = narrow ? rhh - 40 : rhh * 0.58;
   const base = D.mm.frames[0].pnl; const vals = D.mm.frames.slice(0, i + 1).map((x) => x.pnl - base);
@@ -299,20 +359,20 @@ function drawMm(i) {
   const gh = 12, gyy = gy + 10, mid = rx + rw / 2, iw = f.pos / 1000 * rw / 2;
   ctx.fillStyle = C.line; ctx.fillRect(rx, gyy, rw, gh); ctx.fillStyle = f.pos >= 0 ? C.bid : C.ask; ctx.fillRect(Math.min(mid, mid + iw), gyy, Math.abs(iw), gh); ctx.fillStyle = C.ink; ctx.fillRect(mid - 0.5, gyy - 3, 1, gh + 6);
   if (!narrow) {
-    label('Whole year, daily P&L', rx, gyy + 50);
+    label(REAL ? 'Whole day, P&L by minute' : 'Whole year, daily P&L', rx, gyy + 50);
     line(ctx, D.mm.summary.daily, rx, gyy + 58, rw, rhh - (gyy + 58 - ry) - 4, C.hft, { zero: true, dot: true });
   }
 }
 
 // ---------- draw: stat arb
 function drawArb(i) {
-  const rows = D.pairs.rows; const n = 312; const s0 = Math.max(0, i - n + 1); const win = rows.slice(s0, i + 1);
+  const rows = D.pairs.rows; const n = REAL ? rows.length : 312; const s0 = Math.max(0, i - n + 1); const win = rows.slice(s0, i + 1);
   const pad = 14, x = 52, w = W - x - pad - 14; const h1 = H * 0.42, h2 = H * 0.28; const y1 = 20, y2 = y1 + h1 + 24, y3 = y2 + h2 + 24, h3 = H - y3 - 10;
   const X = (k) => x + k / (n - 1) * w;
   win.forEach((r, k) => { if (r[3] !== 0 && k > 0) { ctx.fillStyle = C.arb; ctx.globalAlpha = 0.09; ctx.fillRect(X(k - 1), y1, X(k) - X(k - 1) + 0.5, y3 + h3 - y1); ctx.globalAlpha = 1; } });
   let la = win.find((r) => r[0])?.[0] || 1, lb = win.find((r) => r[1])?.[1] || 1; const a0 = la, b0 = lb;
   const A = win.map((r) => { if (r[0]) la = r[0]; return la / a0 * 100; }), B = win.map((r) => { if (r[1]) lb = r[1]; return lb / b0 * 100; });
-  label('SEMA and SEMB, rebased to 100', pad, y1 - 6);
+  label(`${D.pairs.symbols[0]} and ${D.pairs.symbols[1]}, rebased to 100`, pad, y1 - 6);
   const mn = Math.min(...A, ...B), mx = Math.max(...A, ...B);
   const g = line(ctx, A, x, y1 + 4, w, h1 - 8, C.arb, { n, min: mn, max: mx });
   line(ctx, B, x, y1 + 4, w, h1 - 8, C.muted, { n, min: mn, max: mx });
@@ -325,7 +385,7 @@ function drawArb(i) {
   line(ctx, win.map((r) => Math.max(zl, Math.min(zh, r[2]))), x, y2, w, h2, C.arb, { n, min: zl, max: zh });
   label('P&L', pad, y3 - 6); const P = win.map((r) => r[6]);
   line(ctx, P, x, y3, w, h3, C.arb, { n, zero: true, fill: true });
-  txt('year to date ' + big(P.at(-1)), W - pad, y3 - 6, P.at(-1) >= 0 ? C.bid : C.ask, 11, 'right', 600);
+  txt((REAL ? 'today ' : 'year to date ') + big(P.at(-1)), W - pad, y3 - 6, P.at(-1) >= 0 ? C.bid : C.ask, 11, 'right', 600);
 }
 
 // ---------- draw: trend
@@ -336,7 +396,7 @@ function drawTrend(i) {
   let mn = Infinity, mx = -Infinity; for (const r of rows) { mn = Math.min(mn, r[2]); mx = Math.max(mx, r[1]); }
   const Y = (v) => y1 + h1 - (v - mn) / (mx - mn) * h1;
   for (let k = 0; k <= i; k++) { const p = rows[k][7]; if (!p) continue; ctx.fillStyle = p > 0 ? C.bid : C.ask; ctx.globalAlpha = 0.08; ctx.fillRect(X(k) - w / n / 2, y1, w / n + 0.5, h1); ctx.globalAlpha = 1; }
-  label('TRND daily bars, 20-day and 50-day averages', pad, y1 - 8);
+  label(`${D.trend.symbol} daily bars, 20-day and 50-day averages`, pad, y1 - 8);
   for (const v of [mn + (mx - mn) * 0.1, (mn + mx) / 2, mx - (mx - mn) * 0.1]) txt('$' + v.toFixed(0), x - 6, Y(v), C.muted, 10.5, 'right', 400, 'middle');
   for (let k = 0; k <= i; k++) { const [o, hi, lo, c] = rows[k]; const up = c >= o; ctx.strokeStyle = ctx.fillStyle = up ? C.bid : C.ask; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(k), Y(hi)); ctx.lineTo(X(k), Y(lo)); ctx.stroke(); const t = Y(Math.max(o, c)), b = Y(Math.min(o, c)); ctx.fillRect(X(k) - bw / 2, t, bw, Math.max(1, b - t)); }
   for (const [col, color, lw] of [[4, C.trend, 2.2], [5, C.ink, 1.5]]) { ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath(); let st = false; for (let k = 0; k <= i; k++) { const v = rows[k][col]; if (!v) continue; st ? ctx.lineTo(X(k), Y(v)) : ctx.moveTo(X(k), Y(v)); st = true; } ctx.stroke(); }
@@ -354,14 +414,14 @@ function drawFund(i) {
   const X = (k) => x + k / (n - 1) * w;
   let mn = Infinity, mx = fv * 1.04; for (const r of rows) { mn = Math.min(mn, r[0] || mn); mx = Math.max(mx, r[0]); } mn *= 0.97;
   const Y = (v) => y1 + h1 - (v - mn) / (mx - mn) * h1;
-  label('VALU close over the year', pad, y1 - 10);
+  label(`${D.fund.symbol} close over the year`, pad, y1 - 10);
   ctx.strokeStyle = C.fund; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, Y(fv)); ctx.lineTo(x + w, Y(fv)); ctx.stroke(); ctx.setLineDash([]);
-  txt(`analysts' fair value $${fv.toFixed(0)}`, x + w, Y(fv) - 6, C.fund, 10.5, 'right', 600);
+  txt(REAL ? `fair value $${fv.toFixed(2)} = EPS $${D.fund.eps.toFixed(2)} × ${D.fund.pe}` : `analysts' fair value $${fv.toFixed(0)}`, x + w, Y(fv) - 6, C.fund, 10.5, 'right', 600);
   ctx.fillStyle = C.fund; ctx.globalAlpha = 0.08; ctx.fillRect(x, Y(fv * 0.97), w, Y(fv * 0.9) - Y(fv * 0.97)); ctx.globalAlpha = 1;
   txt('no-buy zone (within 10%)', x + 4, Y(fv * 0.9) - 4, C.muted, 10);
-  for (const v of [Math.ceil(mn / 5) * 5, Math.ceil(mn / 5) * 5 + 5, Math.ceil(mn / 5) * 5 + 10].filter((v) => v < mx)) txt('$' + v, x - 6, Y(v), C.muted, 10.5, 'right', 400, 'middle');
+  for (const v of [mn + (mx - mn) * 0.1, (mn + mx) / 2, mx - (mx - mn) * 0.1]) txt('$' + v.toFixed(0), x - 6, Y(v), C.muted, 10.5, 'right', 400, 'middle');
   let prev = null; for (let k = 0; k <= i; k++) { const ph = rows[k][5]; if (ph !== prev && (ph === 'build' || ph === 'exit')) { ctx.fillStyle = C.muted; ctx.fillRect(X(k), y1, 1, h1); txt(ph, X(k) + 3, y1 + h1 - 5, C.muted, 10); } prev = ph; }
-  if (i + 1 >= D.fund.catalyst_day) { const k = D.fund.catalyst_day - 1; ctx.fillStyle = C.warn; ctx.fillRect(X(k), y1, 1.5, h1); txt('earnings', X(k) + 3, y1 + 12, C.warn, 10, 'left', 600); }
+  if (D.fund.catalyst_day && i + 1 >= D.fund.catalyst_day) { const k = D.fund.catalyst_day - 1; ctx.fillStyle = C.warn; ctx.fillRect(X(k), y1, 1.5, h1); txt(REAL ? 'the ITCH day' : 'earnings', X(k) + 3, y1 + 12, C.warn, 10, 'left', 600); }
   const r = rows[i]; if (r[2] > 0 && r[3]) { ctx.strokeStyle = C.ink; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, Y(r[3])); ctx.lineTo(X(i), Y(r[3])); ctx.stroke(); ctx.setLineDash([]); txt('our average cost $' + r[3].toFixed(2), x + 4, Y(r[3]) + 13, C.ink, 10.5); }
   line(ctx, rows.slice(0, i + 1).map((q) => q[0]), x, y1, w, h1, C.ink, { n, min: mn, max: mx, lw: 1.6 });
   label('Shares held', pad, y2 - 8);
@@ -369,12 +429,15 @@ function drawFund(i) {
   const narrow = W < 600;
   const half = narrow ? W - 2 * pad : (W - 2 * pad - 24) / 2, ix = pad, px2 = narrow ? pad : pad + half + 24;
   const h3a = narrow ? (h3 - 24) * 0.55 : h3, y4 = narrow ? y3 + h3a + 24 : y3, h4 = narrow ? h3 - h3a - 24 : h3;
-  label(`Day ${i + 1}: volume per half hour`, ix, y3 - 10);
-  const iv = r[6]; const vmax = Math.max(1, ...iv.map((b) => b[0])); const bw = half / iv.length; const trading = iv.some((b) => b[1] > 0);
+  label(REAL ? `${longDate(D.fund.dates[i])}: ${r[6].length ? 'volume per half hour, from the ITCH day' : 'volume'}` : `Day ${i + 1}: volume per half hour`, ix, y3 - 10);
+  const iv = r[6];
+  if (!iv.length) { const tv = r[7], uv = r[8]; const bh = h3a - 30; ctx.fillStyle = C.line; ctx.fillRect(ix, y3 + 4, half, Math.min(bh, 18)); if (uv) { ctx.fillStyle = C.fund; ctx.fillRect(ix, y3 + 4, Math.max(2, half * uv / tv), Math.min(bh, 18)); } txt(uv ? `ours ${fmt(uv)} of ${fmt(tv)} sh (${(uv / tv * 100).toFixed(1)}%)` : `${fmt(tv)} sh traded · not trading today`, ix, y3 + 40, uv ? C.fund : C.muted, 10.5); txt('Half-hour volume exists only for the ITCH day; other days are daily bars.', ix, y3 + 58, C.muted, 10); }
+  else { const vmax = Math.max(1, ...iv.map((b) => b[0])); const bw = half / iv.length; const trading = iv.some((b) => b[1] > 0);
   iv.forEach((b, k) => { const hh = b[0] / vmax * (h3a - 16); ctx.fillStyle = C.line; ctx.fillRect(ix + k * bw + 1, y3 + h3a - 14 - hh, bw - 2, hh); if (b[1]) { const uh = b[1] / vmax * (h3a - 16); ctx.fillStyle = C.fund; ctx.fillRect(ix + k * bw + 1, y3 + h3a - 14 - uh, bw - 2, Math.max(1, uh)); } });
   txt('9:30', ix, y3 + h3a, C.muted, 10); txt('16:00', ix + half, y3 + h3a, C.muted, 10, 'right');
   const tv = sum(iv.map((b) => b[0])), uv = sum(iv.map((b) => b[1]));
   txt(trading ? `ours ${fmt(uv)} of ${fmt(tv)} sh (${(uv / tv * 100).toFixed(1)}%)` : 'not trading today', ix + half / 2, y3 + h3a, trading ? C.fund : C.muted, 10, 'center');
+  }
   label('P&L', px2, y4 - 10);
   line(ctx, rows.slice(0, i + 1).map((q) => q[4]), px2, y4, W - pad - px2, h4 - 6, C.fund, { n, zero: true, fill: true, min: Math.min(...rows.map((q) => q[4])), max: Math.max(...rows.map((q) => q[4])) });
 }
@@ -383,14 +446,14 @@ function drawFund(i) {
 const board = $('board');
 order.forEach((k) => {
   const s = S[k], sm = s.data.summary; const b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.id = 'tile-' + k; b.style.setProperty('--c', `var(--${s.color})`);
-  b.innerHTML = `<span class="nm"><i></i>${s.name}</span><span class="big ${cls(sm.pnl)}">${big(sm.pnl)}</span><span class="sub">Sharpe ${sm.sharpe.toFixed(2)} · max drawdown ${big(sm.max_drawdown)}</span><span class="sub">${fmt(sm.orders)} orders · ${fmt(sm.fills)} fills · ${s.syms.join('/')}</span><canvas aria-hidden="true"></canvas>`;
+  b.innerHTML = `<span class="nm"><i></i>${s.name}</span><span class="big ${cls(sm.pnl)}">${big(sm.pnl)}</span><span class="sub">${sm.intraday ? 'one day' : 'Sharpe ' + sm.sharpe.toFixed(2)} · max drawdown ${big(sm.max_drawdown)}</span><span class="sub">${fmt(sm.orders)} orders · ${fmt(sm.fills)} fills · ${s.syms.join('/')}</span><canvas aria-hidden="true"></canvas>`;
   b.onclick = () => { location.hash = k; select(k); }; board.appendChild(b);
 });
 function drawTiles() { order.forEach((k) => { const c = document.querySelector(`#tile-${k} canvas`); const r = c.getBoundingClientRect(); const d = window.devicePixelRatio || 1; c.width = r.width * d; c.height = r.height * d; const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); line(g, S[k].data.summary.daily, 0, 3, r.width, r.height - 6, C[S[k].color], { zero: true, fill: true, dot: false, lw: 1.4 }); }); }
 
 // ---------- seeds table
 (function seeds() {
-  const t = $('seeds'); if (!SEEDS.length) { t.closest('section').hidden = true; return; }
+  const t = $('seeds'); if (!SEEDS.length) { t.closest('section').style.display = 'none'; return; }
   const keys = [['mm', 'Market making'], ['arb', 'Stat arb'], ['trend', 'Trend'], ['fund', 'Fundamental']];
   let h = '<thead><tr><th>Seed</th>' + keys.map(([, n]) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
   for (const r of SEEDS) h += `<tr><td>${r.seed}${r.seed === M.seed ? ' (shown above)' : ''}</td>` + keys.map(([k]) => `<td class="${cls(r[k].pnl)}">${big(r[k].pnl)} <span style="color:var(--muted)">· ${r[k].sharpe.toFixed(1)}</span></td>`).join('') + '</tr>';
@@ -402,7 +465,7 @@ function drawTiles() { order.forEach((k) => { const c = document.querySelector(`
 
 // ---------- player
 let cur = 'mm', idx = 0, acc = 0, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches, last = performance.now();
-const startAt = { mm: 0, arb: 156 + 60, trend: 49, fund: 0 };
+const startAt = REAL ? { mm: 0, arb: 0, trend: 0, fund: 0 } : { mm: 0, arb: 156 + 60, trend: 49, fund: 0 };
 function select(k) {
   cur = k; const s = S[k]; document.documentElement.style.setProperty('--accent', `var(--${s.color})`);
   order.forEach((o) => $('tile-' + o).setAttribute('aria-pressed', String(o === k)));
@@ -410,6 +473,7 @@ function select(k) {
   $('chips').innerHTML = feedChips(s.syms).map(([c, l, v]) => `<span class="chip"><em>${c}</em>${l} ${fmt(v)}</span>`).join('');
   $('feednote').textContent = s.feednote; $('codeplace').innerHTML = s.code;
   const n = s.len(); $('scrub').max = n - 1; $('scrub-l').textContent = k === 'mm' ? 'event 1' : k === 'arb' ? 'day 1' : 'day 1'; $('scrub-r').textContent = k === 'mm' ? `event ${n}` : `day ${k === 'arb' ? Math.ceil(n / 78) : n}`;
+  if (REAL && s.range) { const [l, r] = s.range(n); $('scrub-l').textContent = l; $('scrub-r').textContent = r; }
   idx = Math.min(startAt[k], n - 1); acc = 0; C = tok(); update(); draw();
 }
 function update() {

@@ -8,6 +8,11 @@ Runs `quant-lab` once for the replayed seed and once per extra seed (summary
 only), then writes one self-contained HTML page from
 tools/quant-lab/web/index.html. Exits 1 if any run reports an integrity
 error, a book mismatch or an inconsistent OMS response.
+
+With `--real RUN.json` (written by tools/quant-real from a Nasdaq ITCH day and
+daily bars) it builds the real-data version of the page instead:
+
+    python3 research/quant_lab.py --real quant-real.json --page /tmp/quant-real.html
 """
 
 from __future__ import annotations
@@ -35,7 +40,8 @@ def parse_seeds(text: str) -> list[int]:
 
 def clean(run: dict) -> bool:
     m = run["meta"]
-    return m["integrity_errors"] == 0 and m["book_mismatches"] == 0 and m["oms_inconsistent"] == 0
+    return (m["integrity_errors"] == 0 and m.get("book_mismatches", 0) == 0
+            and m["oms_inconsistent"] == 0)
 
 
 def seed_row(run: dict) -> dict:
@@ -64,13 +70,26 @@ def run_lab(binary: str, seed: int, days: int, out: Path) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--bin", required=True, help="path to the quant-lab executable")
+    ap.add_argument("--bin", help="path to the quant-lab executable")
+    ap.add_argument("--real", help="a quant-real run (JSON) to build the real-data page from")
     ap.add_argument("--seed", type=int, default=3, help="the run the page replays")
     ap.add_argument("--seeds", default="", help="extra seeds for the table, e.g. 1-10")
     ap.add_argument("--days", type=int, default=252)
     ap.add_argument("--page", help="write the HTML page here")
     ap.add_argument("--json", help="also keep the replayed run's JSON here")
     a = ap.parse_args(argv)
+    if a.real:
+        run = json.loads(Path(a.real).read_text())
+        if a.page:
+            page = build_page(TEMPLATE.read_text(), run, [])
+            Path(a.page).write_text(page)
+            print(f"wrote {a.page} ({len(page):,} bytes)")
+        if not clean(run):
+            print("integrity problems in the real-data run", file=sys.stderr)
+            return 1
+        return 0
+    if not a.bin:
+        ap.error("--bin or --real is required")
 
     with tempfile.TemporaryDirectory() as tmp:
         main_run = run_lab(a.bin, a.seed, a.days, Path(tmp) / "main.json")

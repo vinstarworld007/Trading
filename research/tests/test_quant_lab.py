@@ -42,6 +42,14 @@ class QuantLabTest(unittest.TestCase):
         inner = page.split("<x>")[1].split("</x>")[0]
         self.assertEqual(json.loads(inner)["meta"]["notes"], ["</script><b>"])
 
+    def test_real_runs_have_no_engine_book_check(self):
+        data = run(1)
+        del data["meta"]["book_mismatches"]
+        data["meta"]["mode"] = "real"
+        self.assertTrue(quant_lab.clean(data))
+        data["meta"]["oms_inconsistent"] = 2
+        self.assertFalse(quant_lab.clean(data))
+
     def test_template_has_both_placeholders(self):
         t = quant_lab.TEMPLATE.read_text()
         self.assertIn("/*LAB_DATA*/", t)

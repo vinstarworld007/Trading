@@ -48,6 +48,7 @@ add_subdirectory(vendors/bpipe)
 add_subdirectory(tools/vendor-client)
 add_subdirectory(tools/order-trace)
 add_subdirectory(tools/quant-lab)
+add_subdirectory(tools/quant-real)
 
 if(LAB_BUILD_TESTS)
   enable_testing()

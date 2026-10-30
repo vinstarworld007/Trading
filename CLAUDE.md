@@ -34,6 +34,10 @@ the project playbook. Build phases are listed in README.md.
 - `scripts/e2e-quant-lab.sh` runs `quant-lab` (all four strategies for a shortened
   year) and builds the Quant Research Lab page; run it after any strategy,
   `tools/quant-lab` or `research/quant_lab.py` change.
+- `scripts/e2e-quant-real.sh` runs `quant-real` on a synthetic ITCH day and made-up
+  daily bars and builds the real-data page; run it after any `tools/quant-real`,
+  `research/fetch_daily.py` or strategy change. `scripts/run-quant-real.sh` is the
+  real run (downloads the Jan 30, 2019 sample day and Nasdaq daily bars; needs internet).
 - Benchmarks: `./build/release/bench/core_bench`. Any hot-path change comes with
   before/after numbers from the same machine.
 
@@ -53,6 +57,8 @@ the project playbook. Build phases are listed in README.md.
   trend, thesis, execution helpers); `firm/trader` the trading engine
 - `tools/quant-lab`  the Quant Research Lab: a simulated year of all four strategies on the engine,
   feed, BookBuilder, risk and OMS; `web/index.html` is the page template `research/quant_lab.py` fills
+- `tools/quant-real`  the same strategies backtested on a real ITCH day (queue-position fill model in
+  `queue_model.hpp`) and on Nasdaq daily bars (`daily.hpp`); the page template's real-data mode shows it
 - `libs/vendor`  vendor ticker plant: `Consolidator` (Level 1 records from `BookBuilder`), a
   single-threaded distribution `Server` with conflation, and the ICF, OMM JSON/WebSocket and
   B-PIPE sessions; `vendors/{icf,rtws,bpipe}` the three servers
