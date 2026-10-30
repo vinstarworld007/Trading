@@ -1,0 +1,439 @@
+<title>Quant Research Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: run header with the lab's integrity numbers, a scoreboard of the four strategies, then one
+   strategy at a time on a replay "stage" (canvas + explanation), then results across seeds. */
+:root {
+  --bg: #edf0f2; --panel: #ffffff; --sunk: #f6f8f9; --ink: #14202a; --muted: #5a6a77; --line: #d2d9df;
+  --bid: #1b8556; --ask: #c4453a; --warn: #b0661a;
+  --hft: #0a7686; --arb: #7447a8; --trend: #a86300; --fund: #2c5aa3; --accent: var(--hft);
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151b; --panel: #141e26; --sunk: #101920; --ink: #e2e9ee; --muted: #8d9eab; --line: #263440;
+    --bid: #3cba80; --ask: #ef6b5d; --warn: #e39a4b; --hft: #33b4c4; --arb: #a986dc; --trend: #e0a043; --fund: #6f9de8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151b; --panel: #141e26; --sunk: #101920; --ink: #e2e9ee; --muted: #8d9eab; --line: #263440;
+  --bid: #3cba80; --ask: #ef6b5d; --warn: #e39a4b; --hft: #33b4c4; --arb: #a986dc; --trend: #e0a043; --fund: #6f9de8;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 30px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(36px, 6.5vw, 64px); font-weight: 780; font-stretch: 72%; line-height: 0.98; }
+h2 { font-size: 26px; font-weight: 720; font-stretch: 85%; }
+h3 { margin: 0; font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+p { margin: 0; }
+code { font-family: var(--mono); font-size: 0.9em; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
+.lede { max-width: 70ch; color: var(--muted); font-size: 17px; }
+.lede b { color: var(--ink); font-weight: 600; }
+header { display: grid; gap: 14px; }
+.pipeline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-family: var(--mono); font-size: 12.5px; }
+.pipeline span { border: 1px solid var(--line); background: var(--panel); border-radius: 5px; padding: 3px 8px; }
+.pipeline i { font-style: normal; color: var(--muted); }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.checks b { color: var(--bid); font-weight: 600; }
+.checks b.bad { color: var(--ask); }
+
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .board { grid-template-columns: minmax(0, 1fr); } }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 6px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.tile[aria-pressed="true"] { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+.tile .nm { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.tile .nm i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.tile .big { font-family: var(--mono); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile .sub { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tile canvas { width: 100%; height: 34px; display: block; }
+.pos { color: var(--bid); } .neg { color: var(--ask); }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 880px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.screen { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-width: 0; }
+.screen-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.screen-head .name { font-family: var(--display); font-weight: 720; font-stretch: 85%; font-size: 19px; }
+.clock { font-family: var(--mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: auto; }
+.ctrls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.ctrls button, .ctrls select { font: 500 13px var(--body); color: var(--ink); background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.ctrls button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); min-width: 72px; }
+.scrub { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.scrub input { flex: 1; accent-color: var(--accent); min-width: 0; }
+.canvas-box { position: relative; height: 410px; background: var(--sunk); }
+@media (max-width: 560px) { .canvas-box { height: 470px; } }
+.canvas-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.log { list-style: none; margin: 0; padding: 10px 14px 12px; font-family: var(--mono); font-size: 12.5px; display: grid; gap: 3px; min-height: 150px; border-top: 1px solid var(--line); }
+.log li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.log li:first-child { color: var(--ink); }
+.log li.us::before { content: "▸ "; color: var(--accent); }
+.log li.fill::before { content: "● "; color: var(--bid); }
+.log li.warn::before { content: "▲ "; color: var(--warn); }
+.log li.mkt::before { content: "· "; color: var(--muted); }
+.side { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.stat { display: grid; gap: 2px; }
+.stat span { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.stat b { font-family: var(--mono); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 6px; }
+ol.steps li { counter-increment: s; position: relative; padding: 8px 10px 8px 38px; border-radius: 7px; border: 1px solid transparent; color: var(--muted); transition: background .25s, color .25s, border-color .25s; }
+ol.steps li::before { content: counter(s); position: absolute; left: 10px; top: 8px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); font: 600 11px/18px var(--mono); text-align: center; }
+ol.steps li.on { color: var(--ink); background: var(--sunk); border-color: var(--accent); }
+ol.steps li.on::before { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+ol.steps b { color: var(--ink); font-weight: 600; }
+.code { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.code b { color: var(--ink); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px; background: var(--sunk); font-variant-numeric: tabular-nums; }
+.chip em { font-style: normal; font-weight: 600; color: var(--accent); margin-right: 4px; }
+.note { font-size: 13.5px; color: var(--muted); }
+.table-box { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: right; padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+td { font-family: var(--mono); font-size: 13px; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 650; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+tbody tr:last-child td { border-bottom: 0; }
+tr.agg td { font-weight: 600; background: var(--sunk); }
+section { display: grid; gap: 14px; }
+footer { color: var(--muted); font-size: 13px; max-width: 84ch; }
+button:focus-visible, select:focus-visible, input:focus-visible, .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { ol.steps li { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">MarketData lab · tools/quant-lab</div>
+    <h1>Quant Research Lab</h1>
+    <p class="lede" id="lede">Four strategies traded a simulated year on the lab's own stack. Everything below is a replay of that run.</p>
+    <div class="pipeline" aria-label="What the run goes through">
+      <span>market model</span><i>→</i><span>match::Engine</span><i>→</i><span>ITCH 5.0 A E X D</span><i>→</i><span>BookBuilder</span><i>→</i><span>strategy</span><i>→</i><span>risk::Risk</span><i>→</i><span>oms::Oms</span><i>→</i><span>match::Engine</span>
+    </div>
+    <div class="checks" id="checks"></div>
+  </header>
+
+  <section aria-label="Scoreboard">
+    <div class="board" id="board"></div>
+  </section>
+
+  <section aria-label="Strategy replay">
+    <div class="stage">
+      <div class="screen">
+        <div class="screen-head">
+          <span class="name" id="sname"></span>
+          <span class="clock" id="clock"></span>
+          <div class="ctrls">
+            <button class="primary" id="play" type="button">Pause</button>
+            <button id="stepbtn" type="button">Step</button>
+            <select id="speed" aria-label="Speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option><option value="16">16×</option></select>
+          </div>
+        </div>
+        <div class="scrub"><span id="scrub-l"></span><input type="range" id="scrub" min="0" max="1" value="0" aria-label="Position in the replay"><span id="scrub-r"></span></div>
+        <div class="canvas-box"><canvas id="cv"></canvas></div>
+        <ul class="log" id="log"></ul>
+      </div>
+      <div class="side">
+        <div class="card"><p id="pitch"></p><div class="stats" id="stats"></div></div>
+        <div class="card"><h3>How it made money in this run</h3><ol class="steps" id="steps"></ol></div>
+        <div class="card"><h3>What it read from the feed</h3><div class="chips" id="chips"></div><p class="note" id="feednote"></p><p class="code" id="codeplace"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Results across seeds">
+    <h2>Is it luck? Ten more years</h2>
+    <p class="lede" id="seeds-lede">The same lab, run with different random seeds. Each seed is a different simulated year with the same rules.</p>
+    <div class="table-box"><table id="seeds"></table></div>
+  </section>
+
+  <footer id="foot">Simulated market: the prices and order flow come from a model, not from Nasdaq history. The strategy code, order book rebuild, risk checks, OMS and matching engine are the lab's real code. No fees or rebates are counted. Nothing here is investment advice.</footer>
+</div>
+
+<script id="lab-data" type="application/json">/*LAB_DATA*/</script>
+<script id="seed-data" type="application/json">/*SEED_DATA*/</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const D = JSON.parse($('lab-data').textContent);
+let SEEDS = []; try { SEEDS = JSON.parse($('seed-data').textContent); } catch (e) { SEEDS = []; }
+const tok = () => { const s = getComputedStyle(document.documentElement); const g = (n) => s.getPropertyValue(n).trim();
+  return { ink: g('--ink'), muted: g('--muted'), line: g('--line'), sunk: g('--sunk'), panel: g('--panel'), bid: g('--bid'), ask: g('--ask'), warn: g('--warn'), hft: g('--hft'), arb: g('--arb'), trend: g('--trend'), fund: g('--fund'), mono: g('--mono') }; };
+let C = tok();
+const fmt = (v, d = 0) => Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const money = (v, d = 0) => (v >= 0 ? '+' : '−') + '$' + fmt(v, d);
+const big = (v) => { const a = Math.abs(v); const s = a >= 1e6 ? (a / 1e6).toFixed(2) + 'M' : a >= 1e3 ? (a / 1e3).toFixed(1) + 'k' : a.toFixed(0); return (v >= 0 ? '+' : '−') + '$' + s; };
+const cls = (v) => (v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : '');
+const px4 = (p) => (p / 10000).toFixed(2);
+const cents = (c) => (c / 100).toFixed(2);
+const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+
+// ---------- header
+const M = D.meta;
+$('lede').innerHTML = `Four strategies traded <b>${M.days} simulated days</b> on the lab's own code. The market model sent orders to the matching engine, which published <b>${fmt(M.messages)} ITCH messages</b>. Each day's books were rebuilt by <code>BookBuilder</code>, and the strategies traded only from those books, through pre-trade risk and the OMS, back into the same engine. Seed ${M.seed}; the run took ${M.wall_s.toFixed(1)} s.`;
+const ok = (v) => `<b class="${v ? 'bad' : ''}">${fmt(v)}</b>`;
+$('checks').innerHTML = `<span>book integrity errors ${ok(M.integrity_errors)}</span><span>rebuilt vs engine book mismatches ${ok(M.book_mismatches)}</span><span>OMS inconsistent responses ${ok(M.oms_inconsistent)}</span><span>engine executions <b>${fmt(M.engine.executions)}</b></span>`;
+
+// ---------- canvas helpers
+const cv = $('cv'); const ctx = cv.getContext('2d'); let W = 0, H = 0;
+function fit() { const r = cv.getBoundingClientRect(); const d = window.devicePixelRatio || 1; W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); }
+function txt(s, x, y, color, size = 11, align = 'left', weight = 400, base = 'alphabetic') { ctx.fillStyle = color; ctx.font = `${weight} ${size}px ${C.mono || 'monospace'}`; ctx.textAlign = align; ctx.textBaseline = base; ctx.fillText(s, x, y); }
+function label(s, x, y) { txt(s.toUpperCase(), x, y, C.muted, 10.5, 'left', 600); }
+function line(c2, vals, x, y, w, h, color, o = {}) {
+  const n = o.n || vals.length; if (vals.length < 2) return null;
+  let mn = o.min ?? Math.min(...vals), mx = o.max ?? Math.max(...vals);
+  if (o.zero) { mn = Math.min(mn, 0); mx = Math.max(mx, 0); }
+  if (mx - mn < 1e-9) { mx += 1; mn -= 1; }
+  const X = (i) => x + i / (n - 1) * w, Y = (v) => y + h - (v - mn) / (mx - mn) * h;
+  if (o.zero) { c2.strokeStyle = C.line; c2.lineWidth = 1; c2.setLineDash([3, 3]); c2.beginPath(); c2.moveTo(x, Y(0)); c2.lineTo(x + w, Y(0)); c2.stroke(); c2.setLineDash([]); }
+  if (o.fill) { c2.beginPath(); c2.moveTo(X(0), Y(o.zero ? 0 : mn)); vals.forEach((v, i) => c2.lineTo(X(i), Y(v))); c2.lineTo(X(vals.length - 1), Y(o.zero ? 0 : mn)); c2.closePath(); c2.globalAlpha = 0.13; c2.fillStyle = color; c2.fill(); c2.globalAlpha = 1; }
+  c2.strokeStyle = color; c2.lineWidth = o.lw || 1.7; c2.lineJoin = 'round'; c2.beginPath(); vals.forEach((v, i) => (i ? c2.lineTo(X(i), Y(v)) : c2.moveTo(X(i), Y(v)))); c2.stroke();
+  if (o.dot !== false) { const i = vals.length - 1; c2.fillStyle = color; c2.beginPath(); c2.arc(X(i), Y(vals[i]), 3, 0, 7); c2.fill(); }
+  return { X, Y, mn, mx };
+}
+
+// ---------- strategies
+const feedChips = (syms) => { const t = { A: 0, E: 0, X: 0, D: 0 }; for (const s of syms) for (const k in t) t[k] += M.feed[s][k]; return [['A', 'Add Order', t.A], ['E', 'Executed', t.E], ['X', 'Cancel', t.X], ['D', 'Delete', t.D]]; };
+const S = {
+  mm: {
+    name: 'HFT market making', color: 'hft', sym: 'AAPL', data: D.mm, rate: 5,
+    len: () => D.mm.frames.length,
+    pitch: 'Quotes both sides of AAPL all day and earns the spread on thousands of small round trips. Below: 900 real book updates from day 2, from 10:00, exactly as the strategy saw them.',
+    steps: ['<b>Quote both sides</b> at the best prices others show, one cent inside when the spread is 3 cents or more.', '<b>Get hit on one side.</b> A seller hits our bid or a buyer lifts our offer. Inventory moves 100 shares.', '<b>Get hit on the other side.</b> Inventory goes back toward zero and we keep the difference between the two prices.', '<b>Lean against inventory.</b> When the price runs through us, quotes shift a cent per 100 shares so the next fill is more likely to flatten us.'],
+    code: '<b>firm/strategy/market_maker.hpp</b> · MakerParams defaults: 100 shares a side, cap ±1,000, hold 1 tick',
+    feednote: 'Every message for AAPL, applied to a full-depth book. The ladder shows the rebuilt book, including our own resting orders.',
+    syms: ['AAPL'],
+    clock: (i) => { const f = D.mm.frames[i]; const ns = f.t; const s = Math.floor(ns / 1e9); return `AAPL · day 2 ${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}.${String(Math.floor(ns % 1e9)).padStart(9, '0').slice(0, 6)}`; },
+    stats: (i) => { const f = D.mm.frames[i], s = D.mm.summary; return [['P&L today (marked)', money(f.pnl - D.mm.frames[0].pnl, 2), cls(f.pnl - D.mm.frames[0].pnl)], ['Inventory', (f.pos > 0 ? '+' : '') + f.pos + ' sh', ''], ['Year P&L', big(s.pnl), cls(s.pnl)], ['Year fills', fmt(s.fills), '']]; },
+    phase: (i) => { const f = D.mm.frames[i], p = D.mm.frames[Math.max(0, i - 1)]; const mine = f.m.some((m) => m.startsWith('E') && m.endsWith('|1')); if (!mine) return 0; return Math.abs(f.pos) > Math.abs(p.pos) ? (Math.abs(f.pos) >= 300 ? 3 : 1) : 2; },
+    log: (i) => { const out = []; for (let j = i; j >= 0 && out.length < 6; j--) for (const m of D.mm.frames[j].m) { if (out.length >= 6) break; const [k, sd, q, p, us] = m.split('|'); const what = { A: 'A  add', E: 'E  executed', X: 'X  cancel', D: 'D  delete', T: 'T  we took' }[k]; out.push([us === '1' ? (k === 'E' ? 'fill' : 'us') : 'mkt', `ITCH ${what} ${sd === 'B' ? 'buy' : 'sell'} ${q} @ ${px4(+p)}${us === '1' ? '  ← ours' : ''}`]); } return out; },
+    draw: drawMm
+  },
+  arb: {
+    name: 'Statistical arbitrage', color: 'arb', data: D.pairs, rate: 14,
+    len: () => D.pairs.rows.length,
+    pitch: 'Trades SEMA against SEMB, two stocks driven by the same factor. Samples both mids every 5 minutes; past ±2 standard deviations it sells the rich one and buys the cheap one, $200,000 a leg.',
+    steps: ['<b>Sample the two books</b> every 5 minutes and compute the log price gap\'s z-score over the last two days (156 samples).', '<b>Gap past ±2:</b> sell the rich stock, buy the cheap one with marketable orders, at most 1,000 shares per order.', '<b>Hold</b> while the gap closes. The common factor cancels out between the legs.', '<b>Close near zero</b>, or stop out past ±4 when the relationship shifts for good.'],
+    code: '<b>firm/strategy/pairs.hpp</b> · PairsTrader, window 156, entry 2.0, exit 0.3, stop 4.0; legs worked with <b>execution.hpp</b> work_toward()',
+    feednote: 'Top of book for two symbols, sampled. It ignores most messages; what matters is a clean mid.',
+    syms: ['SEMA', 'SEMB'],
+    clock: (i) => `SEMA vs SEMB · day ${Math.floor(i / 78) + 1} ${hm(570 + (i % 78) * 5 + 5)}`,
+    stats: (i) => { const r = D.pairs.rows[i]; return [['P&L', big(r[6]), cls(r[6])], ['Position', r[4] === 0 && r[5] === 0 ? 'Flat' : `${r[4] > 0 ? '+' : ''}${fmt(r[4])} A / ${r[5] > 0 ? '+' : ''}${fmt(r[5])} B`, ''], ['Gap (z)', (r[2] >= 0 ? '+' : '') + r[2].toFixed(2), ''], ['Round trips (year)', `${D.pairs.wins} won · ${D.pairs.losses} lost`, '']]; },
+    phase: (i) => { const r = D.pairs.rows[i]; if (r[7] === 'in') return 1; if (r[7] === 'out' || r[7] === 'stop') return 3; return r[3] !== 0 ? 2 : 0; },
+    log: (i) => { const out = []; for (let j = i; j >= 0 && out.length < 6; j--) { const r = D.pairs.rows[j]; if (!r[7]) continue; const when = `d${Math.floor(j / 78) + 1} ${hm(570 + (j % 78) * 5 + 5)}`; if (r[7] === 'in') out.push(['us', `${when}  z ${r[2] >= 0 ? '+' : ''}${r[2].toFixed(2)}: ${r[3] < 0 ? 'sell SEMA, buy SEMB' : 'buy SEMA, sell SEMB'}`]); else { let k = j - 1; while (k > 0 && D.pairs.rows[k][7] !== 'in') k--; const pl = r[6] - D.pairs.rows[k][6]; out.push([r[7] === 'stop' ? 'warn' : pl >= 0 ? 'fill' : 'warn', `${when}  z ${r[2] >= 0 ? '+' : ''}${r[2].toFixed(2)}: ${r[7] === 'stop' ? 'stop loss' : 'gap closed'}, ${money(pl)}`]); } } return out; },
+    draw: drawArb
+  },
+  trend: {
+    name: 'Trend following', color: 'trend', data: D.trend, rate: 5,
+    len: () => D.trend.rows.length,
+    pitch: 'Builds a daily bar for TRND from the executions on the feed. Long $1M while the 20-day average is above the 50-day, short while below. A handful of trades a year.',
+    steps: ['<b>Build daily bars</b> from the day\'s executions: open, high, low and last trade.', '<b>The averages cross.</b> Set a new target of ±$1M, worked the next day 1,000 shares a minute.', '<b>Ride the trend.</b> A long trend pays for many small losses.', '<b>Get whipsawed</b> in sideways markets: the averages cross back and forth and each flip costs a little.'],
+    code: '<b>firm/strategy/trend.hpp</b> · TrendFollower 20/50, $1M; worked with <b>execution.hpp</b> work_toward()',
+    feednote: 'Only the executions, rolled up once a day. It reads a tiny fraction of what the market maker reads.',
+    syms: ['TRND'],
+    clock: (i) => `TRND · day ${i + 1} of ${D.trend.rows.length}`,
+    stats: (i) => { const r = D.trend.rows[i]; return [['P&L', big(r[8]), cls(r[8])], ['Position', r[7] === 0 ? 'Flat' : `${r[7] > 0 ? 'Long' : 'Short'} ${fmt(Math.abs(r[7]))} sh`, ''], ['Close', '$' + r[3].toFixed(2), ''], ['Signals (year)', String(D.trend.signals), '']]; },
+    phase: (i) => { const r = D.trend.rows[i]; if (!r[4]) return 0; if (r[9]) return 1; let k = i; while (k > 0 && !D.trend.rows[k][9]) k--; const pl = r[8] - D.trend.rows[k][8]; return pl >= 0 ? 2 : 3; },
+    log: (i) => { const out = []; for (let j = i; j >= 0 && out.length < 6; j--) { const r = D.trend.rows[j]; if (!r[9]) continue; let k = j - 1; while (k > 0 && !D.trend.rows[k][9]) k--; const pl = k > 0 ? r[8] - D.trend.rows[k][8] : 0; out.push([k > 0 ? (pl >= 0 ? 'fill' : 'warn') : 'us', `day ${j + 1}  20-day ${r[4].toFixed(2)} ${r[6] > 0 ? 'above' : 'below'} 50-day ${r[5].toFixed(2)}: go ${r[6] > 0 ? 'long' : 'short'}${k > 0 ? `  (last trade ${money(pl)})` : ''}`]); } return out; },
+    draw: drawTrend
+  },
+  fund: {
+    name: 'Fundamental', color: 'fund', data: D.fund, rate: 5,
+    len: () => D.fund.rows.length,
+    pitch: `Analysts value VALU at $${D.fund.fair_value.toFixed(0)}; it trades near $40. The strategy buys ${fmt(D.fund.target_shares)} shares at 6% of the market's volume, holds through the drawdown, and sells once the price is within 3% of fair value.`,
+    steps: ['<b>Research.</b> The fair value comes from outside the feed. Wait out the research period.', '<b>Build quietly</b> at 6% of each minute\'s traded volume, at the touch, so the buying barely moves the price.', '<b>Hold.</b> The market disagrees for months and the position is often under water.', '<b>Catalyst</b> on day ' + D.fund.catalyst_day + ': results show the margins, and the market starts repricing.', '<b>Sell</b> into strength near fair value, again at 6% of volume.'],
+    code: '<b>firm/strategy/thesis.hpp</b> · ThesisTrader; executed by <b>execution.hpp</b> pov_child() at 600 bps',
+    feednote: 'The signal is not in the feed. The feed sets the pace: volume per minute decides how much it may trade. In this simulation the market model makes the analysts right, which is why it wins every seed; a real thesis can be wrong, and then the stop loss at 25% below cost decides the damage.',
+    syms: ['VALU'],
+    clock: (i) => `VALU · day ${i + 1} of ${D.fund.rows.length} · ${D.fund.rows[i][5]}`,
+    stats: (i) => { const r = D.fund.rows[i]; return [['P&L', big(r[4]), cls(r[4])], ['Shares held', fmt(r[2]), ''], ['Average cost', r[3] ? '$' + r[3].toFixed(2) : '—', ''], ['Close', '$' + r[0].toFixed(2), '']]; },
+    phase: (i) => { const r = D.fund.rows[i]; return { research: 0, build: 1, hold: i + 1 >= D.fund.catalyst_day ? 3 : 2, exit: 4, done: 4 }[r[5]]; },
+    log: (i) => { const out = []; let prev = null; for (let j = 0; j <= i; j++) { const r = D.fund.rows[j]; if (r[5] !== prev) { out.unshift([r[5] === 'build' || r[5] === 'exit' ? 'us' : r[5] === 'done' ? 'fill' : 'mkt', `day ${j + 1}  ${{ research: 'research: no position', build: `price $${r[0].toFixed(2)} is 10%+ below fair value: start buying`, hold: `holding ${fmt(r[2])} shares at $${r[3].toFixed(2)}`, exit: `price $${r[0].toFixed(2)} near fair value: start selling`, done: `sold out, P&L ${big(r[4])}` }[r[5]]}`]); prev = r[5]; } if (j + 1 === D.fund.catalyst_day) out.unshift(['warn', `day ${j + 1}  earnings: the market starts repricing VALU`]); } return out.slice(0, 6); },
+    draw: drawFund
+  }
+};
+const order = ['mm', 'arb', 'trend', 'fund'];
+const hm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+// ---------- draw: market making
+function drawMm(i) {
+  const f = D.mm.frames[i]; const narrow = W < 600;
+  const lw = narrow ? W : W * 0.58, lh = narrow ? H * 0.62 : H; const pad = 14, rows = 13, top = 34; const rh = (lh - top - 12) / rows;
+  const bb = f.b.length ? f.b[0][0] : 0, ba = f.a.length ? f.a[0][0] : 0; const center = Math.round((bb + ba) / 2);
+  const cx = lw / 2, pw = 64; const barMax = cx - pw / 2 - pad - 34;
+  const qty = new Map(); let maxQ = 400; for (const [p, q] of f.b) { qty.set('b' + p, q); maxQ = Math.max(maxQ, q); } for (const [p, q] of f.a) { qty.set('a' + p, q); maxQ = Math.max(maxQ, q); }
+  const fills = new Set(f.m.filter((m) => m.startsWith('E')).map((m) => +m.split('|')[3] / 100));
+  txt('BID SIZE', cx - pw / 2 - 8, 22, C.muted, 10.5, 'right', 600); txt('PRICE', cx, 22, C.muted, 10.5, 'center', 600); txt('ASK SIZE', cx + pw / 2 + 8, 22, C.muted, 10.5, 'left', 600);
+  for (let r = 0; r < rows; r++) {
+    const p = center + 6 - r, y = top + r * rh;
+    if (p > bb && p < ba) { ctx.fillStyle = C.line; ctx.globalAlpha = 0.35; ctx.fillRect(pad, y, lw - 2 * pad, rh); ctx.globalAlpha = 1; }
+    if (fills.has(p)) { ctx.fillStyle = C.warn; ctx.globalAlpha = 0.22; ctx.fillRect(pad, y, lw - 2 * pad, rh); ctx.globalAlpha = 1; }
+    const unit = barMax / maxQ;
+    const bq = qty.get('b' + p) || 0, aq = qty.get('a' + p) || 0;
+    const ub = f.ub && f.ub[0] === p ? f.ub[1] : 0, ua = f.ua && f.ua[0] === p ? f.ua[1] : 0;
+    if (bq) { const w = bq * unit, wu = ub * unit; ctx.fillStyle = C.bid; ctx.globalAlpha = 0.7; ctx.fillRect(cx - pw / 2 - 4 - w, y + 3, w - wu, rh - 6); ctx.globalAlpha = 1; if (ub) { ctx.fillStyle = C.hft; ctx.fillRect(cx - pw / 2 - 4 - wu, y + 3, wu, rh - 6); } txt(String(bq), cx - pw / 2 - 8 - w, y + rh / 2, C.muted, 10.5, 'right', 400, 'middle'); }
+    if (aq) { const w = aq * unit, wu = ua * unit; if (ua) { ctx.fillStyle = C.hft; ctx.fillRect(cx + pw / 2 + 4, y + 3, wu, rh - 6); } ctx.fillStyle = C.ask; ctx.globalAlpha = 0.7; ctx.fillRect(cx + pw / 2 + 4 + wu, y + 3, w - wu, rh - 6); ctx.globalAlpha = 1; txt(String(aq), cx + pw / 2 + 8 + w, y + rh / 2, C.muted, 10.5, 'left', 400, 'middle'); }
+    const best = p === bb || p === ba;
+    txt(cents(p), cx, y + rh / 2, best ? C.ink : C.muted, 12, 'center', best ? 600 : 400, 'middle');
+  }
+  ctx.fillStyle = C.hft; ctx.fillRect(pad, lh - 12, 10, 8); txt('our order (inside the level, at the front only if it was there first)', pad + 14, lh - 4, C.muted, 10);
+  const rx = narrow ? pad : lw + 16, ry = narrow ? lh + 10 : 24, rw = narrow ? W - 2 * pad : W - lw - 30, rhh = narrow ? H - lh - 18 : H - 48;
+  const ch = narrow ? rhh - 40 : rhh * 0.58;
+  const base = D.mm.frames[0].pnl; const vals = D.mm.frames.slice(0, i + 1).map((x) => x.pnl - base);
+  label('P&L in this replay', rx, ry + 8); txt(money(vals.at(-1), 2), rx + rw, ry + 8, vals.at(-1) >= 0 ? C.bid : C.ask, 12, 'right', 600);
+  line(ctx, vals, rx, ry + 20, rw, ch - 20, C.hft, { zero: true, fill: true, n: D.mm.frames.length });
+  const gy = ry + ch + (narrow ? 14 : 30);
+  label('Inventory (limit ±1,000)', rx, gy);
+  const gh = 12, gyy = gy + 10, mid = rx + rw / 2, iw = f.pos / 1000 * rw / 2;
+  ctx.fillStyle = C.line; ctx.fillRect(rx, gyy, rw, gh); ctx.fillStyle = f.pos >= 0 ? C.bid : C.ask; ctx.fillRect(Math.min(mid, mid + iw), gyy, Math.abs(iw), gh); ctx.fillStyle = C.ink; ctx.fillRect(mid - 0.5, gyy - 3, 1, gh + 6);
+  if (!narrow) {
+    label('Whole year, daily P&L', rx, gyy + 50);
+    line(ctx, D.mm.summary.daily, rx, gyy + 58, rw, rhh - (gyy + 58 - ry) - 4, C.hft, { zero: true, dot: true });
+  }
+}
+
+// ---------- draw: stat arb
+function drawArb(i) {
+  const rows = D.pairs.rows; const n = 312; const s0 = Math.max(0, i - n + 1); const win = rows.slice(s0, i + 1);
+  const pad = 14, x = 52, w = W - x - pad - 14; const h1 = H * 0.42, h2 = H * 0.28; const y1 = 20, y2 = y1 + h1 + 24, y3 = y2 + h2 + 24, h3 = H - y3 - 10;
+  const X = (k) => x + k / (n - 1) * w;
+  win.forEach((r, k) => { if (r[3] !== 0 && k > 0) { ctx.fillStyle = C.arb; ctx.globalAlpha = 0.09; ctx.fillRect(X(k - 1), y1, X(k) - X(k - 1) + 0.5, y3 + h3 - y1); ctx.globalAlpha = 1; } });
+  let la = win.find((r) => r[0])?.[0] || 1, lb = win.find((r) => r[1])?.[1] || 1; const a0 = la, b0 = lb;
+  const A = win.map((r) => { if (r[0]) la = r[0]; return la / a0 * 100; }), B = win.map((r) => { if (r[1]) lb = r[1]; return lb / b0 * 100; });
+  label('SEMA and SEMB, rebased to 100', pad, y1 - 6);
+  const mn = Math.min(...A, ...B), mx = Math.max(...A, ...B);
+  const g = line(ctx, A, x, y1 + 4, w, h1 - 8, C.arb, { n, min: mn, max: mx });
+  line(ctx, B, x, y1 + 4, w, h1 - 8, C.muted, { n, min: mn, max: mx });
+  if (g) { txt('A', X(win.length - 1) + 6, g.Y(A.at(-1)), C.arb, 11, 'left', 700, 'middle'); txt('B', X(win.length - 1) + 6, g.Y(B.at(-1)), C.muted, 11, 'left', 700, 'middle');
+    win.forEach((r, k) => { if (!r[7]) return; ctx.fillStyle = r[7] === 'in' ? C.ink : r[7] === 'stop' ? C.ask : C.bid; ctx.beginPath(); ctx.arc(X(k), g.Y(A[k]), 4, 0, 7); ctx.fill(); }); }
+  label('Gap (z-score)', pad, y2 - 6);
+  const zl = -4.5, zh = 4.5; const Z = (v) => y2 + h2 - (Math.max(zl, Math.min(zh, v)) - zl) / (zh - zl) * h2;
+  ctx.fillStyle = C.line; ctx.globalAlpha = 0.45; ctx.fillRect(x, Z(2), w, Z(-2) - Z(2)); ctx.globalAlpha = 1;
+  for (const [v, l] of [[2, '+2'], [0, '0'], [-2, '−2']]) { ctx.strokeStyle = v ? C.muted : C.line; ctx.setLineDash(v ? [4, 4] : []); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, Z(v)); ctx.lineTo(x + w, Z(v)); ctx.stroke(); ctx.setLineDash([]); txt(l, x - 6, Z(v), C.muted, 10.5, 'right', 400, 'middle'); }
+  line(ctx, win.map((r) => Math.max(zl, Math.min(zh, r[2]))), x, y2, w, h2, C.arb, { n, min: zl, max: zh });
+  label('P&L', pad, y3 - 6); const P = win.map((r) => r[6]);
+  line(ctx, P, x, y3, w, h3, C.arb, { n, zero: true, fill: true });
+  txt('year to date ' + big(P.at(-1)), W - pad, y3 - 6, P.at(-1) >= 0 ? C.bid : C.ask, 11, 'right', 600);
+}
+
+// ---------- draw: trend
+function drawTrend(i) {
+  const rows = D.trend.rows, n = rows.length; const pad = 14, x = 54, w = W - x - pad - 8;
+  const y1 = 22, h1 = H * 0.64, y2 = y1 + h1 + 28, h2 = H - y2 - 10;
+  const X = (k) => x + (k + 0.5) / n * w, bw = Math.max(1.2, w / n * 0.62);
+  let mn = Infinity, mx = -Infinity; for (const r of rows) { mn = Math.min(mn, r[2]); mx = Math.max(mx, r[1]); }
+  const Y = (v) => y1 + h1 - (v - mn) / (mx - mn) * h1;
+  for (let k = 0; k <= i; k++) { const p = rows[k][7]; if (!p) continue; ctx.fillStyle = p > 0 ? C.bid : C.ask; ctx.globalAlpha = 0.08; ctx.fillRect(X(k) - w / n / 2, y1, w / n + 0.5, h1); ctx.globalAlpha = 1; }
+  label('TRND daily bars, 20-day and 50-day averages', pad, y1 - 8);
+  for (const v of [mn + (mx - mn) * 0.1, (mn + mx) / 2, mx - (mx - mn) * 0.1]) txt('$' + v.toFixed(0), x - 6, Y(v), C.muted, 10.5, 'right', 400, 'middle');
+  for (let k = 0; k <= i; k++) { const [o, hi, lo, c] = rows[k]; const up = c >= o; ctx.strokeStyle = ctx.fillStyle = up ? C.bid : C.ask; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(k), Y(hi)); ctx.lineTo(X(k), Y(lo)); ctx.stroke(); const t = Y(Math.max(o, c)), b = Y(Math.min(o, c)); ctx.fillRect(X(k) - bw / 2, t, bw, Math.max(1, b - t)); }
+  for (const [col, color, lw] of [[4, C.trend, 2.2], [5, C.ink, 1.5]]) { ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath(); let st = false; for (let k = 0; k <= i; k++) { const v = rows[k][col]; if (!v) continue; st ? ctx.lineTo(X(k), Y(v)) : ctx.moveTo(X(k), Y(v)); st = true; } ctx.stroke(); }
+  for (let k = 0; k <= i; k++) { const r = rows[k]; if (!r[9]) continue; const up = r[6] > 0; const yy = up ? Y(r[2]) + 12 : Y(r[1]) - 12; ctx.fillStyle = up ? C.bid : C.ask; ctx.beginPath(); if (up) { ctx.moveTo(X(k), yy - 7); ctx.lineTo(X(k) - 5, yy + 2); ctx.lineTo(X(k) + 5, yy + 2); } else { ctx.moveTo(X(k), yy + 7); ctx.lineTo(X(k) - 5, yy - 2); ctx.lineTo(X(k) + 5, yy - 2); } ctx.fill(); }
+  const lx = W - pad - 160; ctx.fillStyle = C.trend; ctx.fillRect(lx, y1 + 4, 14, 2.5); txt('20-day', lx + 18, y1 + 9, C.ink, 10.5); ctx.fillStyle = C.ink; ctx.fillRect(lx + 76, y1 + 4, 14, 2); txt('50-day', lx + 94, y1 + 9, C.ink, 10.5);
+  label('P&L', pad, y2 - 8); const P = rows.slice(0, i + 1).map((r) => r[8]);
+  line(ctx, P, x, y2, w, h2, C.trend, { n, zero: true, fill: true, min: Math.min(...rows.map((r) => r[8])), max: Math.max(...rows.map((r) => r[8])) });
+  txt(big(P.at(-1)), W - pad, y2 - 8, P.at(-1) >= 0 ? C.bid : C.ask, 11, 'right', 600);
+}
+
+// ---------- draw: fundamental
+function drawFund(i) {
+  const rows = D.fund.rows, n = rows.length, fv = D.fund.fair_value; const pad = 14, x = 54, w = W - x - pad - 8;
+  const y1 = 24, h1 = H * 0.46, y2 = y1 + h1 + 26, h2 = H * 0.09, y3 = y2 + h2 + 28, h3 = H - y3 - 14;
+  const X = (k) => x + k / (n - 1) * w;
+  let mn = Infinity, mx = fv * 1.04; for (const r of rows) { mn = Math.min(mn, r[0] || mn); mx = Math.max(mx, r[0]); } mn *= 0.97;
+  const Y = (v) => y1 + h1 - (v - mn) / (mx - mn) * h1;
+  label('VALU close over the year', pad, y1 - 10);
+  ctx.strokeStyle = C.fund; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, Y(fv)); ctx.lineTo(x + w, Y(fv)); ctx.stroke(); ctx.setLineDash([]);
+  txt(`analysts' fair value $${fv.toFixed(0)}`, x + w, Y(fv) - 6, C.fund, 10.5, 'right', 600);
+  ctx.fillStyle = C.fund; ctx.globalAlpha = 0.08; ctx.fillRect(x, Y(fv * 0.97), w, Y(fv * 0.9) - Y(fv * 0.97)); ctx.globalAlpha = 1;
+  txt('no-buy zone (within 10%)', x + 4, Y(fv * 0.9) - 4, C.muted, 10);
+  for (const v of [Math.ceil(mn / 5) * 5, Math.ceil(mn / 5) * 5 + 5, Math.ceil(mn / 5) * 5 + 10].filter((v) => v < mx)) txt('$' + v, x - 6, Y(v), C.muted, 10.5, 'right', 400, 'middle');
+  let prev = null; for (let k = 0; k <= i; k++) { const ph = rows[k][5]; if (ph !== prev && (ph === 'build' || ph === 'exit')) { ctx.fillStyle = C.muted; ctx.fillRect(X(k), y1, 1, h1); txt(ph, X(k) + 3, y1 + h1 - 5, C.muted, 10); } prev = ph; }
+  if (i + 1 >= D.fund.catalyst_day) { const k = D.fund.catalyst_day - 1; ctx.fillStyle = C.warn; ctx.fillRect(X(k), y1, 1.5, h1); txt('earnings', X(k) + 3, y1 + 12, C.warn, 10, 'left', 600); }
+  const r = rows[i]; if (r[2] > 0 && r[3]) { ctx.strokeStyle = C.ink; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, Y(r[3])); ctx.lineTo(X(i), Y(r[3])); ctx.stroke(); ctx.setLineDash([]); txt('our average cost $' + r[3].toFixed(2), x + 4, Y(r[3]) + 13, C.ink, 10.5); }
+  line(ctx, rows.slice(0, i + 1).map((q) => q[0]), x, y1, w, h1, C.ink, { n, min: mn, max: mx, lw: 1.6 });
+  label('Shares held', pad, y2 - 8);
+  ctx.fillStyle = C.fund; for (let k = 0; k <= i; k++) { const hh = rows[k][2] / D.fund.target_shares * h2; ctx.fillRect(X(k) - 0.5, y2 + h2 - hh, Math.max(1, w / n), hh); }
+  const narrow = W < 600;
+  const half = narrow ? W - 2 * pad : (W - 2 * pad - 24) / 2, ix = pad, px2 = narrow ? pad : pad + half + 24;
+  const h3a = narrow ? (h3 - 24) * 0.55 : h3, y4 = narrow ? y3 + h3a + 24 : y3, h4 = narrow ? h3 - h3a - 24 : h3;
+  label(`Day ${i + 1}: volume per half hour`, ix, y3 - 10);
+  const iv = r[6]; const vmax = Math.max(1, ...iv.map((b) => b[0])); const bw = half / iv.length; const trading = iv.some((b) => b[1] > 0);
+  iv.forEach((b, k) => { const hh = b[0] / vmax * (h3a - 16); ctx.fillStyle = C.line; ctx.fillRect(ix + k * bw + 1, y3 + h3a - 14 - hh, bw - 2, hh); if (b[1]) { const uh = b[1] / vmax * (h3a - 16); ctx.fillStyle = C.fund; ctx.fillRect(ix + k * bw + 1, y3 + h3a - 14 - uh, bw - 2, Math.max(1, uh)); } });
+  txt('9:30', ix, y3 + h3a, C.muted, 10); txt('16:00', ix + half, y3 + h3a, C.muted, 10, 'right');
+  const tv = sum(iv.map((b) => b[0])), uv = sum(iv.map((b) => b[1]));
+  txt(trading ? `ours ${fmt(uv)} of ${fmt(tv)} sh (${(uv / tv * 100).toFixed(1)}%)` : 'not trading today', ix + half / 2, y3 + h3a, trading ? C.fund : C.muted, 10, 'center');
+  label('P&L', px2, y4 - 10);
+  line(ctx, rows.slice(0, i + 1).map((q) => q[4]), px2, y4, W - pad - px2, h4 - 6, C.fund, { n, zero: true, fill: true, min: Math.min(...rows.map((q) => q[4])), max: Math.max(...rows.map((q) => q[4])) });
+}
+
+// ---------- scoreboard
+const board = $('board');
+order.forEach((k) => {
+  const s = S[k], sm = s.data.summary; const b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.id = 'tile-' + k; b.style.setProperty('--c', `var(--${s.color})`);
+  b.innerHTML = `<span class="nm"><i></i>${s.name}</span><span class="big ${cls(sm.pnl)}">${big(sm.pnl)}</span><span class="sub">Sharpe ${sm.sharpe.toFixed(2)} · max drawdown ${big(sm.max_drawdown)}</span><span class="sub">${fmt(sm.orders)} orders · ${fmt(sm.fills)} fills · ${s.syms.join('/')}</span><canvas aria-hidden="true"></canvas>`;
+  b.onclick = () => { location.hash = k; select(k); }; board.appendChild(b);
+});
+function drawTiles() { order.forEach((k) => { const c = document.querySelector(`#tile-${k} canvas`); const r = c.getBoundingClientRect(); const d = window.devicePixelRatio || 1; c.width = r.width * d; c.height = r.height * d; const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); line(g, S[k].data.summary.daily, 0, 3, r.width, r.height - 6, C[S[k].color], { zero: true, fill: true, dot: false, lw: 1.4 }); }); }
+
+// ---------- seeds table
+(function seeds() {
+  const t = $('seeds'); if (!SEEDS.length) { t.closest('section').hidden = true; return; }
+  const keys = [['mm', 'Market making'], ['arb', 'Stat arb'], ['trend', 'Trend'], ['fund', 'Fundamental']];
+  let h = '<thead><tr><th>Seed</th>' + keys.map(([, n]) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
+  for (const r of SEEDS) h += `<tr><td>${r.seed}${r.seed === M.seed ? ' (shown above)' : ''}</td>` + keys.map(([k]) => `<td class="${cls(r[k].pnl)}">${big(r[k].pnl)} <span style="color:var(--muted)">· ${r[k].sharpe.toFixed(1)}</span></td>`).join('') + '</tr>';
+  const agg = keys.map(([k]) => { const v = SEEDS.map((r) => r[k].pnl); const won = v.filter((x) => x > 0).length; const med = [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)]; return `<td>${won} of ${v.length} made money · median ${big(med)}</td>`; });
+  h += `<tr class="agg"><td>All seeds</td>${agg.join('')}</tr></tbody>`;
+  t.innerHTML = h;
+  $('seeds-lede').textContent = `The same lab with ${SEEDS.length} random seeds: each is a different simulated year with the same rules. Each cell is the year's P&L and its Sharpe ratio.`;
+})();
+
+// ---------- player
+let cur = 'mm', idx = 0, acc = 0, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches, last = performance.now();
+const startAt = { mm: 0, arb: 156 + 60, trend: 49, fund: 0 };
+function select(k) {
+  cur = k; const s = S[k]; document.documentElement.style.setProperty('--accent', `var(--${s.color})`);
+  order.forEach((o) => $('tile-' + o).setAttribute('aria-pressed', String(o === k)));
+  $('sname').textContent = s.name; $('pitch').textContent = s.pitch; $('steps').innerHTML = s.steps.map((t) => `<li>${t}</li>`).join('');
+  $('chips').innerHTML = feedChips(s.syms).map(([c, l, v]) => `<span class="chip"><em>${c}</em>${l} ${fmt(v)}</span>`).join('');
+  $('feednote').textContent = s.feednote; $('codeplace').innerHTML = s.code;
+  const n = s.len(); $('scrub').max = n - 1; $('scrub-l').textContent = k === 'mm' ? 'event 1' : k === 'arb' ? 'day 1' : 'day 1'; $('scrub-r').textContent = k === 'mm' ? `event ${n}` : `day ${k === 'arb' ? Math.ceil(n / 78) : n}`;
+  idx = Math.min(startAt[k], n - 1); acc = 0; C = tok(); update(); draw();
+}
+function update() {
+  const s = S[cur]; $('clock').textContent = s.clock(idx); $('scrub').value = idx;
+  $('stats').innerHTML = s.stats(idx).map(([l, v, c]) => `<div class="stat"><span>${l}</span><b class="${c}">${v}</b></div>`).join('');
+  const ph = s.phase(idx); [...$('steps').children].forEach((li, j) => li.classList.toggle('on', j === ph));
+  const lg = s.log(idx); $('log').innerHTML = lg.length ? lg.map(([c, t]) => `<li class="${c}">${t}</li>`).join('') : '<li class="mkt">No trades yet</li>';
+}
+function draw() { if (!W) return; ctx.clearRect(0, 0, W, H); S[cur].draw(idx); }
+function tick(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (playing) { const n = S[cur].len(); acc += dt * S[cur].rate * +$('speed').value; if (acc >= 1) { const k = Math.floor(acc); acc -= k; idx = idx + k >= n ? 0 : idx + k; update(); draw(); } }
+  requestAnimationFrame(tick);
+}
+$('play').onclick = () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; };
+$('play').textContent = playing ? 'Pause' : 'Play';
+$('stepbtn').onclick = () => { idx = Math.min(idx + 1, S[cur].len() - 1); update(); draw(); };
+$('scrub').oninput = (e) => { idx = +e.target.value; update(); draw(); };
+new ResizeObserver(() => { fit(); draw(); drawTiles(); }).observe(cv.parentElement);
+const retheme = () => { C = tok(); draw(); drawTiles(); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
+new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+const fromHash = () => (order.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'mm');
+window.addEventListener('hashchange', () => select(fromHash()));
+fit(); select(fromHash()); drawTiles(); requestAnimationFrame(tick);
+if (document.fonts) document.fonts.ready.then(retheme);
+</script>

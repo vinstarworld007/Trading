@@ -58,6 +58,7 @@ gtest_discover_tests(ouch_tests DISCOVERY_TIMEOUT 30)
 
 add_executable(firm_tests
   firm/test_market_maker.cpp
+  firm/test_quant_strategies.cpp
   firm/test_oms.cpp
   firm/test_risk.cpp)
 target_link_libraries(firm_tests PRIVATE lab::strategy lab::risk lab::oms GTest::gtest_main)
