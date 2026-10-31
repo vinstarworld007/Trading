@@ -142,7 +142,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `exchange/agents` | Agent-based liquidity: makers, noise, value and momentum traders around a hidden fundamental value |
 | `tools/fix-client` | Trades FIX sessions against each other through `fixgw`, drops and resumes a session, and checks every answer |
 | `research/` | Python: positions and PnL, reconciliation against the drop copy, TCA, a queue-model market-making backtest, and `quant_lab.py`, which runs the quant lab over several seeds and builds its page |
-| `research/colo.py` | Option C colo network model: the firm on Arista 7130 Layer 1 fan-out, kernel-bypass hosts and MetaMux order aggregation, simulated at nanosecond resolution, with the trader's measured tick-to-wire as the host's decision time |
+| `research/colo.py` | Colo network model with three designs to choose from (`--option C`, `D`, `G` or `all`): the firm on Arista 7130 Layer 1 fan-out and MetaMux order aggregation, with kernel-bypass hosts (C), an FPGA feed handler in front of the CPU (D), or the strategy in the 7130 FPGA (G), simulated at nanosecond resolution using the trader's measured latency |
 | `tools/ouch-client` | Trades random orders into simex on several accounts and checks every response |
 | `tools/itch-gen` | Writes a synthetic ITCH day, for trying the tools without a multi-GB download |
 | `tools/lab-check` | Checks the machine (CPUs, TSC, huge pages, loopback multicast, disk) and measures a core-to-core round trip |
@@ -156,7 +156,7 @@ cmake --preset asan    && cmake --build --preset asan    && ctest --preset asan
 | `scripts/e2e-live-feed.sh` | Replays a day with packet loss into `itch-fh` and checks the books match `itch-dump` |
 | `scripts/e2e-simex.sh` | simex with historical liquidity, `ouch-client` trading into it and `itch-fh` on its feed; checks responses and that all books agree |
 | `scripts/e2e-firm.sh` | `trader` making markets on simex against noise flow; checks risk limits, OMS consistency, no self-trades, clean shutdown |
-| `scripts/e2e-posttrade.sh` | The firm session plus drop copy, then reconciliation, TCA, a backtest and the option C colo model on the trader's latency |
+| `scripts/e2e-posttrade.sh` | The firm session plus drop copy, then reconciliation, TCA, a backtest and the colo model (`COLO_OPTION`) on the trader's latency |
 | `scripts/e2e-fix.sh` | Two FIX sessions trading through `fixgw`, one dropped and resumed midway; FIX fills checked against the drop copy |
 | `scripts/e2e-agents.sh` | `trader` making markets among the agents, with no replay |
 | `scripts/e2e-scenarios.sh` | simex `--scenario all` with an implied strip, agents, `itch-fh` and two vendors; checks every scenario ran and every book agrees |
@@ -221,30 +221,41 @@ maker, the year for the others) and compares ten seeds. SEMA, SEMB, TRND and
 VALU are made-up symbols and all prices are simulated; no fees or rebates
 are counted.
 
-## Colo network (option C)
+## Colo network (options C, D and G)
 
 The lab runs on loopback, so it has no switches, cables or NICs.
 `research/colo.py` models the network the firm would sit on in an exchange
-colo, using option C from the network study: the feed arrives over a 50 m
-cross-connect, an Arista 7130 fans it out on Layer 1 circuits (about 4.5 ns, no
-queueing) to four kernel-bypass hosts, and a 7130 MetaMux (about 39 ns) merges
-their orders onto the 50 m cross-connect back to the exchange. It is a
-discrete-event simulation at nanosecond resolution with port serialisation,
-contention between simultaneous orders, and microbursts.
+colo. In every option the feed arrives over a 50 m cross-connect, an Arista
+7130 fans it out on Layer 1 circuits (about 4.5 ns, no queueing), and a 7130
+MetaMux (about 39 ns) merges orders onto the 50 m cross-connect back to the
+exchange. The options differ in what makes the decision:
+
+| Option | Host | Modelled wire-to-wire p50 |
+| --- | --- | --- |
+| `C` | Kernel-bypass servers running the trader | about 2.8 µs |
+| `D` | FPGA NIC decodes the feed and builds books, the CPU decides and sends | about 2.2 µs |
+| `G` | The strategy runs in the 7130's own user FPGA, no NIC or rack cables | about 0.84 µs |
+
+Choose with `--option` (or `COLO_OPTION`): one letter, a list such as `C,G`,
+or `all`. The default is `C`.
 
 ```bash
 trader ... > trader.out
-python3 research/colo.py --trader-log trader.out --page /tmp/colo.html --json /tmp/colo.json
+python3 research/colo.py --option C --trader-log trader.out --page /tmp/colo.html
+python3 research/colo.py --option all --trader-log trader.out --json /tmp/colo.json
 ```
 
-It prints two rows. `C` uses a reference kernel-bypass host (about 2.8 µs from
-the exchange to the order gateway at the median). `C-lab` replaces the host's
-decision time with the trader's own "Tick to wire" histogram, between the NIC
-rx and tx stages that loopback cannot measure. The page breaks each order's
-time down by stage and stress-tests microbursts. Device figures live in
+It is a discrete-event simulation at nanosecond resolution with port
+serialisation, contention between simultaneous orders, and microbursts. With
+`--trader-log`, C and D each get a `-lab` row that uses the trader's own
+measured latency: "Tick to wire" in C, between the NIC rx and tx stages that
+loopback cannot measure, and "Decide to wire" in D, after the modelled FPGA
+feed handler and strategy evaluation. G has no lab row because its strategy is
+FPGA logic, not the C++ trader. The page breaks each order's time down by stage
+and stress-tests microbursts. Device figures live in
 `research/lab_research/colo/catalog.py`, are representative rather than vendor
 specs, and can be overridden with `--config`. `scripts/e2e-posttrade.sh` runs
-it on its session's trader.
+it on its session's trader with `COLO_OPTION` (default `C`).
 
 Latency numbers measured under WSL2 are relative, not production figures: the
 Windows host schedules the VM's CPUs, and there is no kernel-bypass networking.

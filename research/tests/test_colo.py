@@ -1,4 +1,4 @@
-"""Tests for the option C colo model. Run: python3 -m unittest discover research/tests"""
+"""Tests for the colo network model (options C, D, G). Run: python3 -m unittest discover research/tests"""
 
 import random
 import sys
@@ -76,8 +76,10 @@ class TraderLogTest(unittest.TestCase):
 class OptionCTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        t2w = colo.parse_tick_to_wire(TRADER_OUT)
-        cls.c, cls.lab = (colo.run_scenario(s, SHORT) for s in colo.option_c_scenarios(t2w))
+        runs = {s["id"]: colo.run_scenario(s, SHORT)
+                for s in colo.option_scenarios(["C", "D", "G"], TRADER_OUT)}
+        cls.runs = runs
+        cls.c, cls.lab = runs["C"], runs["C-lab"]
 
     def stage(self, r, name):
         return next(b["mean_ns"] for b in r["breakdown"] if b["stage"] == name)
@@ -97,8 +99,35 @@ class OptionCTest(unittest.TestCase):
         self.assertGreater(self.lab["tick_to_trade"]["p50"], self.c["tick_to_trade"]["p50"] + 4000)
         self.assertEqual(self.lab["md_switch"], self.c["md_switch"])
 
-    def test_same_ticks_in_both_runs(self):
-        self.assertEqual(self.c["md_frames"], self.lab["md_frames"])
+    def test_same_ticks_in_every_run(self):
+        self.assertEqual({r["md_frames"] for r in self.runs.values()}, {self.c["md_frames"]})
+
+    def test_option_d_decodes_in_fpga_and_uses_decide_to_wire(self):
+        d, lab = self.runs["D"], self.runs["D-lab"]
+        self.assertLess(self.stage(d, "FPGA feed decode + book build"), 60)
+        self.assertLess(d["wire_to_wire"]["p50"], self.c["wire_to_wire"]["p50"])
+        measured = self.stage(lab, "lab trader: decision to order (measured)")
+        self.assertTrue(1500 < measured < 6000, measured)  # Decide to wire p50 2100, tail to 61 us
+
+    def test_option_g_is_fastest_and_has_no_lab_run(self):
+        g = self.runs["G"]
+        self.assertNotIn("G-lab", self.runs)
+        self.assertLess(g["tick_to_trade"]["p50"], 150)
+        self.assertLess(g["wire_to_wire"]["p50"], self.runs["D"]["wire_to_wire"]["p50"])
+        self.assertLess(self.stage(g, "MD switch → host"), 1)  # on-board trace, not a cable
+
+
+class OptionChoiceTest(unittest.TestCase):
+    def test_parses_choices(self):
+        self.assertEqual(colo.parse_options("C"), ["C"])
+        self.assertEqual(colo.parse_options("g, c"), ["C", "G"])
+        self.assertEqual(colo.parse_options("all"), ["C", "D", "G"])
+        with self.assertRaises(ValueError):
+            colo.parse_options("C,F")
+
+    def test_runs_only_the_chosen_option(self):
+        self.assertEqual([s["id"] for s in colo.option_scenarios(["G"], TRADER_OUT)], ["G"])
+        self.assertEqual([s["id"] for s in colo.option_scenarios(["D"])], ["D"])
 
 
 class CliTest(unittest.TestCase):
@@ -106,12 +135,15 @@ class CliTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             log, page, js = Path(d, "trader.out"), Path(d, "colo.html"), Path(d, "colo.json")
             log.write_text(TRADER_OUT)
-            rc = colo_cli.main(["--trader-log", str(log), "--duration-ms", "2", "--no-sweep",
-                                "--page", str(page), "--json", str(js)])
+            rc = colo_cli.main(["--option", "C,G", "--trader-log", str(log), "--duration-ms", "2",
+                                "--no-sweep", "--page", str(page), "--json", str(js)])
             self.assertEqual(rc, 0)
             self.assertIn('"id":"C-lab"', page.read_text())
             self.assertNotIn("__DATA__", page.read_text())
-            self.assertIn('"trader_tick_to_wire"', js.read_text())
+            self.assertIn('"options": [\n  "C",\n  "C-lab",\n  "G"\n ]', js.read_text())
+
+    def test_rejects_unknown_option(self):
+        self.assertEqual(colo_cli.main(["--option", "B", "--no-sweep"]), 1)
 
 
 if __name__ == "__main__":

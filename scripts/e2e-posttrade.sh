@@ -5,8 +5,9 @@
 # reconciles the trader's fills against the drop copy and prints positions,
 # PnL and TCA, and research/backtest.py sweeps the strategy on one symbol's
 # top of book from the same day, and research/colo.py places the trader's
-# measured tick-to-wire on the option C colo network (7130 L1 fan-out,
-# kernel-bypass hosts, MetaMux), writing colo.html. Passes when every program exits 0 and the
+# measured latency on the colo network design(s) in COLO_OPTION (C, D, G, a
+# list such as C,G, or all; default C), writing colo.html. Passes when every
+# program exits 0 and the
 # reconciliation finds no breaks.
 #
 #   scripts/e2e-posttrade.sh [BUILD_DIR] [OUT_DIR]
@@ -70,7 +71,8 @@ echo "== backtest on SYM0001's top of book"
 "$tools/itch-dump/itch-dump" "$day" --symbol SYM0001 --tob-csv "$work/tob.csv" --quiet \
   --top 0 > /dev/null
 "${PYTHON:-python3}" research/backtest.py "$work/tob.csv" --top 5
-echo "== option C colo model with this run's tick-to-wire"
-"${PYTHON:-python3}" research/colo.py --trader-log "$work/trader.out" --duration-ms 5 --no-sweep \
+echo "== colo model, option ${COLO_OPTION:-C}, with this run's latency"
+"${PYTHON:-python3}" research/colo.py --option "${COLO_OPTION:-C}" --trader-log "$work/trader.out" \
+  --duration-ms 5 --no-sweep \
   --page "$work/colo.html"
 echo "PASS: drop copy reconciles with the trader's fills"

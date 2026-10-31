@@ -1,4 +1,4 @@
-<title>Option C Colo Path</title>
+<title>Lab Colo Options</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -97,8 +97,8 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 <div class="wrap">
 <header>
   <div class="eyebrow">Trading Lab · colo network model · nanosecond resolution</div>
-  <h1>Option C Colo Path</h1>
-  <p class="muted">The lab's firm placed in an exchange colo: the feed arrives over a cross-connect, an Arista 7130 fans it out on Layer 1 circuits to kernel-bypass hosts, and MetaMux merges their orders back toward the matching engine. Every configuration here ran on the identical market-data stream, so every tick is a fair race.</p>
+  <h1>Lab Colo Options</h1>
+  <p class="muted">The lab's firm placed in an exchange colo: the feed arrives over a cross-connect, an Arista 7130 fans it out on Layer 1 circuits, and MetaMux merges orders back toward the matching engine. Option C runs the trader on kernel-bypass servers, D puts an FPGA feed handler in front of a CPU strategy, and G runs the strategy inside the 7130's own FPGA. Every configuration here ran on the identical market-data stream, so every tick is a fair race.</p>
   <div class="stats" id="stats"></div>
 </header>
 
@@ -288,7 +288,10 @@ document.getElementById("assume").innerHTML = [
   `All links run at 10 Gb/s. Cross-connects are 50 m of fiber (4.9 ns/m, 245 ns each way); rack cables are 2 m DAC. Layer 1 fan-out gives each feed its own circuit, so it never queues; packet switches merge both feeds onto one port per host.`,
   `Device and host latencies are representative figures from public vendor material and industry benchmarks, not guaranteed specs. They live in <span class="mono">research/lab_research/colo/catalog.py</span> and can be overridden per run.`,
   `CPU hosts are modelled as a single core with a per-frame occupancy (about 1.1 µs kernel, 0.3 µs bypass) plus rare stalls; FPGA pipelines accept a frame every 6.4 ns, so they do not queue at 10 Gb/s line rate.`,
-].concat(S.some(s => s.id === "C-lab") ? [`The C-lab row draws each host's decision time from the trader's own "Tick to wire" histogram (feed packet out of recvmmsg to order handed to the socket) and keeps the kernel-bypass NIC rx and tx stages around it, since loopback cannot measure those. Under WSL2 that measurement includes host scheduling noise, so read it as the lab's current software path, not a production figure.`] : [])
+].concat(S.some(s => s.id === "C-lab") ? [`The C-lab row draws each host's decision time from the trader's own "Tick to wire" histogram (feed packet out of recvmmsg to order handed to the socket) and keeps the kernel-bypass NIC rx and tx stages around it, since loopback cannot measure those.`] : [])
+  .concat(S.some(s => s.id === "D-lab") ? [`The D-lab row keeps the FPGA feed handler and CPU strategy evaluation modelled and draws the order path from the trader's "Decide to wire" histogram (decision handed to order entry, encoded and sent), since in option D the FPGA replaces the trader's rx and book threads.`] : [])
+  .concat(S.some(s => s.id.endsWith("-lab")) ? [`Lab measurements under WSL2 include host scheduling noise, so read the lab rows as the lab's current software path, not a production figure.`] : [])
+  .concat(S.some(s => s.id === "G") ? [`Option G has no lab row: its strategy runs in the switch FPGA, so the lab's C++ trader is not on its path. Using it means porting the market maker's quoting logic to the FPGA.`] : [])
   .map(t => `<li>${t}</li>`).join("");
 
 render();

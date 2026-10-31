@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
-"""Option C colo model: the lab's firm on Arista 7130 L1 + MetaMux with kernel-bypass hosts.
+"""Colo network model: the lab's firm on Arista 7130 L1 + MetaMux, options C, D and G.
 
-    python3 research/colo.py
-    python3 research/colo.py --trader-log trader.out --page colo.html --json colo.json
+    python3 research/colo.py                         # option C
+    python3 research/colo.py --option D
+    python3 research/colo.py --option C,D,G --trader-log trader.out --page colo.html
 
-Simulates the network path the lab would run on in an exchange colo (Layer 1
-fan-out of the feed, kernel-bypass hosts, MetaMux order aggregation) at
+Simulates the network path the lab would run on in an exchange colo at
 nanosecond resolution and prints tick-to-trade and wire-to-wire percentiles.
-With --trader-log (trader's stdout), adds a run whose host decision time is the
-trader's own measured "Tick to wire" histogram. Stdlib only.
+All options fan the feed out on 7130 Layer 1 circuits and merge orders with
+MetaMux; the host differs:
+  C  kernel-bypass server running the trader
+  D  FPGA NIC decodes the feed, the CPU decides
+  G  strategy in the 7130's own user FPGA
+With --trader-log (trader's stdout), C and D also get a run whose host uses the
+trader's measured latency ("Tick to wire" for C, "Decide to wire" for D).
+The option can also come from COLO_OPTION. Stdlib only.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -32,7 +39,10 @@ def fmt(ns: float) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--trader-log", help="trader's stdout, for its measured Tick to wire")
+    ap.add_argument("--option", default=os.environ.get("COLO_OPTION", "C"),
+                    help="which design(s) to enable: C, D, G, a list like C,G, or all "
+                         "(default: $COLO_OPTION or C)")
+    ap.add_argument("--trader-log", help="trader's stdout, for its measured latency")
     ap.add_argument("--config", help="JSON with optional keys: scenarios, traffic, switches, hosts")
     ap.add_argument("--duration-ms", type=float, help="simulated time per run (default 30)")
     ap.add_argument("--no-sweep", action="store_true", help="skip the microburst sweep")
@@ -40,14 +50,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--page", help="write a self-contained HTML page here")
     args = ap.parse_args(argv)
 
-    t2w = None
-    if args.trader_log:
-        try:
-            t2w = colo.parse_tick_to_wire(Path(args.trader_log).read_text())
-        except ValueError as e:
-            print(f"colo: {args.trader_log}: {e}", file=sys.stderr)
-            return 1
-    scenarios, traffic = colo.option_c_scenarios(t2w), dict(colo.DEFAULT_TRAFFIC)
+    log = Path(args.trader_log).read_text() if args.trader_log else None
+    try:
+        scenarios = colo.option_scenarios(colo.parse_options(args.option), log)
+    except ValueError as e:
+        print(f"colo: {e}", file=sys.stderr)
+        return 1
+    traffic = dict(colo.DEFAULT_TRAFFIC)
     if args.config:
         cfg = json.loads(Path(args.config).read_text())
         scenarios = cfg.get("scenarios", scenarios)
@@ -89,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for r in results:
         r.pop("_race")
-    payload = {"traffic": traffic, "trader_tick_to_wire": t2w, "scenarios": results,
+    payload = {"traffic": traffic, "options": [s["id"] for s in scenarios], "scenarios": results,
                "head_to_head": matrix, "sweep": sweep}
     payload = json.loads(json.dumps(payload).replace("NaN", "null"))
     if args.json:
