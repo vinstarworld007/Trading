@@ -19,6 +19,9 @@ the project playbook. Build phases are listed in README.md.
 - `scripts/e2e-posttrade.sh` adds the drop copy and runs `research/report.py`
   (reconciliation must be clean); run it after any drop copy, fill log or
   research change, and `python3 -m unittest discover research/tests`.
+  It also runs `research/colo.py` (`COLO_OPTION`, default C) on the trader's output, so
+  keep trader's "Tick to wire" and "Decide to wire" line format in step with
+  `lab_research/colo`'s parsers.
 - `scripts/e2e-fix.sh` runs `fixgw` and `fix-client` against simex; run it after
   any `libs/fix`, `fixgw` or OUCH change. `scripts/e2e-agents.sh` runs `agents`
   and `trader`; run it after any agents or trader change.
@@ -56,7 +59,8 @@ the project playbook. Build phases are listed in README.md.
 - `libs/vendor`  vendor ticker plant: `Consolidator` (Level 1 records from `BookBuilder`), a
   single-threaded distribution `Server` with conflation, and the ICF, OMM JSON/WebSocket and
   B-PIPE sessions; `vendors/{icf,rtws,bpipe}` the three servers
-- `research/`  Python (numpy, pandas): PnL, reconciliation, TCA, backtests; stdlib unittest
+- `research/`  Python (numpy, pandas): PnL, reconciliation, TCA, backtests; stdlib unittest; `research/lab_research/colo`
+  the colo network model (stdlib only; options C, D, G) that `research/colo.py` runs
 - `exchange/`, `tools/`  as in the design doc
 - One library or executable per directory, each with its own CMakeLists.txt and
   tests under `tests/<lib>/`.

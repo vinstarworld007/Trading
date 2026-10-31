@@ -40,6 +40,39 @@ grid. Fills come from a queue model:
 `lab_research/backtest.py` explains the model and its limits. Use it to compare
 settings, not to forecast PnL.
 
+## Colo network (options C, D and G)
+
+```bash
+python3 research/colo.py --option C --trader-log trader.out --page colo.html
+python3 research/colo.py --option all --trader-log trader.out --json colo.json
+COLO_OPTION=D,G python3 research/colo.py
+```
+
+Puts the firm on an exchange colo network: Arista 7130 Layer 1 fan-out of the
+feed and MetaMux merging orders toward the exchange, over 50 m
+cross-connects. `--option` (or `COLO_OPTION`) picks the host design: `C`
+kernel-bypass servers, `D` an FPGA feed handler in front of a CPU strategy,
+`G` the strategy in the 7130's user FPGA; a list such as `C,G`, or `all`.
+The default is `C`. `lab_research/colo/` is a stdlib-only discrete-event model
+(times in ns) with port serialisation and contention, so simultaneous orders
+from several hosts queue at MetaMux and CPU hosts queue during microbursts.
+
+With `--trader-log`, C and D each add a `-lab` run:
+
+- `C-lab`: each host's decision time is drawn from the trader's "Tick to wire"
+  percentiles. The NIC rx and tx stages stay modelled, because the trader
+  measures from `recvmmsg` to the socket.
+- `D-lab`: the FPGA feed handler, PCIe DMA and strategy evaluation stay
+  modelled, and the order path is drawn from the trader's "Decide to wire"
+  percentiles, because in D the FPGA replaces the trader's rx and book threads.
+- G has none: its strategy is FPGA logic, so the C++ trader is not on its path.
+
+It prints p50/p99/p99.9 tick-to-trade (at the host) and wire-to-wire (exchange
+publish to order at the gateway), the mean time per stage, and a microburst
+sweep; `--page` writes an interactive page. `--config my.json` overrides
+`scenarios`, `traffic`, `switches` or `hosts`. Device latencies are
+representative figures from public material, for comparing designs.
+
 ## Tests
 
 ```bash

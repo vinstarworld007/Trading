@@ -1,0 +1,298 @@
+<title>Lab Colo Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single instrument-panel column; path diagram up top, then ladder, distributions, stress tests. */
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --ink: #141821; --muted: #5b6372; --line: #dde1e8; --grid: #eceef2;
+  --accent: #2442b8;
+  --c-cable: #8a7f6d; --c-switch: #2442b8; --c-queue: #d0612a; --c-host: #1d8a7a;
+  --s0: #b0a395; --s1: #c08a5b; --s2: #c9a03a; --s3: #7fa35a; --s4: #3f9a8e; --s5: #3367c4; --s6: #1d2f8f;
+  --heat-lo: #fbeae0; --heat-hi: #dfe6fb;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1218; --panel: #161a22; --ink: #e6e9ef; --muted: #98a0ae; --line: #2a303b; --grid: #20252e;
+  --accent: #8fa6ff;
+  --c-cable: #b3a68f; --c-switch: #7f97ff; --c-queue: #f08a4f; --c-host: #4cc2ae;
+  --s0: #8e8478; --s1: #c4895a; --s2: #d6b04a; --s3: #93bd6a; --s4: #4fb7a8; --s5: #6b95ec; --s6: #a9b8ff;
+  --heat-lo: #3a2418; --heat-hi: #1f2a52;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1218; --panel: #161a22; --ink: #e6e9ef; --muted: #98a0ae; --line: #2a303b; --grid: #20252e;
+  --accent: #8fa6ff;
+  --c-cable: #b3a68f; --c-switch: #7f97ff; --c-queue: #f08a4f; --c-host: #4cc2ae;
+  --s0: #8e8478; --s1: #c4895a; --s2: #d6b04a; --s3: #93bd6a; --s4: #4fb7a8; --s5: #6b95ec; --s6: #a9b8ff;
+  --heat-lo: #3a2418; --heat-hi: #1f2a52;
+  color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 48px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; font-stretch: 78%; letter-spacing: -0.01em; line-height: 1.05; }
+h2 { font-size: 22px; font-weight: 700; font-stretch: 85%; }
+p { margin: 0; max-width: 68ch; }
+.muted { color: var(--muted); }
+.eyebrow { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+section { display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; flex-direction: column; gap: 16px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.stat { background: var(--panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.stat b { font-family: var(--f-mono); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px var(--f-body); border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 3px; padding: 6px 10px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.chip:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.path { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+.node { flex: 1 0 118px; background: var(--panel); border: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.node .role { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.node .dev { font-weight: 600; font-size: 13.5px; line-height: 1.25; }
+.node .t { font-family: var(--f-mono); font-size: 13px; margin-top: auto; }
+.node.k-switch { border-top: 3px solid var(--c-switch); }
+.node.k-host { border-top: 3px solid var(--c-host); }
+.node.k-ex { border-top: 3px solid var(--muted); }
+.wire { flex: 0 0 76px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; font-family: var(--f-mono); font-size: 11px; color: var(--muted); text-align: center; }
+.wire::before { content: ""; display: block; width: 100%; height: 2px; background: var(--c-cable); order: 1; }
+.wire span:last-child { order: 2; }
+.summary { color: var(--muted); }
+
+.bar { display: flex; height: 30px; border: 1px solid var(--line); background: var(--panel); }
+.bar div { height: 100%; min-width: 1px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font-family: var(--f-mono); font-weight: 500; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td:first-child, th:first-child, td.l, th.l { text-align: left; }
+td.num { font-family: var(--f-mono); }
+tr:last-child td { border-bottom: 0; }
+tr.sel td { background: var(--grid); }
+.stage-sw { color: var(--c-switch); } .stage-q { color: var(--c-queue); }
+
+.chart { background: var(--panel); border: 1px solid var(--line); padding: 12px; overflow-x: auto; }
+.chart svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.chart text { fill: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+.chart .gl { stroke: var(--grid); }
+.chart .ax { stroke: var(--line); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 24px; }
+.two > section { min-width: 0; }
+.heat td.num { text-align: center; }
+pre { font-family: var(--f-mono); font-size: 13px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; overflow-x: auto; margin: 0; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 75ch; }
+@media (prefers-reduced-motion: no-preference) { .bar div, .node { transition: all .25s ease; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Trading Lab · colo network model · nanosecond resolution</div>
+  <h1>Lab Colo Options</h1>
+  <p class="muted">The lab's firm placed in an exchange colo: the feed arrives over a cross-connect, an Arista 7130 fans it out on Layer 1 circuits, and MetaMux merges orders back toward the matching engine. Option C runs the trader on kernel-bypass servers, D puts an FPGA feed handler in front of a CPU strategy, and G runs the strategy inside the 7130's own FPGA. Every configuration here ran on the identical market-data stream, so every tick is a fair race.</p>
+  <div class="stats" id="stats"></div>
+</header>
+
+<section>
+  <h2>Follow one tick through the rack</h2>
+  <p class="muted">Pick a configuration. Times are the mean per hop for frames that triggered an order, measured first bit in to first bit out.</p>
+  <div class="chips" id="chips" role="group" aria-label="Configuration"></div>
+  <p class="summary" id="summary"></p>
+  <div class="path" id="path"></div>
+  <div class="bar" id="bar" aria-label="Latency waterfall"></div>
+  <div class="legend" id="legend"></div>
+  <div class="tablewrap"><table id="stages"></table></div>
+</section>
+
+<section>
+  <h2>Configurations side by side</h2>
+  <p class="muted">Tick-to-trade is measured at the strategy box (market data in to order out). Wire-to-wire adds the switching and cabling, from the exchange publishing a frame to our order reaching its gateway. Log scale; dot is median, line runs to p99.</p>
+  <div class="chart" id="ladderChart"></div>
+  <div class="tablewrap"><table id="ladder"></table></div>
+</section>
+
+<div class="two">
+  <section>
+    <h2>Wire-to-wire distribution</h2>
+    <p class="muted">Cumulative share of orders delivered within a given time. Steep curves mean deterministic latency.</p>
+    <div class="chart" id="cdf"></div>
+  </section>
+  <section>
+    <h2>Microburst stress</h2>
+    <p class="muted">p99 wire-to-wire as each feed's bursts grow. CPU hosts queue frames during bursts; FPGA pipelines run at line rate and barely notice.</p>
+    <div class="chart" id="sweep"></div>
+  </section>
+</div>
+
+<section>
+  <h2>Head-to-head on the same ticks</h2>
+  <p class="muted">Share of shared trading signals where the row's order reached the exchange before the column's.</p>
+  <div class="tablewrap heat"><table id="h2h"></table></div>
+</section>
+
+<section>
+  <h2>What the model assumes</h2>
+  <ul id="assume"></ul>
+  <pre>python3 research/colo.py --trader-log trader.out --page colo.html
+python3 research/colo.py --config my.json   # override devices, hosts, cables, traffic</pre>
+</section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const S = DATA.scenarios;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const scol = i => `var(--s${i})`;
+const CAT = { "Cabling": "--c-cable", "Switching": "--c-switch", "Queueing": "--c-queue", "Host compute": "--c-host" };
+const fmt = ns => ns == null ? "–" : ns >= 1e6 ? (ns / 1e6).toFixed(2) + " ms" : ns >= 1000 ? (ns / 1000).toFixed(ns >= 1e4 ? 1 : 2) + " µs" : Math.round(ns) + " ns";
+const el = (tag, attrs = {}, html = "") => { const e = document.createElement(tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); e.innerHTML = html; return e; };
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+// headline stats
+const best = S.reduce((a, b) => a.wire_to_wire.p50 < b.wire_to_wire.p50 ? a : b);
+const worst = S.reduce((a, b) => a.wire_to_wire.p50 > b.wire_to_wire.p50 ? a : b);
+document.getElementById("stats").innerHTML = [
+  [fmt(best.wire_to_wire.p50), `fastest median wire-to-wire (${best.id}: ${best.label})`],
+  [fmt(worst.wire_to_wire.p50), `slowest median wire-to-wire (${worst.id}: ${worst.label})`],
+  [fmt(best.tick_to_trade.p50), `median tick-to-trade inside the host (${best.id})`],
+  [`${S[0].md_frames.toLocaleString()}`, `market-data frames per run, ${S[0].orders.toLocaleString()} orders across ${S[0].servers} strategy boxes`],
+].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+
+// selection
+let sel = S.length - 1;
+const chips = document.getElementById("chips");
+S.forEach((s, i) => { const b = el("button", { class: "chip", type: "button", id: "chip-" + s.id }, `<i style="background:${scol(i)}"></i>${s.id} · ${s.label}`); b.onclick = () => { sel = i; render(); }; chips.append(b); });
+
+function stage(s, name) { const b = s.breakdown.find(x => x.stage === name); return b ? b.mean_ns : 0; }
+function hostTotal(s) { return s.breakdown.filter(b => b.category === "Host compute" || b.stage === "host queue" || b.stage === "host NIC egress").reduce((a, b) => a + b.mean_ns, 0); }
+
+function render() {
+  const s = S[sel];
+  chips.querySelectorAll(".chip").forEach((c, i) => c.setAttribute("aria-pressed", i === sel));
+  document.getElementById("summary").textContent = s.summary;
+  const wire = (label, a, b) => `<div class="wire"><span>${label}</span><span>${fmt(stage(s, a))}</span></div>`;
+  const node = (k, role, dev, t) => `<div class="node k-${k}"><span class="role">${role}</span><span class="dev">${dev}</span><span class="t">${t}</span></div>`;
+  document.getElementById("path").innerHTML =
+    node("ex", "Exchange", "Market-data publisher", "t = 0") +
+    wire("cross-connect", "Exchange → MD switch") +
+    node("switch", "Feed switch", s.md_switch, fmt(stage(s, "MD switch") + stage(s, "MD switch queue"))) +
+    wire("rack cable", "MD switch → host") +
+    node("host", `Strategy ×${s.servers}`, s.host, fmt(hostTotal(s))) +
+    wire("rack cable", "Host → order switch") +
+    node("switch", "Order switch", s.order_switch, fmt(stage(s, "Order switch") + stage(s, "Order switch queue"))) +
+    wire("cross-connect", "Order switch → exchange") +
+    node("ex", "Exchange", "Order gateway", "p50 " + fmt(s.wire_to_wire.p50));
+
+  const total = s.breakdown.reduce((a, b) => a + b.mean_ns, 0);
+  const bar = document.getElementById("bar"); bar.innerHTML = "";
+  s.breakdown.forEach(b => { const d = el("div", { title: `${b.stage}: ${fmt(b.mean_ns)}` }); d.style.flex = `${b.mean_ns} 0 0`; d.style.background = `var(${CAT[b.category]})`; bar.append(d); });
+  const cats = {}; s.breakdown.forEach(b => cats[b.category] = (cats[b.category] || 0) + b.mean_ns);
+  document.getElementById("legend").innerHTML = Object.keys(CAT).map(c => `<span><i style="background:var(${CAT[c]})"></i>${c} <span class="mono">${fmt(cats[c] || 0)} · ${((cats[c] || 0) / total * 100).toFixed(0)}%</span></span>`).join("");
+  document.getElementById("stages").innerHTML = `<tr><th class="l">Stage</th><th class="l">Kind</th><th>Mean</th><th>Share</th></tr>` +
+    s.breakdown.filter(b => b.mean_ns >= 0.05).map(b => `<tr><td>${b.stage}</td><td class="l"><i style="display:inline-block;width:8px;height:8px;margin-right:6px;background:var(${CAT[b.category]})"></i>${b.category}</td><td class="num">${fmt(b.mean_ns)}</td><td class="num">${(b.mean_ns / total * 100).toFixed(1)}%</td></tr>`).join("") +
+    `<tr><td><b>Mean wire-to-wire</b></td><td></td><td class="num"><b>${fmt(total)}</b></td><td class="num">100%</td></tr>`;
+  document.querySelectorAll("#ladder tr[data-i]").forEach(r => r.classList.toggle("sel", +r.dataset.i === sel));
+}
+
+// ladder table
+document.getElementById("ladder").innerHTML = `<tr><th class="l">Configuration</th><th>T2T p50</th><th>T2T p99</th><th>W2W p50</th><th>W2W p99</th><th>W2W p99.9</th><th>Host load</th></tr>` +
+  S.map((s, i) => `<tr data-i="${i}"><td><i style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;background:${scol(i)}"></i>${s.id} · ${s.label}</td>
+  <td class="num">${fmt(s.tick_to_trade.p50)}</td><td class="num">${fmt(s.tick_to_trade.p99)}</td><td class="num">${fmt(s.wire_to_wire.p50)}</td><td class="num">${fmt(s.wire_to_wire.p99)}</td><td class="num">${fmt(s.wire_to_wire.p999)}</td><td class="num">${(s.host_utilisation * 100).toFixed(s.host_utilisation < 0.01 ? 1 : 0)}%</td></tr>`).join("");
+
+// log axis helper
+function logAxis(lo, hi) { const ticks = []; for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) for (const m of [1, 3]) { const v = m * 10 ** e; if (v >= lo && v <= hi) ticks.push(v); } return ticks; }
+const lab = v => v >= 1e6 ? v / 1e6 + " ms" : v >= 1000 ? v / 1000 + " µs" : v + " ns";
+
+// ladder chart
+(function () {
+  const W = 900, rowH = 30, top = 16, left = 300, right = 20, H = top + S.length * rowH * 2 + 40;
+  const all = S.flatMap(s => [s.tick_to_trade.p50, s.wire_to_wire.p99, s.tick_to_trade.p99]);
+  const lo = 10 ** Math.floor(Math.log10(Math.min(...all))), hi = 10 ** Math.ceil(Math.log10(Math.max(...all)));
+  const x = v => left + (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo)) * (W - left - right);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Median and p99 latency per configuration" });
+  logAxis(lo, hi).forEach(t => { svg.append(svgEl("line", { x1: x(t), x2: x(t), y1: top, y2: H - 28, class: "gl" })); const tx = svgEl("text", { x: x(t), y: H - 10, "text-anchor": "middle" }); tx.textContent = lab(t); svg.append(tx); });
+  S.forEach((s, i) => {
+    [["tick_to_trade", "T2T", 0], ["wire_to_wire", "W2W", 1]].forEach(([k, name, j]) => {
+      const y = top + (i * 2 + j) * rowH + rowH / 2, d = s[k];
+      if (j === 0) { const t = svgEl("text", { x: 8, y: y + 4, fill: "currentColor" }); t.style.fill = "var(--ink)"; t.textContent = `${s.id} · ${s.label.length > 34 ? s.label.slice(0, 33) + "…" : s.label}`; svg.append(t); }
+      const t2 = svgEl("text", { x: left - 10, y: y + 4, "text-anchor": "end" }); t2.textContent = name; svg.append(t2);
+      svg.append(svgEl("line", { x1: x(d.p50), x2: x(d.p99), y1: y, y2: y, stroke: scol(i), "stroke-width": 3, "stroke-linecap": "round", opacity: j ? 1 : 0.55 }));
+      svg.append(svgEl("circle", { cx: x(d.p50), cy: y, r: j ? 6 : 4.5, fill: j ? scol(i) : "var(--panel)", stroke: scol(i), "stroke-width": 2 }));
+    });
+    if (i) svg.append(svgEl("line", { x1: 0, x2: W, y1: top + i * 2 * rowH, y2: top + i * 2 * rowH, class: "gl" }));
+  });
+  document.getElementById("ladderChart").append(svg);
+})();
+
+// CDF
+(function () {
+  const W = 560, H = 340, L = 44, R = 14, T = 12, B = 34;
+  const all = S.flatMap(s => [s.wire_to_wire.cdf[0], s.wire_to_wire.cdf[100]]);
+  const lo = 10 ** Math.floor(Math.log10(Math.min(...all)) * 2) / 1, hi = Math.max(...all);
+  const lo2 = Math.max(100, 10 ** Math.floor(Math.log10(Math.min(...all)))), hi2 = 10 ** Math.ceil(Math.log10(hi));
+  const x = v => L + (Math.log10(v) - Math.log10(lo2)) / (Math.log10(hi2) - Math.log10(lo2)) * (W - L - R);
+  const y = p => T + (1 - p / 100) * (H - T - B);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "CDF of wire-to-wire latency" });
+  logAxis(lo2, hi2).forEach(t => { svg.append(svgEl("line", { x1: x(t), x2: x(t), y1: T, y2: H - B, class: "gl" })); const tx = svgEl("text", { x: x(t), y: H - B + 16, "text-anchor": "middle" }); tx.textContent = lab(t); svg.append(tx); });
+  [0, 25, 50, 75, 100].forEach(p => { svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(p), y2: y(p), class: "gl" })); const tx = svgEl("text", { x: L - 6, y: y(p) + 4, "text-anchor": "end" }); tx.textContent = p + "%"; svg.append(tx); });
+  S.forEach((s, i) => { const pts = s.wire_to_wire.cdf.map((v, p) => `${x(Math.max(v, lo2)).toFixed(1)},${y(p).toFixed(1)}`).join(" "); svg.append(svgEl("polyline", { points: pts, fill: "none", stroke: scol(i), "stroke-width": 2.2 }));
+    const last = s.wire_to_wire.cdf[50]; const tx = svgEl("text", { x: x(last) + 5, y: y(50) - 4 - (i % 2) * 0 }); tx.textContent = s.id; tx.style.fill = scol(i); tx.style.fontWeight = 600; svg.append(tx); });
+  document.getElementById("cdf").append(svg);
+})();
+
+// burst sweep
+(function () {
+  const sw = DATA.sweep; if (!sw.series.length) { document.getElementById("sweep").textContent = "Sweep skipped in this run."; return; }
+  const W = 560, H = 340, L = 54, R = 40, T = 12, B = 40;
+  const vals = sw.series.flatMap(s => s.points.map(p => p.p99));
+  const lo = 10 ** Math.floor(Math.log10(Math.min(...vals))), hi = 10 ** Math.ceil(Math.log10(Math.max(...vals)));
+  const bx = sw.bursts, maxB = Math.max(...bx);
+  const x = b => L + b / maxB * (W - L - R);
+  const y = v => T + (1 - (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))) * (H - T - B);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "p99 latency versus microburst size" });
+  logAxis(lo, hi).forEach(t => { svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "gl" })); const tx = svgEl("text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }); tx.textContent = lab(t); svg.append(tx); });
+  bx.forEach(b => { const tx = svgEl("text", { x: x(b), y: H - B + 16, "text-anchor": "middle" }); tx.textContent = b; svg.append(tx); });
+  const xl = svgEl("text", { x: L, y: H - 2, "text-anchor": "start" }); xl.textContent = "frames per burst →"; svg.append(xl);
+  sw.series.forEach(se => { const i = S.findIndex(s => s.id === se.id);
+    svg.append(svgEl("polyline", { points: se.points.map((p, k) => `${x(bx[k])},${y(p.p99)}`).join(" "), fill: "none", stroke: scol(i), "stroke-width": 2.2 }));
+    se.points.forEach((p, k) => svg.append(svgEl("circle", { cx: x(bx[k]), cy: y(p.p99), r: 3, fill: scol(i) })));
+    const lp = se.points[se.points.length - 1]; const tx = svgEl("text", { x: x(maxB) + 6, y: y(lp.p99) + 4 }); tx.textContent = se.id; tx.style.fill = scol(i); tx.style.fontWeight = 600; svg.append(tx); });
+  document.getElementById("sweep").append(svg);
+})();
+
+// head to head
+(function () {
+  const M = DATA.head_to_head;
+  document.getElementById("h2h").innerHTML = `<tr><th class="l">Row beats column</th>${S.map(s => `<th>${s.id}</th>`).join("")}</tr>` +
+    S.map((s, i) => `<tr><td>${s.id} · ${s.label}</td>${M[i].map(v => {
+      if (v == null) return `<td class="num muted">–</td>`;
+      const bg = v >= 0.5 ? `color-mix(in srgb, var(--heat-hi) ${Math.round((v - 0.5) * 200)}%, var(--panel))` : `color-mix(in srgb, var(--heat-lo) ${Math.round((0.5 - v) * 200)}%, var(--panel))`;
+      return `<td class="num" style="background:${bg}">${Math.round(v * 100)}%</td>`; }).join("")}</tr>`).join("");
+})();
+
+// assumptions
+const tr = DATA.traffic;
+document.getElementById("assume").innerHTML = [
+  `${tr.feeds} exchange feeds, each a Poisson stream of ${(tr.base_pps / 1000).toFixed(0)}k frames/s plus a ${tr.burst_size}-frame microburst every ${tr.burst_every_us} µs, ${tr.frame_bytes[0]}–${tr.frame_bytes[1]} byte frames, ${tr.duration_ms} ms simulated. ${Math.round(tr.trigger_p * 100)}% of frames carry a signal.`,
+  `${S[0].servers} strategy boxes react to every signal at once, so their orders collide at the order switch. That is why the MetaMux row shows queueing well above its 39 ns fabric latency: 128-byte orders take about 102 ns each to serialise at 10 Gb/s.`,
+  `All links run at 10 Gb/s. Cross-connects are 50 m of fiber (4.9 ns/m, 245 ns each way); rack cables are 2 m DAC. Layer 1 fan-out gives each feed its own circuit, so it never queues; packet switches merge both feeds onto one port per host.`,
+  `Device and host latencies are representative figures from public vendor material and industry benchmarks, not guaranteed specs. They live in <span class="mono">research/lab_research/colo/catalog.py</span> and can be overridden per run.`,
+  `CPU hosts are modelled as a single core with a per-frame occupancy (about 1.1 µs kernel, 0.3 µs bypass) plus rare stalls; FPGA pipelines accept a frame every 6.4 ns, so they do not queue at 10 Gb/s line rate.`,
+].concat(S.some(s => s.id === "C-lab") ? [`The C-lab row draws each host's decision time from the trader's own "Tick to wire" histogram (feed packet out of recvmmsg to order handed to the socket) and keeps the kernel-bypass NIC rx and tx stages around it, since loopback cannot measure those.`] : [])
+  .concat(S.some(s => s.id === "D-lab") ? [`The D-lab row keeps the FPGA feed handler and CPU strategy evaluation modelled and draws the order path from the trader's "Decide to wire" histogram (decision handed to order entry, encoded and sent), since in option D the FPGA replaces the trader's rx and book threads.`] : [])
+  .concat(S.some(s => s.id.endsWith("-lab")) ? [`Lab measurements under WSL2 include host scheduling noise, so read the lab rows as the lab's current software path, not a production figure.`] : [])
+  .concat(S.some(s => s.id === "G") ? [`Option G has no lab row: its strategy runs in the switch FPGA, so the lab's C++ trader is not on its path. Using it means porting the market maker's quoting logic to the FPGA.`] : [])
+  .map(t => `<li>${t}</li>`).join("");
+
+render();
+</script>
