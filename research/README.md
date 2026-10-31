@@ -40,6 +40,29 @@ grid. Fills come from a queue model:
 `lab_research/backtest.py` explains the model and its limits. Use it to compare
 settings, not to forecast PnL.
 
+## Colo network (option C)
+
+```bash
+python3 research/colo.py --trader-log trader.out --page colo.html --json colo.json
+```
+
+Puts the firm on an exchange colo network: Arista 7130 Layer 1 fan-out of the
+feed, kernel-bypass hosts, and MetaMux merging orders toward the exchange, over
+50 m cross-connects. `lab_research/colo/` is a stdlib-only discrete-event model
+(times in ns) with port serialisation and contention, so simultaneous orders
+from several hosts queue at MetaMux and CPU hosts queue during microbursts.
+
+- `C`: the reference kernel-bypass host from `lab_research/colo/catalog.py`.
+- `C-lab` (with `--trader-log`): each host's decision time is drawn from the
+  trader's "Tick to wire" percentiles. The NIC rx and tx stages stay modelled,
+  because the trader measures from `recvmmsg` to the socket.
+
+It prints p50/p99/p99.9 tick-to-trade (at the host) and wire-to-wire (exchange
+publish to order at the gateway), the mean time per stage, and a microburst
+sweep; `--page` writes an interactive page. `--config my.json` overrides
+`scenarios`, `traffic`, `switches` or `hosts`. Device latencies are
+representative figures from public material, for comparing designs.
+
 ## Tests
 
 ```bash
